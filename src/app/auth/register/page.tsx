@@ -3,15 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { signUp } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingForm, setIsLoadingForm] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
@@ -21,37 +20,48 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoadingForm(true);
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
-      setIsLoading(false);
+      setIsLoadingForm(false);
       return;
     }
 
     try {
-      await signUp(formData.email, formData.password);
-      router.push('/auth/login?registered=true');
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (error) throw error;
+
+      // (Opcional) Guarda el user id en localStorage para el onboarding
+      const userId = data.user?.id;
+      if (userId) {
+        localStorage.setItem('onboarding_user_id', userId);
+      }
+      // Redirige a la página de verificación
+      router.push('/auth/verify');
     } catch (err: any) {
       setError(err?.message || 'Failed to create account');
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setIsLoadingForm(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <FormWrapper
-        title="Create an account"
-        description="Enter your details to create your account"
+        title="Crear una cuenta"
+        description="Ingresa tus datos para crear tu cuenta"
         onSubmit={handleSubmit}
       >
         <Input
           label="Email"
           type="email"
-          placeholder="Enter your email"
+          placeholder="Ingresa tu email"
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
@@ -59,9 +69,9 @@ export default function RegisterPage() {
           required
         />
         <Input
-          label="Password"
+          label="Contraseña"
           type="password"
-          placeholder="Create a password"
+          placeholder="Crea una contraseña"
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
@@ -69,9 +79,9 @@ export default function RegisterPage() {
           required
         />
         <Input
-          label="Confirm Password"
+          label="Confirmar contraseña"
           type="password"
-          placeholder="Confirm your password"
+          placeholder="Confirma tu contraseña"
           value={formData.confirmPassword}
           onChange={(e) =>
             setFormData({ ...formData, confirmPassword: e.target.value })
@@ -82,17 +92,17 @@ export default function RegisterPage() {
         <Button
           type="submit"
           fullWidth
-          isLoading={isLoading}
+          isLoading={isLoadingForm}
         >
-          Create account
+          Crear cuenta
         </Button>
         <p className="text-center text-sm text-gray-600">
-          Already have an account?{' '}
+          ¿Ya tienes una cuenta?{' '}
           <Link
             href="/auth/login"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
-            Sign in
+            Inicia sesión
           </Link>
         </p>
       </FormWrapper>

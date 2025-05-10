@@ -10,8 +10,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // If user is not signed in and the current path is not /auth/login or /auth/register
-  // redirect the user to /auth/login
+  console.log('MIDDLEWARE SESSION:', session);
+
+  // Si NO hay sesión y NO está en /auth, redirige a login
   if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = '/auth/login';
@@ -19,17 +20,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user is signed in and the current path is /auth/login or /auth/register
-  // redirect the user to /dashboard
-  if (session && req.nextUrl.pathname.startsWith('/auth')) {
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = '/dashboard';
-    return NextResponse.redirect(redirectUrl);
+  // Si HAY sesión y está en /auth/login o /auth/register, redirige a dashboard
+  if (
+    session &&
+    (req.nextUrl.pathname === '/auth/login' ||
+      req.nextUrl.pathname === '/auth/register')
+  ) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   return res;
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-}; 
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|auth/verify|auth/reset-password|api|public).*)',
+  ],
+};

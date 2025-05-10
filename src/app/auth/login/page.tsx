@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -24,10 +25,30 @@ export default function LoginPage() {
     setError('');
 
     try {
+      // 1. Login
       await signIn(formData.email, formData.password);
-      router.push('/dashboard');
-    } catch (err) {
-      setError('Invalid email or password');
+
+      // 2. Espera a que el usuario esté disponible
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw userError || new Error('No user found');
+
+      // 3. Consultar si el usuario ya tiene tienda
+      const { data: stores, error: storeError } = await supabase
+        .from('stores')
+        .select('store_id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (storeError) throw storeError;
+
+      if (stores && stores.length > 0) {
+        router.push('/dashboard');
+      } else {
+        router.push('/onboarding');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Invalid email or password');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
