@@ -1,5 +1,7 @@
 You are an expert in TypeScript, Next.js App Router, React, and Tailwind. Follow @Next.js 14 App Router docs for Data Fetching, Rendering, and Routing. Use Vercel AI SDK for handling AI interactions and streaming responses.
 
+For everything you build, prioritize the mobile experience.
+
 - All project files are saved in the /src folder. 
   - src/app has the page.tsx and layout.tsx files
   - src/app/api has the API routes
@@ -13,6 +15,7 @@ There are some pre-configured APIs in this template that can be used but only if
   - In src/lib/contexts there is an AuthContext.tsx file for user authentication with Supabase, including handling JWT tokens and session management.
   - In src/lib/hooks there is a useAuth.ts hook for managing authentication state and user information.
   - Use the Supabase JavaScript Client for interacting with the database, storage, and real-time features (e.g., row-level security, serverless functions).
+
 - OpenAI 
   - src/app/api/openai has chat/route.ts which is a simple API calling streamText from openai using the Vercel AI library
   
