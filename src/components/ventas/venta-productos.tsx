@@ -1,3 +1,5 @@
+// Al dar click en modal "VENTA DE PRODUCTOS" se muestra este componente.
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -190,7 +192,7 @@ export default function ProductSale() {
       <div className="bg-yellow-400 p-4">
         <div className="flex items-center justify-between h-10">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.back()}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
           >
             <ArrowLeft className="h-5 w-5" />

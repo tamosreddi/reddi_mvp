@@ -1,4 +1,4 @@
-import ProductSale from "@/components/inventario/product-sale"
+import ProductSale from "@/components/ventas/venta-productos"
 
 export default function ProductSalePage() {
   return <ProductSale />

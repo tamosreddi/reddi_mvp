@@ -1,3 +1,5 @@
+// Página de CONFIRMACIÖN al terminar el proceso de venta.
+
 "use client"
 
 import { useState } from "react"

@@ -1,3 +1,5 @@
+// VENTA LIBRE: Al dar click en Modal tipo de venta
+
 "use client"
 
 import type React from "react"
@@ -98,12 +100,12 @@ export default function RegisterSale() {
       <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
         <div className="flex items-center justify-between h-10">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.back()}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-bold">Nueva venta</h1>
+          <h1 className="text-xl font-bold">Nueva venta libre</h1>
           <div className="w-12"></div> {/* Spacer for centering */}
         </div>
       </div>

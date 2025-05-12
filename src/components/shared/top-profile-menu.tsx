@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface TopProfileMenuProps {
   userName?: string
@@ -36,9 +37,9 @@ export default function TopProfileMenu({
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleLogout = () => {
-    // Implementar lógica de cierre de sesión aquí
-    alert("Cerrando sesión...")
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
   }
 
   const handleSettings = () => {
@@ -81,15 +82,25 @@ export default function TopProfileMenu({
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuItem onClick={handleSettings} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Mi Perfil</span>
+              <DropdownMenuContent
+                align="start"
+                className="w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 px-1"
+                sideOffset={8}
+              >
+                <DropdownMenuItem
+                  onClick={handleSettings}
+                  className="cursor-pointer flex items-center rounded-lg px-3 py-2 hover:bg-gray-100 transition-colors"
+                >
+                  <Settings className="mr-2 h-4 w-4 text-gray-600" />
+                  <span className="text-gray-900">Mi Perfil</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Cerrar sesión</span>
+                <DropdownMenuSeparator className="my-1 bg-gray-200" />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer flex items-center rounded-lg px-3 py-2 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                  <span className="text-red-600 font-medium">Cerrar sesión</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

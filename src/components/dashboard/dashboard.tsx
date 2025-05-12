@@ -42,7 +42,7 @@ export default function Dashboard() {
         {/* Registrar Gasto Button */}
         <div className="mb-4">
           <button
-            onClick={() => router.push("/gasto")}
+            onClick={() => router.push("/dashboard/gastos")}
             className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-red-50 rounded-full mr-4">

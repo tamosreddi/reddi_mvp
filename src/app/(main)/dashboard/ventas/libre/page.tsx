@@ -1,4 +1,4 @@
-import RegisterSale from "@/components/ventas/register-sale"
+import RegisterSale from "@/components/ventas/venta-libre"
 
 export default function FreeSalePage() {
   return <RegisterSale />
