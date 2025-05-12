@@ -27,9 +27,9 @@ export default function SaleTypeModal({ isOpen, onClose }: SaleTypeModalProps) {
   const handleSelectSaleType = (type: "products" | "free") => {
     onClose()
     if (type === "free") {
-      router.push("/venta/libre")
+      router.push("/dashboard/ventas/libre")
     } else {
-      router.push("/venta/productos")
+      router.push("/dashboard/ventas/productos")
     }
   }
 

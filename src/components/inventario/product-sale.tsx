@@ -1,0 +1,410 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { ArrowLeft, Search, Barcode, ShoppingCart, ChevronRight, Plus, Minus } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import CreateProductForm from "@/components/inventario/create-product-form"
+
+// Definición de tipos
+interface Product {
+  id: number
+  name: string
+  price: number
+  quantity: number
+  category: string
+  image: string
+}
+
+interface CartItem extends Product {
+  cartQuantity: number
+}
+
+export default function ProductSale() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [categories, setCategories] = useState<string[]>([])
+  // New state to control whether to show the create product form
+  const [showCreateProductForm, setShowCreateProductForm] = useState(false)
+
+  // Cargar productos de muestra y carrito del localStorage si existe
+  useEffect(() => {
+    // En una aplicación real, esto vendría de una API o base de datos
+    const sampleProducts: Product[] = [
+      {
+        id: 1,
+        name: "Dispo",
+        price: 550,
+        quantity: -1,
+        category: "Bebidas",
+        image: "/refreshing-drink.png",
+      },
+      {
+        id: 2,
+        name: "Ejemplo",
+        price: 10,
+        quantity: 2,
+        category: "Panadería",
+        image: "/cooking-pan.png",
+      },
+      {
+        id: 3,
+        name: "Producto 2",
+        price: 50,
+        quantity: 5,
+        category: "Lácteos",
+        image: "/glass-of-milk.png",
+      },
+      {
+        id: 4,
+        name: "Producto con nombre mucho mas largo",
+        price: 585,
+        quantity: 0,
+        category: "Higiene",
+        image: "/jabon.png",
+      },
+      {
+        id: 5,
+        name: "Producto3",
+        price: 22,
+        quantity: -6,
+        category: "Higiene",
+        image: "/crumpled-paper.png",
+      },
+      {
+        id: 6,
+        name: "Producto Agotado",
+        price: 22,
+        quantity: 0,
+        category: "Varios",
+        image: "/generic-product-display.png",
+      },
+    ]
+
+    setProducts(sampleProducts)
+
+    // Extraer categorías únicas
+    const uniqueCategories = Array.from(new Set(sampleProducts.map((product) => product.category)))
+    setCategories(uniqueCategories)
+
+    // Cargar carrito del localStorage si existe
+    const savedCart = localStorage.getItem("productCart")
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart))
+      } catch (e) {
+        console.error("Error parsing cart from localStorage:", e)
+      }
+    }
+  }, [])
+
+  // Guardar carrito en localStorage cuando cambie
+  useEffect(() => {
+    localStorage.setItem("productCart", JSON.stringify(cart))
+  }, [cart])
+
+  // Filtrar productos basados en búsqueda y categoría
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory ? product.category === selectedCategory : true
+    return matchesSearch && matchesCategory
+  })
+
+  // Añadir producto al carrito
+  const addToCart = (product: Product) => {
+    if (product.quantity <= 0) return // No añadir productos sin stock
+
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id)
+
+      if (existingItem) {
+        // Si ya existe en el carrito, incrementar cantidad
+        return prevCart.map((item) =>
+          item.id === product.id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item,
+        )
+      } else {
+        // Si no existe, añadirlo con cantidad 1
+        return [...prevCart, { ...product, cartQuantity: 1 }]
+      }
+    })
+  }
+
+  // Decrementar cantidad de un producto en el carrito
+  const decrementCartItem = (productId: number) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) => {
+        if (item.id === productId) {
+          return { ...item, cartQuantity: Math.max(0, item.cartQuantity - 1) }
+        }
+        return item
+      })
+      // Eliminar productos con cantidad 0
+      return updatedCart.filter((item) => item.cartQuantity > 0)
+    })
+  }
+
+  // Calcular total de items en el carrito
+  const cartItemCount = cart.reduce((total, item) => total + item.cartQuantity, 0)
+
+  // Calcular precio total del carrito
+  const cartTotal = cart.reduce((total, item) => total + item.price * item.cartQuantity, 0)
+
+  // Show create product form
+  const handleShowCreateProductForm = () => {
+    setShowCreateProductForm(true)
+  }
+
+  // Handle when the create product form is closed
+  const handleCreateProductFormClose = () => {
+    setShowCreateProductForm(false)
+  }
+
+  // Navegar a la página de canasta
+  const navigateToCart = () => {
+    router.push("/venta/canasta")
+  }
+
+  // If showing create product form, render it
+  if (showCreateProductForm) {
+    return (
+      <CreateProductForm
+        initialReferrer={pathname}
+        onCancel={handleCreateProductFormClose}
+        onSuccess={() => {
+          // Handle successful product creation
+          setShowCreateProductForm(false)
+          // Optionally refresh product list or show success message
+        }}
+      />
+    )
+  }
+
+  // Otherwise, render the product sale view
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-100 pb-16">
+      {/* Header */}
+      <div className="bg-yellow-400 p-4">
+        <div className="flex items-center justify-between h-10">
+          <button
+            onClick={() => router.push("/")}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-xl font-bold">Nueva venta</h1>
+          <button className="flex h-10 w-10 items-center justify-center" aria-label="Escanear código de barras">
+            <Barcode className="h-6 w-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="p-4 max-w-4xl mx-auto w-full">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre o código"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm"
+          />
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="px-4 overflow-x-auto max-w-4xl mx-auto w-full">
+        <div className="flex space-x-2 pb-3">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className={cn(
+              "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all",
+              !selectedCategory
+                ? "bg-yellow-400 text-gray-900 shadow-md"
+                : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50",
+            )}
+          >
+            Todas las categorías
+          </button>
+
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={cn(
+                "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all",
+                selectedCategory === category
+                  ? "bg-yellow-400 text-gray-900 shadow-md"
+                  : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50",
+              )}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Products Grid - Responsive grid with improved styling */}
+      <div className="flex-1 p-4 pb-20 max-w-4xl mx-auto w-full">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
+          {/* New Product Button */}
+          <button
+            onClick={handleShowCreateProductForm}
+            className="flex flex-col items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded-lg aspect-square hover:bg-gray-50 transition-colors group"
+          >
+            <div className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center mb-1 group-hover:bg-yellow-100 transition-colors">
+              <Plus className="h-5 w-5" />
+            </div>
+            <span className="text-center font-bold text-gray-800 text-sm">NUEVO PRODUCTO</span>
+          </button>
+
+          {/* Product Cards - Redesigned with improved styling */}
+          {filteredProducts.map((product) => {
+            const inCart = cart.find((item) => item.id === product.id)
+            const isOutOfStock = product.quantity <= 0
+
+            return (
+              <div
+                key={product.id}
+                onClick={() => !isOutOfStock && addToCart(product)}
+                className={cn(
+                  "bg-white rounded-lg overflow-hidden relative flex flex-col shadow-sm",
+                  isOutOfStock
+                    ? "opacity-70"
+                    : "cursor-pointer hover:shadow-md transition-all hover:translate-y-[-2px]",
+                )}
+              >
+                {/* Product Image - Improved sizing and styling */}
+                <div
+                  className={cn("h-20 sm:h-32 bg-gray-200 relative", !isOutOfStock && "cursor-pointer overflow-hidden")}
+                >
+                  <img
+                    src={product.image || "/placeholder.svg"}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform hover:scale-105"
+                  />
+
+                  {/* Add button overlay for desktop */}
+                  {!isOutOfStock && !inCart && (
+                    <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity sm:flex">
+                      <div className="bg-yellow-400 rounded-full p-2 shadow-md">
+                        <Plus className="h-6 w-6" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cart indicator if product is in cart */}
+                {inCart && (
+                  <div className="absolute top-1 right-1 bg-yellow-400 rounded-md px-2 py-0.5 flex items-center text-xs shadow-sm">
+                    <ShoppingCart className="h-3 w-3 mr-0.5" />
+                    <span>{inCart.cartQuantity}</span>
+                  </div>
+                )}
+
+                {/* Product Info - Improved layout and spacing */}
+                <div className="p-2 flex-1 flex flex-col justify-between">
+                  {/* Price */}
+                  <p className="text-base font-bold text-gray-900">$ {product.price.toLocaleString()}</p>
+
+                  {/* Product Name - Ensure it wraps properly */}
+                  <h3 className="font-medium text-sm leading-tight line-clamp-2 min-h-[2.5rem] text-gray-800">
+                    {product.name}
+                  </h3>
+
+                  {/* Availability */}
+                  <p
+                    className={cn(
+                      "text-xs mt-1",
+                      product.quantity < 0 ? "text-red-500" : product.quantity === 0 ? "text-red-500" : "text-gray-500",
+                    )}
+                  >
+                    {product.quantity} disponibles
+                  </p>
+
+                  {/* Add/Remove Buttons */}
+                  <div className="flex justify-between items-center mt-1 w-full">
+                    {inCart ? (
+                      <>
+                        {/* Minus button moved to the left */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            decrementCartItem(product.id)
+                          }}
+                          className="w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100"
+                          aria-label={`Quitar ${product.name} del carrito`}
+                        >
+                          <Minus className="h-5 w-5" />
+                        </button>
+
+                        {/* Plus button stays on the right */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            addToCart(product)
+                          }}
+                          disabled={isOutOfStock}
+                          className={cn(
+                            "w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100",
+                            isOutOfStock && "opacity-50 cursor-not-allowed",
+                          )}
+                          aria-label={`Añadir ${product.name} al carrito`}
+                        >
+                          <Plus className="h-5 w-5" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* Empty div to maintain layout when not in cart */}
+                        <div></div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            addToCart(product)
+                          }}
+                          disabled={isOutOfStock}
+                          className={cn(
+                            "w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100",
+                            isOutOfStock && "opacity-50 cursor-not-allowed",
+                          )}
+                          aria-label={`Añadir ${product.name} al carrito`}
+                        >
+                          <Plus className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Cart Bar */}
+      {cartItemCount > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white py-3 px-4 rounded-none shadow-lg">
+          <div className="max-w-4xl mx-auto w-full">
+            <button className="w-full flex items-center justify-between" onClick={navigateToCart}>
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gray-700 rounded-md flex items-center justify-center mr-3">
+                  {cartItemCount}
+                </div>
+                <span className="text-lg font-medium">Canasta</span>
+              </div>
+              <div className="flex items-center">
+                <span className="mr-2">{cartTotal.toLocaleString()} MXN</span>
+                <ChevronRight className="h-5 w-5" />
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
