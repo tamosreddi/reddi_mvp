@@ -24,7 +24,7 @@ const sampleTransactions = [
     name: "1 Dispo",
     amount: 550,
     paymentMethod: "Efectivo",
-    date: new Date(2025, 4, 8, 12, 16), // May 8, 2025, 12:16
+    date: new Date(2025, 4, 13, 12, 16), // May 8, 2025, 12:16
     status: "Pagado",
     category: "",
     profit: 545,
@@ -43,7 +43,7 @@ const sampleTransactions = [
     name: "Renta local",
     amount: 800,
     paymentMethod: "Transferencia",
-    date: new Date(2025, 4, 8, 10, 30), // May 8, 2025, 10:30
+    date: new Date(2025, 4, 13, 10, 30), // May 8, 2025, 10:30
     status: "Pagado",
     category: "Arriendo",
   },
