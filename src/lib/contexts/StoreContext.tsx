@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/supabaseClient";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
+// Aqui debe de tener todos los datos de la tienda tal y como en la base de datos Supabase
 export interface Store {
   store_id: string;
   user_id: string;

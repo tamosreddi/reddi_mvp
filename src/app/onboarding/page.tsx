@@ -21,6 +21,7 @@ export default function OnboardingPage() {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     owner_name: '',
+    owner_lastname: '',
     store_name: '',
     store_category: categories[0],
   });
@@ -51,10 +52,13 @@ export default function OnboardingPage() {
     setError('');
 
     try {
-      // 1. Actualiza el nombre del usuario en la tabla "user"
+      // 1. Actualiza el nombre y apellido del usuario en la tabla "user"
       const { error: userError } = await supabase
         .from('user')
-        .update({ name: formData.owner_name })
+        .update({ 
+          name: formData.owner_name,
+          last_name: formData.owner_lastname
+        })
         .eq('user_id', user?.id);
 
       if (userError) throw userError;
@@ -100,10 +104,17 @@ export default function OnboardingPage() {
         onSubmit={handleSubmit}
       >
         <Input
-          label="Tu nombre"
-          placeholder="Ejemplo: Juan Pérez"
+          label="Nombre"
+          placeholder="Ejemplo: Juan"
           value={formData.owner_name}
           onChange={e => setFormData({ ...formData, owner_name: e.target.value })}
+          required
+        />
+        <Input
+          label="Apellido"
+          placeholder="Ejemplo: Pérez"
+          value={formData.owner_lastname}
+          onChange={e => setFormData({ ...formData, owner_lastname: e.target.value })}
           required
         />
         <Input

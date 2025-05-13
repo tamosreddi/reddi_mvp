@@ -1,45 +1,68 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowLeft, Plus, Facebook, MessageCircle, Share2, Shield, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/contexts/AuthContext"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 export default function ProfileView() {
   const router = useRouter()
-  const [user] = useState({
-    name: "Ricardo",
-    fullName: "Ricardo Abarrotes de Leon",
-    phone: "+13124689319",
-    plan: "gratis",
-    planPrice: "0 US$ / Mes",
-    planType: "App",
-  })
+  const { user } = useAuth()
+  const { selectedStore } = useStore()
+  const [profile, setProfile] = useState<{ name: string; phone?: string } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return
+      setLoading(true)
+      const { data, error } = await supabase
+        .from("user")
+        .select("name, phone")
+        .eq("user_id", user.id)
+        .single()
+      if (!error && data) {
+        setProfile(data)
+      }
+      setLoading(false)
+    }
+    fetchProfile()
+  }, [user])
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header (idéntico a TopProfileMenu) */}
-      <header className="bg-yellow-400 p-4">
-        <div className="flex items-center">
-          <button onClick={() => router.back()} className="mr-4" aria-label="Volver">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-lg font-semibold">{user.fullName}</h1>
-        </div>
+      <header className="bg-yellow-400 p-4 flex items-center h-16 relative">
+        <button onClick={() => router.back()} className="mr-4 absolute left-4" aria-label="Volver">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-xl font-semibold w-full text-center text-gray-900">
+          {selectedStore ? selectedStore.store_name : "Cargando..."}
+        </h1>
       </header>
 
       {/* Profile Content */}
       <div className="flex-1 p-4 space-y-4">
         {/* User Profile */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div
+          className="rounded-xl border border-gray-200 bg-white p-4 cursor-pointer"
+          onClick={() => router.push('/perfil/editar')}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="h-16 w-16 rounded-xl bg-purple-100 mr-4 flex items-center justify-center">
-                <span className="text-purple-500 text-2xl font-bold">{user.name.charAt(0)}</span>
+                <span className="text-purple-500 text-2xl font-bold">
+                  {profile?.name ? profile.name.charAt(0) : "?"}
+                </span>
               </div>
               <div>
-                <h2 className="text-xl font-semibold">{user.name}</h2>
-                <p className="text-gray-600">{user.phone}</p>
+                <h2 className="text-xl font-semibold">
+                  {loading ? "Cargando..." : profile?.name || "Sin nombre"}
+                </h2>
+                <p className="text-gray-600">{profile?.phone || ""}</p>
               </div>
             </div>
             <button className="text-gray-600" aria-label="Editar perfil">
@@ -52,10 +75,10 @@ export default function ProfileView() {
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Plan {user.plan}</h2>
+              <h2 className="text-xl font-semibold">Plan Gratis</h2>
               <div className="flex items-center mt-2 space-x-2">
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">{user.planPrice}</span>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">{user.planType}</span>
+                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">0 US$ / Mes</span>
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">App</span>
               </div>
             </div>
             <button className="text-gray-600" aria-label="Ver planes">
