@@ -8,5 +8,5 @@ export default function SaleConfirmationPage() {
   const total = Number(searchParams.get("total") || "0")
   const paymentMethod = searchParams.get("paymentMethod") || "efectivo"
 
-  return <SaleConfirmation total={total} paymentMethod={paymentMethod} />
+  return <SaleConfirmation isOpen={true} onClose={() => {}} onConfirm={() => {}} total={total} paymentMethod={paymentMethod} />
 }

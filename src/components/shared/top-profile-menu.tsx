@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 interface TopProfileMenuProps {
-  userName?: string
   userRole?: string
   showSearch?: boolean
   onSearchClick?: () => void
@@ -25,7 +25,6 @@ interface TopProfileMenuProps {
 }
 
 export default function TopProfileMenu({
-  userName = "Ricardo Abarrotes",
   userRole = "Propietario",
   showSearch = true,
   onSearchClick,
@@ -34,6 +33,7 @@ export default function TopProfileMenu({
   title = "",
   onBackClick,
 }: TopProfileMenuProps) {
+  const { selectedStore } = useStore()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -75,7 +75,9 @@ export default function TopProfileMenu({
                 <button className="flex items-center focus:outline-none">
                   <div className="text-left">
                     <div className="flex items-center">
-                      <h1 className="text-base font-semibold text-gray-900">{userName}</h1>
+                      <h1 className="text-base font-semibold text-gray-900">
+                        {selectedStore ? selectedStore.store_name : "Cargando..."}
+                      </h1>
                       <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", isOpen && "rotate-180")} />
                     </div>
                     <p className="text-xs text-gray-700">{userRole}</p>
