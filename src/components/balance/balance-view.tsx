@@ -25,6 +25,7 @@ type Transaction = {
   payment_method: string
   transaction_date: string
   unit_amount: number
+  total_amount: number
   // ...otros campos relevantes
 }
 
@@ -66,7 +67,7 @@ function IncomeList({
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xl font-bold">$ {formatNumber(transaction.unit_amount)}</p>
+            <p className="text-xl font-bold">$ {formatNumber(transaction.total_amount)}</p>
             <p className="text-sm text-green-600">Pagado</p>
           </div>
         </button>
@@ -353,7 +354,9 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
             <div className="p-8 text-center text-gray-500">Cargando ingresos...</div>
           ) : (
             <IncomeList
-              transactions={incomeTransactions}
+              transactions={incomeTransactions.filter(
+                (t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate)
+              )}
               onTransactionClick={setSelectedTransaction}
               formatNumber={formatNumber}
             />
