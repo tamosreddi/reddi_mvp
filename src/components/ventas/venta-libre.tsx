@@ -17,6 +17,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, isToday, isTomorrow } from "date-fns"
 import { es } from "date-fns/locale"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/lib/contexts/AuthContext"
+import { useStore } from "@/lib/contexts/StoreContext"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface Customer {
   id: number
@@ -33,6 +37,10 @@ export default function RegisterSale() {
   const [paymentMethod, setPaymentMethod] = useState("efectivo")
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const { selectedStore } = useStore()
+  const [isLoading, setIsLoading] = useState(false)
 
   // Load selected customer from localStorage
   useEffect(() => {
@@ -58,17 +66,76 @@ export default function RegisterSale() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isFormValid = date !== null && value !== "" && Number.parseFloat(value) > 0 && paymentMethod !== ""
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
 
-    // Here you would typically save the sale to your database
-    const customerInfo = selectedCustomer ? `para ${selectedCustomer.name}` : ""
-    alert(`Venta ${customerInfo} registrada con éxito!`)
+    try {
+      console.log('Iniciando registro de venta...')
+      console.log('User:', user)
+      console.log('Selected Store:', selectedStore)
+      console.log('Form Data:', { value, concept, paymentMethod, date, selectedCustomer })
 
-    // Clear selected customer
-    localStorage.removeItem("selectedCustomer")
+      // Validar usuario y tienda
+      if (!user) throw new Error("Debes iniciar sesión para registrar una venta")
+      if (!selectedStore) throw new Error("Debes seleccionar una tienda")
 
-    router.push("/")
+      const paymentMethodMap = {
+        efectivo: "cash",
+        tarjeta: "card",
+        transferencia: "transfer",
+        otro: "other"
+      }
+
+      const transactionData = {
+        user_id: user.id,
+        store_id: selectedStore.store_id,
+        transaction_type: 'income',
+        value: Number(value),
+        quantity: 1,
+        transaction_description: concept,
+        payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
+        transaction_date: date.toISOString(),
+        stakeholder_id: selectedCustomer?.id || null,
+        created_by: user.id,
+      }
+
+      console.log('Enviando a Supabase:', transactionData)
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert(transactionData)
+        .select()
+
+      console.log('Respuesta de Supabase:', { data, error })
+
+      if (error) throw error
+
+      toast({
+        title: "Venta registrada con éxito",
+        description: `Ingreso: $${value}`,
+        variant: "success",
+      })
+
+      setValue("")
+      setConcept("")
+      setSelectedCustomer(null)
+      setPaymentMethod("efectivo")
+      setDate(new Date())
+
+      router.push("/balance?tab=ingresos")
+    } catch (err: any) {
+      console.error('Error en handleSubmit:', err)
+      toast({
+        title: "Error",
+        description: err.message || "No se pudo registrar la venta",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Navigate to customer selection
@@ -95,7 +162,7 @@ export default function RegisterSale() {
   const formattedValue = value ? Number.parseFloat(value).toLocaleString("es-MX") : "0"
 
   return (
-    <div className="pb-6">
+    <div className="pb-32">
       {/* Header */}
       <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
         <div className="flex items-center justify-between h-10">
@@ -128,7 +195,7 @@ export default function RegisterSale() {
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
+                onSelect={(newDate: Date | undefined) => newDate && setDate(newDate)}
                 locale={es}
                 className="border rounded-md"
               />
@@ -203,7 +270,7 @@ export default function RegisterSale() {
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
               className="border-none shadow-none focus-visible:ring-0"
-              placeholder="Dale un nombre a tu venta"
+              placeholder="Agrega una descripción"
             />
           </div>
         </div>
@@ -295,10 +362,19 @@ export default function RegisterSale() {
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>
 
-        {/* Submit Button */}
-        <Button type="submit" className="w-full rounded-xl bg-blue-500 p-6 text-lg font-medium uppercase tracking-wide">
-          Crear Venta
-        </Button>
+        {/* Botón fijo */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-white p-4 border-t border-gray-200">
+          <Button
+            type="submit"
+            className={cn(
+              "w-full rounded-xl p-6 text-lg font-medium transition-colors bg-gray-800 text-white hover:bg-gray-700"
+            )}
+            disabled={!isFormValid || isLoading}
+            isLoading={isLoading}
+          >
+            Crear Venta
+          </Button>
+        </div>
       </form>
     </div>
   )

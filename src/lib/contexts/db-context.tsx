@@ -34,7 +34,7 @@ export const databaseSchema = {
         store_id: "UUID - Tienda asociada al evento, relación con la tabla stores.",
         transaction_type: "Texto - Tipo de evento (expense, income, refund, sale, purchase).",
         quantity: "Decimal - Cantidad de artículos involucrados en el evento.",
-        unit_amount: "Decimal - Precio unitario del artículo.",
+        value: "Decimal - Precio unitario del artículo.",
         total_amount: "Decimal - Monto total calculado automáticamente (quantity * unit_amount).",
         transaction_description: "Texto - Descripción opcional del evento.",
         stakeholder_id: "UUID - Identificador único del proveedor o cliente, si aplica.",

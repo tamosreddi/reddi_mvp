@@ -3,7 +3,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { format, subDays, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { Calendar, ChevronRight, Download, ArrowUpRight, ArrowDownRight, Plus, Minus } from "lucide-react"
@@ -14,6 +14,7 @@ import BalanceHeader from "@/components/balance/balance-header"
 import IncomeDetailView from "@/components/balance/income-detail-view"
 import ExpenseDetailView from "@/components/balance/expense-detail-view"
 import BalanceDetailView from "@/components/balance/balance-detail-view"
+import SaleTypeModal from "@/components/shared/sale-type-modal"
 
 // Sample transaction data
 const sampleTransactions = [
@@ -118,11 +119,14 @@ interface BalanceViewProps {
 
 export default function BalanceView({ onNewSale }: BalanceViewProps) {
   const router = useRouter()
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "egresos" ? "egresos" : "ingresos";
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [activeTab, setActiveTab] = useState("ingresos")
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState<(typeof sampleTransactions)[0] | null>(null)
   const [showBalanceDetail, setShowBalanceDetail] = useState(false)
+  const [isSaleTypeModalOpen, setIsSaleTypeModalOpen] = useState(false)
 
   // Filter transactions based on selected date and active tab
   const filteredTransactions = sampleTransactions.filter(
@@ -199,9 +203,12 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
     })
   }
 
-  // Handle new expense
+  // Action handlers
+  const handleNewSale = () => {
+    setIsSaleTypeModalOpen(true)
+  }
   const handleNewExpense = () => {
-    router.push("/gasto")
+    router.push("/dashboard/gastos")
   }
 
   // Get dates for the date selector
@@ -331,7 +338,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
       </div>
 
       {/* Transactions Tabs */}
-      <Tabs defaultValue="ingresos" className="w-full" onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full grid grid-cols-2 h-auto p-0 bg-transparent">
           <TabsTrigger
             value="ingresos"
@@ -417,7 +424,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
       {/* Action Buttons */}
       <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 flex gap-2">
         <Button
-          onClick={onNewSale}
+          onClick={handleNewSale}
           className="flex-1 bg-green-600/80 hover:bg-green-600 text-white rounded-full py-2.5 text-sm shadow-sm"
         >
           <Plus className="mr-1.5 h-4 w-4" />
@@ -431,6 +438,9 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
           Nuevo gasto
         </Button>
       </div>
+
+      {/* Sale Type Modal */}
+      <SaleTypeModal isOpen={isSaleTypeModalOpen} onClose={() => setIsSaleTypeModalOpen(false)} />
 
       {/* Extra padding at the bottom to prevent content from being hidden behind buttons */}
       <div className="h-20"></div>

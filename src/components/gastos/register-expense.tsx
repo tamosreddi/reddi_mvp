@@ -149,7 +149,7 @@ export default function RegisterExpense() {
       })
 
       // Navegar a la página de balance
-      router.push("/balance")
+      router.push("/balance?tab=egresos")
     } catch (err: any) {
       console.error('Error in handleSubmit:', err)
       toast({
@@ -163,7 +163,7 @@ export default function RegisterExpense() {
   }
 
   return (
-    <div className="pb-6">
+    <div className="pb-32">
       {/* Header */}
       <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
         <div className="flex items-center justify-between h-10">
@@ -376,17 +376,19 @@ export default function RegisterExpense() {
         </div>
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          className={cn(
-            "w-full rounded-xl p-6 text-lg font-medium transition-colors",
-            isFormValid ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400",
-          )}
-          disabled={!isFormValid || isLoading}
-          isLoading={isLoading}
-        >
-          Crear gasto
-        </Button>
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-white p-4 border-t border-gray-200">
+          <Button
+            type="submit"
+            className={cn(
+              "w-full rounded-xl p-6 text-lg font-medium transition-colors",
+              isFormValid ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400",
+            )}
+            disabled={!isFormValid || isLoading}
+            isLoading={isLoading}
+          >
+            Crear gasto
+          </Button>
+        </div>
       </form>
     </div>
   )
