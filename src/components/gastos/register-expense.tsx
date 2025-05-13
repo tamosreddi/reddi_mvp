@@ -15,6 +15,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/lib/contexts/AuthContext"
+import { useStore } from "@/lib/contexts/StoreContext"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface Supplier {
   id: number
@@ -31,8 +34,11 @@ export default function RegisterExpense() {
   const [description, setDescription] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("efectivo")
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const { user } = useAuth()
+  const { selectedStore } = useStore()
 
   // Cargar proveedor seleccionado desde localStorage
   useEffect(() => {
@@ -79,21 +85,81 @@ export default function RegisterExpense() {
     localStorage.removeItem("selectedSupplier")
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
 
-    // Here you would typically save the expense to your database
-    // Instead of showing an alert, we'll navigate to Balance and show a toast
+    try {
+      // Debug logs
+      console.log('Starting expense submission...')
+      console.log('User:', user)
+      console.log('Selected Store:', selectedStore)
 
-    // Show success toast
-    toast({
-      title: "Gasto creado con éxito",
-      description: `${expenseCategory}: $${amount}`,
-      variant: "success",
-    })
+      // Validar que tenemos un usuario y una tienda seleccionada
+      if (!user) {
+        throw new Error("Debes iniciar sesión para registrar un gasto")
+      }
 
-    // Navigate to Balance section
-    router.push("/balance")
+      if (!selectedStore) {
+        throw new Error("Debes seleccionar una tienda")
+      }
+
+      const paymentMethodMap = {
+        efectivo: "cash",
+        tarjeta: "card",
+        transferencia: "transfer"
+      };
+
+      // Solo insertamos los campos básicos
+      // Para el registro de gastos, unit_amount es el monto del gasto y quantity es 1
+      const transactionData = {
+        user_id: user.id,
+        store_id: selectedStore.store_id,
+        transaction_type: 'expense',
+        unit_amount: 1,
+        quantity: 1,
+        transaction_description: description,
+        payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
+        is_paid: isPaid,
+        transaction_subtype: expenseCategory,
+        transaction_date: date.toISOString(),
+        stakeholder_id: selectedSupplier?.id || null,
+        created_by: user.id,
+      }
+
+      console.log('Sending transaction data:', transactionData)
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert(transactionData)
+        .select()
+
+      console.log('Supabase response:', { data, error })
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+
+      // Mostrar mensaje de éxito
+      toast({
+        title: "Gasto creado con éxito",
+        description: "Gasto básico registrado",
+        variant: "success",
+      })
+
+      // Navegar a la página de balance
+      router.push("/balance")
+    } catch (err: any) {
+      console.error('Error in handleSubmit:', err)
+      toast({
+        title: "Error",
+        description: err.message || "No se pudo crear el gasto",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -130,11 +196,10 @@ export default function RegisterExpense() {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                mode="single"
                 selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                locale={es}
-                initialFocus
+                onChange={setDate}
+                dateFormat="dd 'de' MMMM yyyy"
+                placeholderText="Selecciona una fecha"
               />
             </PopoverContent>
           </Popover>
@@ -317,6 +382,8 @@ export default function RegisterExpense() {
             "w-full rounded-xl p-6 text-lg font-medium transition-colors",
             isFormValid ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400",
           )}
+          disabled={!isFormValid || isLoading}
+          isLoading={isLoading}
         >
           Crear gasto
         </Button>
