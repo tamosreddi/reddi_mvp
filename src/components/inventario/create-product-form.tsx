@@ -93,9 +93,9 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           >
             {previewUrl ? (
               <img
-                src={previewUrl || "/placeholder.svg"}
+                src={previewUrl || "/Groserybasket.png"}
                 alt="Vista previa"
-                className="h-full w-full rounded-lg object-cover"
+                className="h-full w-full rounded-lg object-cover grayscale"
               />
             ) : (
               <>

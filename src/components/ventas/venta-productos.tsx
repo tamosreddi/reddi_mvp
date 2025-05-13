@@ -43,7 +43,7 @@ export default function ProductSale() {
         price: 550,
         quantity: -1,
         category: "Bebidas",
-        image: "/refreshing-drink.png",
+        image: "/Groserybasket.png",
       },
       {
         id: 2,
@@ -285,9 +285,9 @@ export default function ProductSale() {
                   className={cn("h-20 sm:h-32 bg-gray-200 relative", !isOutOfStock && "cursor-pointer overflow-hidden")}
                 >
                   <img
-                    src={product.image || "/placeholder.svg"}
+                    src={product.image || "/Groserybasket.png"}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform hover:scale-105"
+                    className="w-full h-full object-cover transition-transform hover:scale-105 grayscale"
                   />
 
                   {/* Add button overlay for desktop */}

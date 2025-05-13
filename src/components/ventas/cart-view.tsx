@@ -262,9 +262,9 @@ export default function CartView() {
                 <div className="flex items-start mb-3">
                   <div className="h-16 w-16 rounded-lg bg-gray-100 mr-3 overflow-hidden">
                     <img
-                      src={item.image || "/placeholder.svg"}
+                      src={item.image || "/Groserybasket.png"}
                       alt={item.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover grayscale"
                     />
                   </div>
                   <div className="flex-1">

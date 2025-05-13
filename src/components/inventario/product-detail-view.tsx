@@ -181,9 +181,9 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         <div className="flex justify-center">
           <div className="relative h-48 w-48 overflow-hidden rounded-lg">
             <img
-              src={product.image || "/placeholder.svg?height=192&width=192&query=product"}
+              src={product.image || "/Groserybasket.png"}
               alt={product.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover grayscale"
             />
             <button
               className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md"
