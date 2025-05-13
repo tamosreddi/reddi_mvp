@@ -204,7 +204,7 @@ export default function ViewInventory() {
                 onClick={() => navigateToProductDetail(item.id)}
               >
                 <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
-                  <img src={item.image || "/placeholder.svg"} alt={item.name} className="h-full w-full object-cover" />
+                  <img src={item.image || "/Groserybasket.png"} alt={item.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{item.name}</h3>
