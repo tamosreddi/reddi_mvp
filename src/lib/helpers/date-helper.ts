@@ -10,3 +10,8 @@ export const formatToLocalTime = (dateString: string, timeZone: string = "Americ
         second: "2-digit"
     });
 };
+
+// Helper para obtener la fecha actual en UTC
+export const getCurrentUTCDate = () => {
+    return new Date().toISOString();
+};
