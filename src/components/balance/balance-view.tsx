@@ -2,8 +2,8 @@
 
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { format, subDays, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { Calendar, ChevronRight, Download, ArrowUpRight, ArrowDownRight, Plus, Minus } from "lucide-react"
@@ -14,103 +14,66 @@ import BalanceHeader from "@/components/balance/balance-header"
 import IncomeDetailView from "@/components/balance/income-detail-view"
 import ExpenseDetailView from "@/components/balance/expense-detail-view"
 import BalanceDetailView from "@/components/balance/balance-detail-view"
+import SaleTypeModal from "@/components/shared/sale-type-modal"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
+import { useAuth } from "@/lib/contexts/AuthContext"
 
-// Sample transaction data
-const sampleTransactions = [
-  {
-    id: 13,
-    type: "income",
-    name: "1 Dispo",
-    amount: 550,
-    paymentMethod: "Efectivo",
-    date: new Date(2025, 4, 8, 12, 16), // May 8, 2025, 12:16
-    status: "Pagado",
-    category: "",
-    profit: 545,
-    products: [
-      {
-        name: "Dispo",
-        quantity: 1,
-        unitPrice: 550,
-        image: "/generic-disposable-device.png",
-      },
-    ],
-  },
-  {
-    id: 2,
-    type: "expense",
-    name: "Renta local",
-    amount: 800,
-    paymentMethod: "Transferencia",
-    date: new Date(2025, 4, 8, 10, 30), // May 8, 2025, 10:30
-    status: "Pagado",
-    category: "Arriendo",
-  },
-  {
-    id: 14,
-    type: "expense",
-    name: "Gasto 8525171655",
-    amount: 888,
-    paymentMethod: "Efectivo",
-    date: new Date(2025, 4, 8, 12, 16), // May 8, 2025, 12:16
-    status: "Pagado",
-    category: "Arriendo",
-  },
-  {
-    id: 3,
-    type: "expense",
-    name: "Servicios",
-    amount: 88,
-    paymentMethod: "Efectivo",
-    date: new Date(2025, 4, 7, 15, 45), // May 7, 2025, 15:45
-    status: "Pagado",
-    category: "Servicios (Luz, Agua, etc.)",
-  },
-  {
-    id: 4,
-    type: "income",
-    name: "2 Productos",
-    amount: 320,
-    paymentMethod: "Tarjeta",
-    date: new Date(2025, 4, 6, 9, 20), // May 6, 2025, 9:20
-    status: "Pagado",
-    category: "",
-    products: [
-      {
-        name: "Refresco Cola",
-        quantity: 1,
-        unitPrice: 120,
-        image: "/refreshing-drink.png",
-      },
-      {
-        name: "Pan Blanco",
-        quantity: 1,
-        unitPrice: 200,
-        image: "/cooking-pan.png",
-      },
-    ],
-  },
-  {
-    id: 5,
-    type: "income",
-    name: "Venta mayoreo",
-    amount: 1200,
-    paymentMethod: "Efectivo",
-    date: new Date(2025, 4, 5, 14, 10), // May 5, 2025, 14:10
-    status: "Pagado",
-    category: "",
-  },
-  {
-    id: 6,
-    type: "expense",
-    name: "Otro gasto",
-    amount: 100,
-    paymentMethod: "Efectivo",
-    date: new Date(2025, 4, 5, 14, 10),
-    status: "Pagado",
-    category: "",
-  },
-]
+type Transaction = {
+  transaction_id: string
+  transaction_description: string
+  payment_method: string
+  transaction_date: string
+  unit_amount: number
+  // ...otros campos relevantes
+}
+
+function IncomeList({
+  transactions,
+  onTransactionClick,
+  formatNumber,
+}: {
+  transactions: Transaction[]
+  onTransactionClick: (t: Transaction) => void
+  formatNumber: (n: number) => string
+}) {
+  if (!transactions.length) {
+    return <div className="p-8 text-center text-gray-500">No hay ingresos registrados para esta fecha.</div>
+  }
+  return (
+    <div className="space-y-4 p-4">
+      {transactions.map((transaction: Transaction) => (
+        <button
+          key={transaction.transaction_id}
+          className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
+          onClick={() => onTransactionClick(transaction)}
+        >
+          <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
+            <span className="text-green-600 text-xl">💵</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900">{transaction.transaction_description || 'Ingreso'}</h3>
+            <p className="text-sm text-gray-600">
+              {transaction.payment_method === 'cash'
+                ? 'Efectivo'
+                : transaction.payment_method === 'card'
+                ? 'Tarjeta'
+                : transaction.payment_method === 'transfer'
+                ? 'Transferencia'
+                : 'Otro'}
+              {" · "}
+              {transaction.transaction_date ? format(new Date(transaction.transaction_date), "dd 'de' MMM - HH:mm", { locale: es }) : "Sin fecha"}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xl font-bold">$ {formatNumber(transaction.unit_amount)}</p>
+            <p className="text-sm text-green-600">Pagado</p>
+          </div>
+        </button>
+      ))}
+    </div>
+  )
+}
 
 interface BalanceViewProps {
   onNewSale: () => void
@@ -118,68 +81,97 @@ interface BalanceViewProps {
 
 export default function BalanceView({ onNewSale }: BalanceViewProps) {
   const router = useRouter()
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "egresos" ? "egresos" : "ingresos";
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [activeTab, setActiveTab] = useState("ingresos")
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [selectedTransaction, setSelectedTransaction] = useState<(typeof sampleTransactions)[0] | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null)
   const [showBalanceDetail, setShowBalanceDetail] = useState(false)
+  const [isSaleTypeModalOpen, setIsSaleTypeModalOpen] = useState(false)
+  const { selectedStore } = useStore()
+  const { user } = useAuth()
+  const [incomeTransactions, setIncomeTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!selectedStore || !user) return
+    setLoading(true)
+    const fetchIncomes = async () => {
+      const start = new Date(selectedDate)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(selectedDate)
+      end.setHours(23, 59, 59, 999)
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("transaction_type", "income")
+        .eq("store_id", selectedStore.store_id)
+        .eq("user_id", user.id)
+        .gte("transaction_date", start.toISOString())
+        .lte("transaction_date", end.toISOString())
+        .order("transaction_date", { ascending: false })
+      if (!error) setIncomeTransactions(data || [])
+      setLoading(false)
+    }
+    fetchIncomes()
+  }, [selectedStore, user, selectedDate])
 
   // Filter transactions based on selected date and active tab
-  const filteredTransactions = sampleTransactions.filter(
+  const filteredTransactions = incomeTransactions.filter(
     (transaction) =>
-      isSameDay(transaction.date, selectedDate) &&
-      ((activeTab === "ingresos" && transaction.type === "income") ||
-        (activeTab === "egresos" && transaction.type === "expense")),
+      isSameDay(new Date(transaction.transaction_date), selectedDate) &&
+      activeTab === "ingresos"
   )
 
   // Calculate totals for the selected date
-  const incomesTotal = sampleTransactions
-    .filter((t) => t.type === "income" && isSameDay(t.date, selectedDate))
-    .reduce((sum, t) => sum + t.amount, 0)
+  const incomesTotal = incomeTransactions
+    .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate))
+    .reduce((sum, t) => sum + t.unit_amount, 0)
 
-  const expensesTotal = sampleTransactions
-    .filter((t) => t.type === "expense" && isSameDay(t.date, selectedDate))
-    .reduce((sum, t) => sum + t.amount, 0)
+  const expensesTotal = incomeTransactions
+    .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
+    .reduce((sum, t) => sum + t.unit_amount, 0)
 
   const balanceTotal = incomesTotal - expensesTotal
 
   // Calculate income by payment method
   const incomesByPaymentMethod = {
-    cash: sampleTransactions
-      .filter((t) => t.type === "income" && isSameDay(t.date, selectedDate) && t.paymentMethod === "Efectivo")
-      .reduce((sum, t) => sum + t.amount, 0),
-    other: sampleTransactions
-      .filter((t) => t.type === "income" && isSameDay(t.date, selectedDate) && t.paymentMethod !== "Efectivo")
-      .reduce((sum, t) => sum + t.amount, 0),
+    cash: incomeTransactions
+      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method === "cash")
+      .reduce((sum, t) => sum + t.unit_amount, 0),
+    other: incomeTransactions
+      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method !== "cash")
+      .reduce((sum, t) => sum + t.unit_amount, 0),
   }
 
   // Calculate expenses by payment method
   const expensesByPaymentMethod = {
-    cash: sampleTransactions
-      .filter((t) => t.type === "expense" && isSameDay(t.date, selectedDate) && t.paymentMethod === "Efectivo")
-      .reduce((sum, t) => sum + t.amount, 0),
-    other: sampleTransactions
-      .filter((t) => t.type === "expense" && isSameDay(t.date, selectedDate) && t.paymentMethod !== "Efectivo")
-      .reduce((sum, t) => sum + t.amount, 0),
+    cash: incomeTransactions
+      .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method === "cash")
+      .reduce((sum, t) => sum + t.unit_amount, 0),
+    other: incomeTransactions
+      .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method !== "cash")
+      .reduce((sum, t) => sum + t.unit_amount, 0),
   }
 
   // Calculate product sales data
   const productSales = {
-    count: sampleTransactions.filter(
-      (t) => t.type === "income" && isSameDay(t.date, selectedDate) && t.products && t.products.length > 0,
+    count: incomeTransactions.filter(
+      (t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.products && t.products.length > 0,
     ).length,
-    total: sampleTransactions
-      .filter((t) => t.type === "income" && isSameDay(t.date, selectedDate) && t.products && t.products.length > 0)
-      .reduce((sum, t) => sum + t.amount, 0),
+    total: incomeTransactions
+      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.products && t.products.length > 0)
+      .reduce((sum, t) => sum + t.unit_amount, 0),
     cost: 5, // This would normally be calculated from the products
-    profit: sampleTransactions
-      .filter((t) => t.type === "income" && isSameDay(t.date, selectedDate) && t.profit)
+    profit: incomeTransactions
+      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.profit)
       .reduce((sum, t) => sum + (t.profit || 0), 0),
   }
 
   // Format number with thousand separators
   const formatNumber = (num: number) => {
-    return num.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    return num?.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   }
 
   // Date navigation
@@ -199,9 +191,12 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
     })
   }
 
-  // Handle new expense
+  // Action handlers
+  const handleNewSale = () => {
+    setIsSaleTypeModalOpen(true)
+  }
   const handleNewExpense = () => {
-    router.push("/gasto")
+    router.push("/dashboard/gastos")
   }
 
   // Get dates for the date selector
@@ -219,7 +214,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
   }
 
   // Handle transaction selection
-  const handleTransactionClick = (transaction: (typeof sampleTransactions)[0]) => {
+  const handleTransactionClick = (transaction: any) => {
     setSelectedTransaction(transaction)
   }
 
@@ -240,7 +235,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
 
   // If a transaction is selected, show the appropriate detail view
   if (selectedTransaction) {
-    if (selectedTransaction.type === "income") {
+    if (selectedTransaction.transaction_type === "income") {
       return <IncomeDetailView transaction={selectedTransaction} onClose={closeTransactionDetail} />
     } else {
       return <ExpenseDetailView expense={selectedTransaction} onClose={closeTransactionDetail} />
@@ -331,7 +326,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
       </div>
 
       {/* Transactions Tabs */}
-      <Tabs defaultValue="ingresos" className="w-full" onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full grid grid-cols-2 h-auto p-0 bg-transparent">
           <TabsTrigger
             value="ingresos"
@@ -354,32 +349,14 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
         </TabsList>
 
         <TabsContent value="ingresos" className="mt-0">
-          {filteredTransactions.length > 0 ? (
-            <div className="space-y-4 p-4">
-              {filteredTransactions.map((transaction) => (
-                <button
-                  key={transaction.id}
-                  className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
-                  onClick={() => handleTransactionClick(transaction)}
-                >
-                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                    <span className="text-green-600 text-xl">💵</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{transaction.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {transaction.paymentMethod} · {format(transaction.date, "dd 'de' MMM - HH:mm", { locale: es })}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold">$ {formatNumber(transaction.amount)}</p>
-                    <p className="text-sm text-green-600">{transaction.status}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+          {loading ? (
+            <div className="p-8 text-center text-gray-500">Cargando ingresos...</div>
           ) : (
-            <div className="p-8 text-center text-gray-500">No hay ingresos registrados para esta fecha.</div>
+            <IncomeList
+              transactions={incomeTransactions}
+              onTransactionClick={setSelectedTransaction}
+              formatNumber={formatNumber}
+            />
           )}
         </TabsContent>
 
@@ -398,7 +375,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900">{transaction.name}</h3>
                     <p className="text-sm text-gray-600">
-                      {transaction.paymentMethod} · {format(transaction.date, "dd 'de' MMM - HH:mm", { locale: es })}
+                      {transaction.paymentMethod} · {transaction.transaction_date ? format(new Date(transaction.transaction_date), "dd 'de' MMM - HH:mm", { locale: es }) : "Sin fecha"}
                     </p>
                   </div>
                   <div className="text-right">
@@ -417,7 +394,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
       {/* Action Buttons */}
       <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 flex gap-2">
         <Button
-          onClick={onNewSale}
+          onClick={handleNewSale}
           className="flex-1 bg-green-600/80 hover:bg-green-600 text-white rounded-full py-2.5 text-sm shadow-sm"
         >
           <Plus className="mr-1.5 h-4 w-4" />
@@ -431,6 +408,9 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
           Nuevo gasto
         </Button>
       </div>
+
+      {/* Sale Type Modal */}
+      <SaleTypeModal isOpen={isSaleTypeModalOpen} onClose={() => setIsSaleTypeModalOpen(false)} />
 
       {/* Extra padding at the bottom to prevent content from being hidden behind buttons */}
       <div className="h-20"></div>
