@@ -1,3 +1,6 @@
+// Al dar click en el bloque de gasto, muestra el detalle de la transacción
+// Viene de balance-view.tsx
+
 "use client"
 import { ArrowLeft, Calendar, CreditCard, Grid, FileText, Edit, Trash2 } from "lucide-react"
 import { format } from "date-fns"
@@ -5,13 +8,13 @@ import { es } from "date-fns/locale"
 
 interface ExpenseDetailProps {
   expense: {
-    id: number
-    name: string
-    amount: number
-    paymentMethod: string
-    date: Date
-    status: string
-    category: string
+    transaction_id: string
+    transaction_description: string
+    total_amount: number
+    payment_method: string
+    transaction_date: string
+    transaction_subtype?: string
+    // ...otros campos relevantes
   }
   onClose: () => void
 }
@@ -36,16 +39,16 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-2">Resumen del gasto</h2>
 
-          <div className="text-blue-600 text-sm mb-3">Transacción #{expense.id}</div>
+          <div className="text-blue-600 text-sm mb-3">Transacción #{expense.transaction_id}</div>
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Concepto</div>
-            <div className="text-lg font-bold mt-1">{expense.name}</div>
+            <div className="text-lg font-bold mt-1">{expense.transaction_description || 'Gasto'}</div>
           </div>
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Valor total</div>
-            <div className="text-2xl font-bold mt-1">{expense.amount} US$</div>
+            <div className="text-2xl font-bold mt-1">$ {expense.total_amount?.toLocaleString('es-MX')}</div>
           </div>
 
           <div className="border-t border-gray-200 py-3">
@@ -55,7 +58,7 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
                 <div className="text-gray-600 text-sm">Fecha y hora</div>
               </div>
               <div className="text-gray-800 text-sm">
-                {format(expense.date, "h:mm a", { locale: es })} | {format(expense.date, "dd MMM yyyy", { locale: es })}
+                {expense.transaction_date ? format(new Date(expense.transaction_date), "h:mm a | dd MMM yyyy", { locale: es }) : "Sin fecha"}
               </div>
             </div>
           </div>
@@ -66,7 +69,15 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
                 <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
                 <div className="text-gray-600 text-sm">Método de pago</div>
               </div>
-              <div className="text-gray-800 text-sm">{expense.paymentMethod}</div>
+              <div className="text-gray-800 text-sm">
+                {expense.payment_method === 'cash'
+                  ? 'Efectivo'
+                  : expense.payment_method === 'card'
+                  ? 'Tarjeta'
+                  : expense.payment_method === 'transfer'
+                  ? 'Transferencia'
+                  : 'Otro'}
+              </div>
             </div>
           </div>
 
@@ -76,7 +87,7 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
                 <Grid className="h-5 w-5 text-gray-400 mr-2" />
                 <div className="text-gray-600 text-sm">Categoría</div>
               </div>
-              <div className="text-gray-800 text-sm">{expense.category}</div>
+              <div className="text-gray-800 text-sm">{expense.transaction_subtype || 'Sin categoría'}</div>
             </div>
           </div>
         </div>
