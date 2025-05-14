@@ -116,7 +116,7 @@ export default function RegisterExpense() {
         user_id: user.id,
         store_id: selectedStore.store_id,
         transaction_type: 'expense',
-        unit_amount: 1,
+        value: 1,
         quantity: 1,
         transaction_description: description,
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
