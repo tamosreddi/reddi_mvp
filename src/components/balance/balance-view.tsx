@@ -134,7 +134,6 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [activeTab, setActiveTab] = useState(initialTab)
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null)
   const [showBalanceDetail, setShowBalanceDetail] = useState(false)
   const [isSaleTypeModalOpen, setIsSaleTypeModalOpen] = useState(false)
   const { selectedStore } = useStore()
@@ -260,16 +259,6 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
     return dates
   }
 
-  // Handle transaction selection
-  const handleTransactionClick = (transaction: any) => {
-    setSelectedTransaction(transaction)
-  }
-
-  // Close transaction detail view
-  const closeTransactionDetail = () => {
-    setSelectedTransaction(null)
-  }
-
   // Show balance detail view
   const handleShowBalanceDetail = () => {
     setShowBalanceDetail(true)
@@ -278,15 +267,6 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
   // Close balance detail view
   const closeBalanceDetail = () => {
     setShowBalanceDetail(false)
-  }
-
-  // If a transaction is selected, show the appropriate detail view
-  if (selectedTransaction) {
-    if (selectedTransaction.transaction_type === "income") {
-      return <IncomeDetailView transaction={selectedTransaction} onClose={closeTransactionDetail} />
-    } else {
-      return <ExpenseDetailView expense={selectedTransaction} onClose={closeTransactionDetail} />
-    }
   }
 
   // If balance detail is shown, render the balance detail view
@@ -403,7 +383,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
               transactions={incomeTransactions.filter(
                 (t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate)
               )}
-              onTransactionClick={setSelectedTransaction}
+              onTransactionClick={(transaction) => router.push(`/balance/income/${transaction.transaction_id}`)}
               formatNumber={formatNumber}
             />
           )}
@@ -417,7 +397,7 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
               transactions={incomeTransactions.filter(
                 (t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate)
               )}
-              onTransactionClick={setSelectedTransaction}
+              onTransactionClick={(transaction) => router.push(`/balance/expense/${transaction.transaction_id}`)}
               formatNumber={formatNumber}
             />
           )}

@@ -7,7 +7,7 @@ import '../styles/globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Mi Tiendita – Gestión de Negocios',
+  title: 'Reddi – Administra tu Negocio',
   description: 'Aplicación para la gestión de micronegocios y tiendas de abarrotes',
 };
 

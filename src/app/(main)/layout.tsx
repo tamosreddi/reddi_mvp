@@ -12,9 +12,16 @@ const navigationVisibleRoutes = [
   "/explorar"
 ];
 
+// Lista de rutas donde NO quieres mostrar el navigation menu
+const navigationHiddenRoutes = [
+  "/balance/income-detail-view",
+  "/balance/expense-detail-view",
+  // Agrega aquí otras rutas de detalle donde no debe mostrarse
+];
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showNavigation = navigationVisibleRoutes.includes(pathname);
+  const showNavigation = navigationVisibleRoutes.includes(pathname) && !navigationHiddenRoutes.includes(pathname);
 
   return (
     <StoreProvider>
