@@ -221,7 +221,7 @@ export default function CartView() {
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
+                onSelect={(newDate: Date | undefined) => newDate && setDate(newDate)}
                 locale={es}
                 className="border rounded-md"
               />
