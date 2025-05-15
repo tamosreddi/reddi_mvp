@@ -5,6 +5,8 @@
 import { ArrowLeft, FileText, Edit, Trash2, Package, Calendar, CreditCard, TrendingUp } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface IncomeDetailProps {
   transaction: {
@@ -13,12 +15,31 @@ interface IncomeDetailProps {
     total_amount: number
     payment_method: string
     transaction_date: string
+    stakeholder_type?: string
+    stakeholder_id?: string
     // ...otros campos relevantes
   }
   onClose: () => void
 }
 
 export default function IncomeDetailView({ transaction, onClose }: IncomeDetailProps) {
+  const [clientName, setClientName] = useState<string | null>(null)
+  useEffect(() => {
+    const fetchClient = async () => {
+      if (transaction.stakeholder_type === 'client' && transaction.stakeholder_id) {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('name')
+          .eq('client_id', transaction.stakeholder_id)
+          .single()
+        if (data && data.name) setClientName(data.name)
+        else setClientName('Sin cliente seleccionado')
+      } else {
+        setClientName('Sin cliente seleccionado')
+      }
+    }
+    fetchClient()
+  }, [transaction.stakeholder_type, transaction.stakeholder_id])
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Header */}
@@ -38,6 +59,11 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
           <h2 className="text-lg font-bold text-gray-800 mb-2">Resumen del ingreso</h2>
 
           <div className="text-blue-600 text-sm mb-3">Transacción #{transaction.transaction_id}</div>
+
+          <div className="border-t border-gray-200 py-3">
+            <div className="text-gray-600 text-xs mb-1.5">Cliente</div>
+            <div className="text-base font-medium mt-1">{clientName ?? 'Sin cliente seleccionado'}</div>
+          </div>
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Concepto</div>

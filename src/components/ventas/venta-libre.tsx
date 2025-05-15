@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import IsPaidToggle from "@/components/ui/is-paid-toggle"
 
 interface Customer {
   id: number
@@ -103,6 +104,7 @@ export default function RegisterSale() {
         stakeholder_id: selectedCustomer?.client_id || null,
         stakeholder_type: selectedCustomer ? 'client' : null,
         created_by: user.id,
+        is_paid: isPaid,
       }
 
       console.log('Enviando a Supabase:', transactionData)
@@ -199,28 +201,7 @@ export default function RegisterSale() {
             </PopoverContent>
           </Popover>
 
-          <div className="flex rounded-xl border border-gray-200 bg-white">
-            <button
-              type="button"
-              className={cn(
-                "flex-1 rounded-l-xl p-2 text-center font-medium transition-colors text-xs",
-                isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(true)}
-            >
-              Pagada
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex-1 rounded-r-xl p-2 text-center font-medium transition-colors text-xs",
-                !isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(false)}
-            >
-              A Crédito
-            </button>
-          </div>
+          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagada", credit: "A Crédito" }} className="h-12" />
         </div>
 
         {/* Value Input - Redesigned */}

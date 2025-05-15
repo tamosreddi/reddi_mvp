@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import IsPaidToggle from "@/components/ui/is-paid-toggle"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 interface Supplier {
   id: number
@@ -125,6 +127,7 @@ export default function RegisterExpense() {
         transaction_date: date.toISOString(),
         stakeholder_id: selectedSupplier?.id || null,
         created_by: user.id,
+        stakeholder_type: 'supplier',
       }
 
       console.log('Sending transaction data:', transactionData)
@@ -164,19 +167,7 @@ export default function RegisterExpense() {
 
   return (
     <div className="pb-32">
-      {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button
-            onClick={() => router.back()}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Nuevo gasto</h1>
-          <div className="w-12"></div> {/* Spacer for centering */}
-        </div>
-      </div>
+      <TopProfileMenu simpleMode={true} title="Nuevo gasto" onBackClick={() => router.back()} />
 
       {/* Form content - with padding to account for fixed header */}
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
@@ -204,29 +195,7 @@ export default function RegisterExpense() {
             </PopoverContent>
           </Popover>
 
-          {/* Paid or Debt Toggle */}
-          <div className="flex h-12 overflow-hidden rounded-full border border-gray-200">
-            <button
-              type="button"
-              className={cn(
-                "flex-1 text-center text-sm font-medium transition-colors",
-                isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(true)}
-            >
-              Pagado
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex-1 text-center text-sm font-medium transition-colors",
-                !isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(false)}
-            >
-              Deuda
-            </button>
-          </div>
+          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagado", credit: "Deuda" }} className="h-12" />
         </div>
 
         {/* Expense Category */}
