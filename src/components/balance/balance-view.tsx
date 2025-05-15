@@ -11,8 +11,6 @@ import { cn } from "@/lib/utils"
 import Button from "@/components/ui/Button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BalanceHeader from "@/components/balance/balance-header"
-import IncomeDetailView from "@/components/balance/income-detail-view"
-import ExpenseDetailView from "@/components/balance/expense-detail-view"
 import BalanceDetailView from "@/components/balance/balance-detail-view"
 import SaleTypeModal from "@/components/shared/sale-type-modal"
 import { supabase } from "@/lib/supabase/supabaseClient"
@@ -261,7 +259,9 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
 
   // Show balance detail view
   const handleShowBalanceDetail = () => {
-    setShowBalanceDetail(true)
+    // Navega a la nueva página de resumen de balance, usando la fecha seleccionada
+    const dateParam = format(selectedDate, "yyyy-MM-dd")
+    router.push(`/balance/see-balance-summary/${dateParam}`)
   }
 
   // Close balance detail view

@@ -47,6 +47,49 @@ export const databaseSchema = {
         transaction_date: "Timestamp con zona horaria - Fecha del evento.",
         created_at: "Timestamp con zona horaria - Fecha de creación del registro.",
         updated_at: "Timestamp con zona horaria - Fecha de la última actualización del registro."
+    },
+    products: {
+        product_id: "UUID - Identificador único del producto.",
+        sku: "VARCHAR - Código único del producto (ej. código de barras).",
+        name: "TEXT - Nombre del producto.",
+        description: "TEXT - Descripción del producto.",
+        brand: "TEXT - Marca del producto.",
+        category: "TEXT - Categoría del producto (ej. bebidas, snacks, limpieza).",
+        distributor_id: "UUID - Referencia al distribuidor que provee el producto, si aplica.",
+        created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
+    },
+    store_inventory: {
+        inventory_id: "UUID - Identificador único del registro de inventario.",
+        store_id: "UUID - Referencia a la tienda propietaria del inventario.",
+        product_id: "UUID - Referencia al producto del catálogo global, si aplica.",
+        store_product_id: "UUID - Referencia al producto personalizado de la tienda, si aplica.",
+        quantity: "NUMERIC - Cantidad disponible del producto.",
+        unit_price: "NUMERIC - Precio unitario para la tienda.",
+        min_stock: "NUMERIC - Mínima cantidad antes de alertar al usuario.",
+        expiration_date: "TIMESTAMPTZ - Fecha de expiración del producto, si aplica.",
+        last_change: "TIMESTAMPTZ - Fecha del último cambio de inventario.",
+        created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro."
+    },
+    distributors: {
+        distributor_id: "UUID - Identificador único del distribuidor.",
+        name: "TEXT - Nombre del distribuidor.",
+        contact_info: "JSONB - Información de contacto del distribuidor (ej. teléfono, email).",
+        is_active: "BOOLEAN - Estado del distribuidor (activo/inactivo).",
+        created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro."
+    },
+    store_products: {
+        store_product_id: "UUID - Identificador único del producto personalizado.",
+        store_id: "UUID - Referencia a la tienda propietaria del producto.",
+        name: "TEXT - Nombre del producto personalizado.",
+        description: "TEXT - Descripción del producto personalizado.",
+        brand: "TEXT - Marca del producto personalizado, si aplica.",
+        category: "TEXT - Categoría del producto (ej. alimentos, bebidas, panadería).",
+        unit_price: "NUMERIC - Precio unitario del producto personalizado.",
+        created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
     }
 };
 

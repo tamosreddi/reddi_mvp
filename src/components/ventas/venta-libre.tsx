@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 interface Customer {
   id: number
@@ -140,9 +141,9 @@ export default function RegisterSale() {
 
   // Navigate to customer selection
   const navigateToCustomerSelection = () => {
-    // Save current path to return to after selection
+    // Guarda la ruta actual para volver después de crear el cliente
     const currentPath = "/venta/libre"
-    router.push(`/clientes?select=true&returnTo=${encodeURIComponent(currentPath)}`)
+    router.push(`/dashboard/clientes/ver-cliente?returnTo=${encodeURIComponent("/dashboard/ventas/libre")}`)
   }
 
   // Remove selected customer
@@ -163,20 +164,11 @@ export default function RegisterSale() {
 
   return (
     <div className="pb-32">
-      {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button
-            onClick={() => router.back()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Nueva venta libre</h1>
-          <div className="w-12"></div> {/* Spacer for centering */}
-        </div>
-      </div>
-
+      <TopProfileMenu 
+        simpleMode={true}
+        title="Nueva venta libre"
+        onBackClick={() => router.push('/dashboard')}
+      />
       {/* Form content - with padding to account for fixed header */}
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
         {/* Date and Payment Status */}

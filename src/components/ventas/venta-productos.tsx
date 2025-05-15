@@ -7,6 +7,7 @@ import { ArrowLeft, Search, Barcode, ShoppingCart, ChevronRight, Plus, Minus } f
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import CreateProductForm from "@/components/inventario/create-product-form"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 // Definición de tipos
 interface Product {
@@ -189,20 +190,19 @@ export default function ProductSale() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-16">
       {/* Header */}
-      <div className="bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button
-            onClick={() => router.back()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
+      <TopProfileMenu 
+        simpleMode={true}
+        title="Nueva venta"
+        onBackClick={() => router.back()}
+        rightContent={
+          <button 
+            className="flex h-10 w-10 items-center justify-center" 
+            aria-label="Escanear código de barras"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Nueva venta</h1>
-          <button className="flex h-10 w-10 items-center justify-center" aria-label="Escanear código de barras">
             <Barcode className="h-6 w-6" />
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Search Bar */}
       <div className="p-4 max-w-4xl mx-auto w-full">
