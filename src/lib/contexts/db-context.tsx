@@ -89,6 +89,9 @@ export const databaseSchema = {
         brand: "TEXT - Marca del producto personalizado, si aplica.",
         category: "TEXT - Categoría del producto (ej. alimentos, bebidas, panadería).",
         unit_price: "NUMERIC - Precio unitario del producto personalizado.",
+        barcode: "VARCHAR - Código de barras del producto personalizado, si aplica.",
+        quantity_available: "NUMERIC - Cantidad disponible del producto en inventario.",
+        unit_cost: "NUMERIC - Costo unitario del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
     },

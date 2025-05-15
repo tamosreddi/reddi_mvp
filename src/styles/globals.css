@@ -2,10 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "react-day-picker/dist/style.css";
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  /* DayPicker New York style */
+  --rdp-cell-size: 40px;
+  --rdp-caption-font-size: 18px;
+  --rdp-accent-color: #000;
+  --rdp-accent-color-dark: #000;
+  --rdp-background-color: #f3f4f6;
+  --rdp-background-color-dark: #18181b;
+  --rdp-outline: 2px solid #000;
+  --rdp-outline-selected: 3px solid #000;
+  --rdp-selected-color: #fff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,4 +44,120 @@ body {
   }
 }
 
-@import "react-datepicker/dist/react-datepicker.css";
+/* Forzar el estilo del día seleccionado en DayPicker */
+.rdp-day_selected, .rdp-day_selected:focus, .rdp-day_selected:active {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Día con hover/focus: fondo gris claro */
+.rdp-day:not(.rdp-day_selected):hover,
+.rdp-day:not(.rdp-day_selected):focus {
+  background-color: #f3f4f6 !important;
+  color: #000 !important;
+  border-radius: 8px !important;
+}
+
+/* Día de hoy: borde gris */
+.rdp-day_today:not(.rdp-day_selected) {
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+}
+
+/* Días fuera de mes: texto gris claro */
+.rdp-day_outside {
+  color: #d1d5db !important;
+}
+
+/* Quita el borde azul de los días seleccionados (por si acaso) */
+.rdp-day_selected {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.rdp {
+  --rdp-accent-color: #000 !important;
+  --rdp-selected-color: #fff !important;
+  --rdp-background-color: #f3f4f6 !important;
+  --rdp-outline: 2px solid #000 !important;
+  --rdp-outline-selected: 3px solid #000 !important;
+}
+
+/* Override DayPicker selected day border and background */
+.rdp-selected .rdp-day_button,
+.rdp-selected .rdp-day_button:focus,
+.rdp-selected .rdp-day_button:active {
+  background: #000 !important;
+  color: #fff !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Día seleccionado estilo New York (shadcn/ui) */
+.rdp-selected .rdp-day_button,
+.rdp-day_selected,
+.rdp-day_selected:focus,
+.rdp-day_selected:active {
+  background: #111 !important;      /* negro suave, puedes usar #000 si prefieres */
+  color: #fff !important;
+  border-radius: 8px !important;    /* igual que los otros días */
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: background 0.15s;
+}
+
+/* Día normal */
+.rdp-day_button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-weight: 500;
+  font-size: 15px;
+  background: none;
+  color: #111;
+  border-radius: 8px;
+  border: none;
+  transition: background 0.15s;
+}
+
+/* Hover/focus en días no seleccionados */
+.rdp-day_button:not(.rdp-day_selected):hover,
+.rdp-day_button:not(.rdp-day_selected):focus {
+  background: #f3f4f6 !important;
+  color: #111 !important;
+}
+
+/* Día de hoy (no seleccionado): borde gris */
+.rdp-day_today:not(.rdp-day_selected) {
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+}
+
+/* Días fuera de mes: texto gris claro */
+.rdp-day_outside {
+  color: #d1d5db !important;
+}
+
+/* Variables y fondo general del calendario */
+.rdp {
+  --rdp-accent-color: #000 !important;
+  --rdp-selected-color: #fff !important;
+  --rdp-background-color: #f3f4f6 !important;
+  --rdp-outline: 2px solid #000 !important;
+  --rdp-outline-selected: 3px solid #000 !important;
+}
+
+/* Opcional: tamaño móvil */
+@media (max-width: 640px) {
+  .rdp-day_button {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+

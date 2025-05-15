@@ -23,6 +23,7 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
+import CalendarSelect from "@/components/ui/calendar-select"
 
 interface Customer {
   id: number
@@ -205,27 +206,7 @@ export default function RegisterSale() {
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
         {/* Date and Payment Status */}
         <div className="grid grid-cols-2 gap-3">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-2 text-left w-full text-xs"
-              >
-                <CalendarIcon className="h-3.5 w-3.5 text-gray-500" />
-                <span className="truncate">{formatCompactDate(date)}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(newDate: Date | undefined) => newDate && setDate(newDate)}
-                locale={es}
-                className="border rounded-md"
-              />
-            </PopoverContent>
-          </Popover>
-
+          <CalendarSelect value={date} onChange={setDate} />
           <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagada", credit: "A Crédito" }} className="h-12" />
         </div>
 

@@ -29,7 +29,6 @@
     "lucide-react": "^0.436.0",
     "next": "^14.2.28",
     "react": "^18",
-    "react-datepicker": "^8.3.0",
     "react-day-picker": "^9.6.7",
     "react-dom": "^18",
     "react-markdown": "^9.0.1",

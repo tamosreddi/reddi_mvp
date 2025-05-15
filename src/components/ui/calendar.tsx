@@ -1,44 +1,51 @@
 "use client"
-import React from "react"
-import ReactDatePicker from "react-datepicker"
-import { es } from "date-fns/locale"
+import * as React from "react"
+import { DayPicker, type DayPickerProps } from "react-day-picker"
+import "react-day-picker/dist/style.css"
 import { cn } from "@/lib/utils"
-import "react-datepicker/dist/react-datepicker.css"
 
-type CalendarProps = {
-  selected: Date | null
-  onChange: (date: Date | null) => void
-  className?: string
-  [key: string]: any // for other react-datepicker props if needed
-}
+type CalendarProps = DayPickerProps & { className?: string }
 
-export const Calendar = React.forwardRef<HTMLInputElement, CalendarProps>(
-  ({ className, selected, onChange, ...props }, ref) => (
-    <ReactDatePicker
-      ref={ref as React.Ref<ReactDatePicker>}
-      locale={es}
-      selected={selected}
-      onChange={onChange}
-      calendarClassName={cn(
-        "rounded-xl border border-gray-200 shadow-lg p-2 bg-white",
-        "w-full max-w-xs",
-        "text-gray-900",
-        "mobile:!w-screen mobile:!max-w-full",
-        className
-      )}
-      dayClassName={date =>
-        "rounded-full w-9 h-9 flex items-center justify-center transition-colors " +
-        "hover:bg-yellow-100 focus:bg-yellow-200 " +
-        (selected && date?.toDateString() === selected.toDateString()
-          ? "bg-gray-900 text-white font-bold border-4 border-gray-900 shadow"
-          : "bg-white text-gray-900")
-      }
-      weekDayClassName={name =>
-        "text-xs font-normal text-gray-400 lowercase"
-      }
-      popperClassName="z-50"
-      {...props}
-    />
+export const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("rounded-md border", className)}>
+      <DayPicker
+        showOutsideDays
+        className="p-3"
+        classNames={{
+          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+          month: "space-y-4",
+          caption: "flex justify-center pt-1 relative items-center",
+          caption_label: "text-sm font-medium",
+          nav: "space-x-1 flex items-center",
+          nav_button: cn(
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          ),
+          nav_button_previous: "absolute left-1",
+          nav_button_next: "absolute right-1",
+          table: "w-full border-collapse space-y-1",
+          head_row: "flex",
+          head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+          row: "flex w-full mt-2",
+          cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+          day: cn(
+            "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          ),
+          day_range_end: "day-range-end",
+          day_selected:
+            "bg-black text-white hover:bg-black hover:text-white focus:bg-black focus:text-white",
+          day_today: "bg-accent text-accent-foreground",
+          day_outside:
+            "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+          day_disabled: "text-muted-foreground opacity-50",
+          day_range_middle:
+            "aria-selected:bg-accent aria-selected:text-accent-foreground",
+          day_hidden: "invisible",
+          ...props.classNames,
+        }}
+        {...props}
+      />
+    </div>
   )
 )
 

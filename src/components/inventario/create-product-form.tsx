@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter, useSearchParams } from "next/navigation"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { useStore } from "@/lib/contexts/StoreContext"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface CreateProductFormProps {
   initialReferrer?: string
@@ -31,6 +34,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { selectedStore } = useStore()
 
   // Obtain referrer from props or search params as fallback
   const referrer = initialReferrer || searchParams.get("referrer") || "/inventario"
@@ -46,17 +50,43 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Aquí normalmente guardarías el producto en tu base de datos
-    alert("Producto registrado con éxito!")
 
-    // Use the onSuccess callback if provided, otherwise navigate
-    if (onSuccess) {
-      onSuccess()
-    } else {
-      // Navegar de vuelta a la página de referencia después de guardar
-      router.push(referrer)
+    try {
+      const response = await supabase.from("store_products").insert([
+        {
+          name,
+          quantity_available: quantity,
+          unit_price: price,
+          unit_cost: cost,
+          category,
+          description,
+          barcode,
+          store_id: selectedStore?.store_id,
+        }
+      ]).select()
+
+      if (response.error) throw response.error;
+      if (image && Array.isArray(response.data) && response.data.length > 0) {
+        const formData = new FormData()
+        formData.append("file", image, image.name)
+        const uploadResponse = await supabase.storage.from("images").upload(`products/${response.data[0].id}/${image.name}`, formData)
+        if (uploadResponse) {
+          const publicUrl = supabase.storage.from("images").getPublicUrl(`products/${response.data[0].id}/${image.name}`)
+          await supabase.from("store_products").update({ image: publicUrl.data.publicUrl }).eq("id", response.data[0].id)
+        }
+      }
+      // Redirigir tras éxito
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push(referrer)
+      }
+    } catch (error) {
+      console.error("Error al guardar el producto:", error)
+      alert("Hubo un error al guardar el producto. Por favor, inténtelo más tarde.")
     }
   }
 
@@ -73,18 +103,14 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   return (
     <div className="pb-6">
       {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button onClick={handleBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Crear producto</h1>
-          <div className="w-12"></div> {/* Spacer for centering */}
-        </div>
-      </div>
+      <TopProfileMenu
+        simpleMode
+        title="Crear producto"
+        onBackClick={handleBack}
+      />
 
       {/* Form content - with padding to account for fixed header */}
-      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4 pb-20">
+      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4 pb-28">
         {/* Image Upload */}
         <div className="flex justify-center">
           <label
@@ -172,12 +198,12 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             </div>
             <Input
               id="price"
-              type="number"
+              type="text"
               min="0"
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="rounded-xl border-gray-200 pl-7"
+              className="rounded-xl border-gray-200 pl-7 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
               required
             />
@@ -198,12 +224,12 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             </div>
             <Input
               id="cost"
-              type="number"
+              type="text"
               min="0"
               step="0.01"
               value={cost}
               onChange={(e) => setCost(e.target.value)}
-              className="rounded-xl border-gray-200 pl-7"
+              className="rounded-xl border-gray-200 pl-7 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
           </div>
@@ -246,7 +272,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>
 
         {/* Submit Button */}
-        <div className="sticky bottom-4 left-0 right-0 mt-6">
+        <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
           <Button
             type="submit"
             className="w-full rounded-xl bg-gray-800 p-6 text-lg font-medium text-white hover:bg-gray-700"

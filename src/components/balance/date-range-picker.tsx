@@ -48,6 +48,7 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
             onSelect={onDateChange}
             numberOfMonths={2}
             locale={es}
+            className="rounded-md border"
           />
         </PopoverContent>
       </Popover>

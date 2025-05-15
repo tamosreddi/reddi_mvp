@@ -222,7 +222,6 @@ export default function CartView() {
                 mode="single"
                 selected={date}
                 onSelect={(newDate: Date | undefined) => newDate && setDate(newDate)}
-                locale={es}
                 className="border rounded-md"
               />
             </PopoverContent>
