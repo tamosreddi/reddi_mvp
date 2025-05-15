@@ -45,8 +45,23 @@ export default function RegisterSale() {
   const { selectedStore } = useStore()
   const [isLoading, setIsLoading] = useState(false)
 
-  // Load selected customer from localStorage on mount
+  // Restaurar estado del formulario si existe en localStorage
   useEffect(() => {
+    const savedForm = localStorage.getItem("registerSaleForm")
+    if (savedForm) {
+      try {
+        const parsed = JSON.parse(savedForm)
+        if (parsed.date) setDate(new Date(parsed.date))
+        if (typeof parsed.isPaid === 'boolean') setIsPaid(parsed.isPaid)
+        if (parsed.value) setValue(parsed.value)
+        if (parsed.concept) setConcept(parsed.concept)
+        if (parsed.paymentMethod) setPaymentMethod(parsed.paymentMethod)
+      } catch (e) {
+        console.error("Error parsing registerSaleForm from localStorage:", e)
+      }
+      localStorage.removeItem("registerSaleForm")
+    }
+    // Restaurar cliente seleccionado
     const savedCustomer = localStorage.getItem("selectedCustomer")
     if (savedCustomer) {
       try {
@@ -118,9 +133,10 @@ export default function RegisterSale() {
 
       if (error) throw error
 
-      // Limpiar cliente seleccionado después de registrar la venta
+      // Limpiar cliente y formulario temporal después de registrar la venta
       setSelectedCustomer(null)
       localStorage.removeItem("selectedCustomer")
+      localStorage.removeItem("registerSaleForm")
 
       toast({
         title: "Venta registrada con éxito",
@@ -148,8 +164,17 @@ export default function RegisterSale() {
 
   // Navigate to customer selection
   const navigateToCustomerSelection = () => {
-    // Guarda la ruta actual para volver después de crear el cliente
-    const currentPath = "/venta/libre"
+    // Guardar el estado actual del formulario antes de navegar
+    localStorage.setItem(
+      "registerSaleForm",
+      JSON.stringify({
+        date,
+        isPaid,
+        value,
+        concept,
+        paymentMethod,
+      })
+    )
     router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=${encodeURIComponent("/dashboard/ventas/libre")}`)
   }
 
