@@ -57,6 +57,7 @@ export const databaseSchema = {
         brand: "TEXT - Marca del producto.",
         category: "TEXT - Categoría del producto (ej. bebidas, snacks, limpieza).",
         distributor_id: "UUID - Referencia al distribuidor que provee el producto, si aplica.",
+        barcode: "VARCHAR - Código de barras del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
     },
@@ -67,6 +68,7 @@ export const databaseSchema = {
         store_product_id: "UUID - Referencia al producto personalizado de la tienda, si aplica.",
         quantity: "NUMERIC - Cantidad disponible del producto.",
         unit_price: "NUMERIC - Precio unitario para la tienda.",
+        unit_cost: "NUMERIC - Costo unitario del producto.",
         min_stock: "NUMERIC - Mínima cantidad antes de alertar al usuario.",
         expiration_date: "TIMESTAMPTZ - Fecha de expiración del producto, si aplica.",
         last_change: "TIMESTAMPTZ - Fecha del último cambio de inventario.",
@@ -88,9 +90,7 @@ export const databaseSchema = {
         description: "TEXT - Descripción del producto personalizado.",
         brand: "TEXT - Marca del producto personalizado, si aplica.",
         category: "TEXT - Categoría del producto (ej. alimentos, bebidas, panadería).",
-        unit_price: "NUMERIC - Precio unitario del producto personalizado.",
         barcode: "VARCHAR - Código de barras del producto personalizado, si aplica.",
-        quantity_available: "NUMERIC - Cantidad disponible del producto en inventario.",
         unit_cost: "NUMERIC - Costo unitario del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
