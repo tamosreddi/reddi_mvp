@@ -38,6 +38,7 @@ export const databaseSchema = {
         total_amount: "Decimal - Monto total calculado automáticamente (quantity * unit_amount).",
         transaction_description: "Texto - Descripción opcional del evento.",
         stakeholder_id: "UUID - Identificador único del proveedor o cliente, si aplica.",
+        stakeholder_type: "Texto - Tipo de stakeholder (proveedor, cliente).",
         sku_id: "UUID - Identificador único del producto, si aplica.",
         payment_method: "Texto - Método de pago (cash, card, transfer).",
         is_paid: "Booleano - Indica si el evento ha sido pagado.",
@@ -90,6 +91,20 @@ export const databaseSchema = {
         unit_price: "NUMERIC - Precio unitario del producto personalizado.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
+    },
+    clients: {
+        client_id: "UUID - Identificador único del cliente.",
+        store_id: "UUID - Referencia a la tienda propietaria del cliente.",
+        name: "VARCHAR - Nombre del cliente.",
+        gender: "VARCHAR - Género del cliente, si se quiere registrar.",
+        age: "VARCHAR - Edad o rango de edad del cliente, si se quiere registrar.",
+        email: "VARCHAR - Correo electrónico del cliente, si se quiere registrar.",
+        phone: "VARCHAR - Número de teléfono del cliente, si se quiere registrar.",
+        address: "TEXT - Dirección del cliente, si se quiere registrar.",
+        created_at: "TIMESTAMPTZ - Fecha de creación del cliente.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro del cliente.",
+        notes: "TEXT - Notas adicionales sobre el cliente, si se quiere registrar.",
+        is_active: "BOOLEAN - Estado del cliente (activo/inactivo)."
     }
 };
 

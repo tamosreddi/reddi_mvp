@@ -1,59 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, User, Plus } from "lucide-react"
 import Button from "@/components/ui/Button"
 import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
-
-// Sample customer data
-const sampleCustomers = [
-  {
-    id: 1,
-    name: "Juan Pérez",
-    notes: "Cliente frecuente, prefiere pagar en efectivo",
-  },
-  {
-    id: 2,
-    name: "María González",
-    notes: "Compra productos de limpieza cada semana",
-  },
-  {
-    id: 3,
-    name: "Carlos Rodríguez",
-    notes: "Dueño de la tienda de la esquina",
-  },
-  {
-    id: 4,
-    name: "Ana Martínez",
-    notes: "Prefiere productos orgánicos",
-  },
-  {
-    id: 5,
-    name: "Roberto Sánchez",
-    notes: "Compra al por mayor",
-  },
-]
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 export default function ViewCustomers() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState("")
-  const [customers] = useState(sampleCustomers)
+  const [customers, setCustomers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { selectedStore } = useStore()
 
   // Check if we're in selection mode (coming from a sale)
   const isSelecting = searchParams.get("select") === "true"
   const returnTo = searchParams.get("returnTo") || "/"
 
-  // Filter customers based on search term
-  const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  const handleSearchClick = () => {
-    // Implementar funcionalidad de búsqueda aquí
-    alert("Funcionalidad de búsqueda será implementada próximamente")
-  }
+  // Fetch customers from Supabase for the current store or search term
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!selectedStore) {
+        setCustomers([])
+        setLoading(false)
+        return
+      }
+      setLoading(true)
+      setError(null)
+      let query = supabase
+        .from("clients")
+        .select("client_id, name, notes")
+        .eq("store_id", selectedStore.store_id)
+        .order("created_at", { ascending: false })
+      if (searchTerm.trim() !== "") {
+        query = query.ilike("name", `%${searchTerm.trim()}%`)
+      }
+      const { data, error } = await query
+      if (error) {
+        setError("Error al cargar clientes: " + error.message)
+        setCustomers([])
+      } else {
+        setCustomers(data || [])
+      }
+      setLoading(false)
+    }
+    fetchCustomers()
+  }, [selectedStore, searchTerm])
 
   // Navigate to create customer form
   const navigateToCreateCustomer = () => {
@@ -66,7 +62,7 @@ export default function ViewCustomers() {
   const selectCustomer = (customerId: number) => {
     if (isSelecting) {
       // Find the selected customer
-      const selectedCustomer = customers.find((customer) => customer.id === customerId)
+      const selectedCustomer = customers.find((customer) => customer.client_id === customerId)
 
       // Store the selected customer in localStorage
       if (selectedCustomer) {
@@ -87,11 +83,11 @@ export default function ViewCustomers() {
       <TopProfileMenu
         simpleMode={true}
         title={isSelecting ? "Seleccionar Cliente" : "Clientes"}
-        onBackClick={() => router.push(returnTo)}
+        onBackClick={() => router.push("/dashboard/ventas/libre")}
       />
 
       {/* Main Content - Add padding at the bottom to prevent content from being hidden behind the fixed button */}
-      <div className="flex-1 p-4 pb-24 space-y-4">
+      <div className="flex-1 p-4 pb-24 space-y-4 mt-20">
         {/* Title */}
         {/* <h1 className="text-xl font-bold text-center">{isSelecting ? "Seleccionar Cliente" : "Clientes"}</h1> */}
 
@@ -109,12 +105,16 @@ export default function ViewCustomers() {
 
         {/* Customer List */}
         <div className="space-y-3 mt-4">
-          {filteredCustomers.length > 0 ? (
-            filteredCustomers.map((customer) => (
+          {loading ? (
+            <div className="py-8 text-center text-gray-500">Cargando clientes...</div>
+          ) : error ? (
+            <div className="py-8 text-center text-red-500">{error}</div>
+          ) : customers.length > 0 ? (
+            customers.map((customer) => (
               <button
-                key={customer.id}
+                key={customer.client_id}
                 className="flex items-center w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left hover:bg-gray-50"
-                onClick={() => selectCustomer(customer.id)}
+                onClick={() => selectCustomer(customer.client_id)}
               >
                 <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center mr-4">
                   <User className="h-6 w-6 text-gray-600" />

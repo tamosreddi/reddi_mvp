@@ -27,6 +27,7 @@ interface Customer {
   id: number
   name: string
   notes?: string
+  client_id: number
 }
 
 export default function RegisterSale() {
@@ -43,7 +44,7 @@ export default function RegisterSale() {
   const { selectedStore } = useStore()
   const [isLoading, setIsLoading] = useState(false)
 
-  // Load selected customer from localStorage
+  // Load selected customer from localStorage on mount
   useEffect(() => {
     const savedCustomer = localStorage.getItem("selectedCustomer")
     if (savedCustomer) {
@@ -99,7 +100,8 @@ export default function RegisterSale() {
         transaction_description: concept,
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
         transaction_date: date.toISOString(),
-        stakeholder_id: selectedCustomer?.id || null,
+        stakeholder_id: selectedCustomer?.client_id || null,
+        stakeholder_type: selectedCustomer ? 'client' : null,
         created_by: user.id,
       }
 
@@ -114,6 +116,10 @@ export default function RegisterSale() {
 
       if (error) throw error
 
+      // Limpiar cliente seleccionado después de registrar la venta
+      setSelectedCustomer(null)
+      localStorage.removeItem("selectedCustomer")
+
       toast({
         title: "Venta registrada con éxito",
         description: `Ingreso: $${value}`,
@@ -122,7 +128,6 @@ export default function RegisterSale() {
 
       setValue("")
       setConcept("")
-      setSelectedCustomer(null)
       setPaymentMethod("efectivo")
       setDate(new Date())
 
@@ -143,7 +148,7 @@ export default function RegisterSale() {
   const navigateToCustomerSelection = () => {
     // Guarda la ruta actual para volver después de crear el cliente
     const currentPath = "/venta/libre"
-    router.push(`/dashboard/clientes/ver-cliente?returnTo=${encodeURIComponent("/dashboard/ventas/libre")}`)
+    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=${encodeURIComponent("/dashboard/ventas/libre")}`)
   }
 
   // Remove selected customer

@@ -10,24 +10,47 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 export default function CreateCustomerForm() {
   const [name, setName] = useState("")
   const [notes, setNotes] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { selectedStore } = useStore()
 
   // Get the return path from query parameters
   const returnTo = searchParams.get("returnTo") || "/clientes"
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    // Here you would typically save the customer to your database
-    alert(`Cliente "${name}" registrado con éxito!`)
-
-    // Navigate back to the previous screen
-    router.push(returnTo)
+    setError(null)
+    setLoading(true)
+    if (!selectedStore) {
+      setError("No hay tienda activa seleccionada.")
+      setLoading(false)
+      return
+    }
+    try {
+      const { data, error } = await supabase
+        .from("clients")
+        .insert({
+          name,
+          notes,
+          store_id: selectedStore.store_id,
+        })
+        .select()
+      if (error) throw error
+      // Navegar de vuelta a la pantalla anterior solo si fue exitoso
+      router.push(returnTo)
+    } catch (err: any) {
+      setError(err.message || "No se pudo registrar el cliente")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleBack = () => {
@@ -77,10 +100,15 @@ export default function CreateCustomerForm() {
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>
 
+        {/* Error message */}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
         {/* Submit Button */}
         <Button
           type="submit"
           className="w-full rounded-xl bg-gray-800 p-6 text-lg font-medium text-white hover:bg-gray-700"
+          disabled={loading}
+          isLoading={loading}
         >
           Crear cliente
         </Button>
