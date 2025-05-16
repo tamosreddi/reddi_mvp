@@ -263,58 +263,61 @@ export default function CartView() {
             <div className="text-center py-8">Cargando productos...</div>
           ) : cartItems.length > 0 ? (
             cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-start mb-3">
-                  <div className="h-16 w-16 rounded-lg bg-gray-100 mr-3 overflow-hidden">
-                    <img
-                      src={item.image || "/Groserybasket.png"}
-                      alt={item.name}
-                      className="h-full w-full object-cover grayscale"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+              <div key={item.id} className="bg-white rounded-xl p-3 shadow-sm flex">
+                {/* Imagen con trash */}
+                <div className="relative h-14 w-14 rounded-lg bg-gray-100 mr-3 flex-shrink-0 overflow-hidden">
+                  <img
+                    src={item.image || "/Groserybasket.png"}
+                    alt={item.name}
+                    className="h-full w-full object-cover grayscale"
+                  />
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 rounded-lg transition-colors"
+                    aria-label="Eliminar producto"
+                    style={{ zIndex: 2 }}
+                  >
+                    <span className="bg-black/80 rounded-full p-1.5 shadow-lg">
+                      <Trash2 className="h-5 w-5 text-white" />
+                    </span>
+                  </button>
+                </div>
+                {/* Info producto */}
+                <div className="flex-1 flex flex-col justify-between">
+                  {/* Nombre */}
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1">{item.name}</h3>
+                  {/* Cantidad y precio unitario alineados, total debajo */}
+                  <div className="flex items-center gap-3 justify-between">
+                    {/* Cantidad */}
+                    <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-500"
-                        aria-label="Eliminar producto"
+                        onClick={() => decrementQuantity(item.id)}
+                        className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                        disabled={item.cartQuantity <= 1}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="font-medium text-sm">{item.cartQuantity}</span>
+                      <button
+                        onClick={() => incrementQuantity(item.id)}
+                        className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                      >
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center mt-2">
-                  <div className="flex items-center space-x-2">
+                    {/* Precio unitario alineado a la derecha */}
                     <button
-                      onClick={() => decrementQuantity(item.id)}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"
-                      disabled={item.cartQuantity <= 1}
+                      onClick={() => handlePriceEdit(item.id)}
+                      className="flex items-center text-gray-900 text-sm font-bold ml-auto"
                     >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="font-medium">{item.cartQuantity}</span>
-                    <button
-                      onClick={() => incrementQuantity(item.id)}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center">
-                    <button onClick={() => handlePriceEdit(item.id)} className="flex items-center text-gray-700 mr-2">
                       <Edit className="h-4 w-4 mr-1" />
+                      <span>${item.price.toFixed(2)}</span>
                     </button>
-                    <span className="font-bold text-lg">${item.price.toFixed(2)}</span>
                   </div>
-                </div>
-
-                {/* Precio total debajo del precio unitario, alineado a la derecha */}
-                <div className="flex justify-end mt-1">
-                  <span className="text-sm text-gray-500">Precio total: ${(item.price * item.cartQuantity).toFixed(2)}</span>
+                  {/* Precio total debajo, alineado a la derecha */}
+                  <div className="flex justify-end">
+                    <span className="text-xs text-gray-500 mt-0.5">= ${(item.price * item.cartQuantity).toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             ))
