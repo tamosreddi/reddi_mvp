@@ -28,6 +28,7 @@ export default function CategoryCreateProductModal({
   const [isVisible, setIsVisible] = useState(false)
   const [selected, setSelected] = useState<string>("")
   const [isClient, setIsClient] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     if (isOpen) setIsVisible(true)
@@ -97,8 +98,7 @@ export default function CategoryCreateProductModal({
         </div>
         <Button
           onClick={() => {
-            // Aquí deberías abrir el flujo para crear una nueva categoría
-            // Por ahora solo cierra el modal
+            router.push("/dashboard/categorias/crear-categoria")
             onClose()
           }}
           variant="primary"
