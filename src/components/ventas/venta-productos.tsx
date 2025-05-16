@@ -8,6 +8,8 @@ import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import CreateProductForm from "@/components/inventario/create-product-form"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 // Definición de tipos
 interface Product {
@@ -26,6 +28,7 @@ interface CartItem extends Product {
 export default function ProductSale() {
   const router = useRouter()
   const pathname = usePathname()
+  const { selectedStore } = useStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
@@ -34,76 +37,54 @@ export default function ProductSale() {
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
 
-  // Cargar productos de muestra y carrito del localStorage si existe
-  useEffect(() => {
-    // En una aplicación real, esto vendría de una API o base de datos
-    const sampleProducts: Product[] = [
-      {
-        id: 1,
-        name: "Dispo",
-        price: 550,
-        quantity: -1,
-        category: "Bebidas",
-        image: "/Groserybasket.png",
-      },
-      {
-        id: 2,
-        name: "Ejemplo",
-        price: 10,
-        quantity: 2,
-        category: "Panadería",
-        image: "/cooking-pan.png",
-      },
-      {
-        id: 3,
-        name: "Producto 2",
-        price: 50,
-        quantity: 5,
-        category: "Lácteos",
-        image: "/glass-of-milk.png",
-      },
-      {
-        id: 4,
-        name: "Producto con nombre mucho mas largo",
-        price: 585,
-        quantity: 0,
-        category: "Higiene",
-        image: "/jabon.png",
-      },
-      {
-        id: 5,
-        name: "Producto3",
-        price: 22,
-        quantity: -6,
-        category: "Higiene",
-        image: "/crumpled-paper.png",
-      },
-      {
-        id: 6,
-        name: "Producto Agotado",
-        price: 22,
-        quantity: 0,
-        category: "Varios",
-        image: "/generic-product-display.png",
-      },
-    ]
-
-    setProducts(sampleProducts)
-
-    // Extraer categorías únicas
-    const uniqueCategories = Array.from(new Set(sampleProducts.map((product) => product.category)))
-    setCategories(uniqueCategories)
-
-    // Cargar carrito del localStorage si existe
-    const savedCart = localStorage.getItem("productCart")
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart))
-      } catch (e) {
-        console.error("Error parsing cart from localStorage:", e)
-      }
+  // Nueva función para refrescar inventario
+  const fetchInventory = async () => {
+    if (!selectedStore) return;
+    // 1. Obtener inventario de la tienda (solo productos custom por ahora)
+    const { data: inventory, error } = await supabase
+      .from("store_inventory")
+      .select("product_reference_id, quantity, unit_price, unit_cost")
+      .eq("store_id", selectedStore.store_id)
+      .eq("product_type", "custom")
+    if (error) {
+      console.error("Error fetching inventory:", error)
+      return
     }
-  }, [])
+    if (!inventory || inventory.length === 0) {
+      setProducts([])
+      setCategories([])
+      return
+    }
+    // 2. Obtener los datos de los productos custom
+    const productIds = inventory.map((item) => item.product_reference_id)
+    const { data: productsData, error: prodError } = await supabase
+      .from("store_products")
+      .select("store_product_id, name, category, image, barcode")
+      .in("store_product_id", productIds)
+    if (prodError) {
+      console.error("Error fetching products:", prodError)
+      return
+    }
+    // 3. Mapear al formato Product
+    const productsMapped = inventory.map((inv) => {
+      const prod = productsData.find((p) => p.store_product_id === inv.product_reference_id)
+      return {
+        id: inv.product_reference_id,
+        name: prod?.name || "Sin nombre",
+        price: Number(inv.unit_price) || 0,
+        quantity: Number(inv.quantity) || 0,
+        category: prod?.category || "Sin categoría",
+        image: prod?.image || "/Groserybasket.png",
+      }
+    })
+    setProducts(productsMapped)
+    setCategories(Array.from(new Set(productsMapped.map((p) => p.category))))
+  }
+
+  useEffect(() => {
+    fetchInventory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStore])
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
@@ -178,9 +159,8 @@ export default function ProductSale() {
         initialReferrer={pathname}
         onCancel={handleCreateProductFormClose}
         onSuccess={() => {
-          // Handle successful product creation
           setShowCreateProductForm(false)
-          // Optionally refresh product list or show success message
+          fetchInventory()
         }}
       />
     )
@@ -282,12 +262,19 @@ export default function ProductSale() {
               >
                 {/* Product Image - Improved sizing and styling */}
                 <div
-                  className={cn("h-20 sm:h-32 bg-gray-200 relative", !isOutOfStock && "cursor-pointer overflow-hidden")}
+                  className={cn("h-20 sm:h-32 bg-gray-200 relative flex items-center justify-center")}
                 >
                   <img
                     src={product.image || "/Groserybasket.png"}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform hover:scale-105 grayscale"
+                    className={
+                      `w-full h-full max-h-full max-w-full grayscale ` +
+                      (
+                        !product.image || product.image === "/Groserybasket.png"
+                          ? "object-contain p-2"
+                          : "object-cover"
+                      )
+                    }
                   />
 
                   {/* Add button overlay for desktop */}
