@@ -1,7 +1,7 @@
+@import "@fontsource/inter/index.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 @import "react-day-picker/dist/style.css";
 
 :root {
