@@ -314,8 +314,8 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
         <div className="bg-white rounded-lg p-4 shadow-sm">
           {/* Balance Header */}
           <div className="flex justify-between items-center pb-3 border-b">
-            <h2 className="text-base text-gray-700">Balance</h2>
-            <span className={cn("text-base font-bold", balanceTotal >= 0 ? "text-green-600" : "text-red-600")}>
+            <h2 className="text-sm text-gray-700">Balance</h2>
+            <span className={cn("text-sm font-bold", balanceTotal >= 0 ? "text-green-600" : "text-red-600")}>
               {balanceTotal >= 0 ? "$" : "-$"} {formatNumber(Math.abs(balanceTotal))}
             </span>
           </div>
@@ -325,14 +325,18 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
             <div className="flex-1 border-r pr-4">
               <div className="flex items-center mb-1">
                 <ArrowUpRight className="h-4 w-4 text-green-600 mr-1" />
-                <span className="text-sm text-gray-700">Ingresos</span>
+                <span className="flex items-center text-xs text-gray-700">
+                  Ingresos
+                </span>
               </div>
               <span className="text-green-600 font-bold text-lg">$ {formatNumber(incomesTotal)}</span>
             </div>
             <div className="flex-1 pl-4">
               <div className="flex items-center mb-1">
                 <ArrowDownRight className="h-4 w-4 text-red-600 mr-1" />
-                <span className="text-sm text-gray-700">Egresos</span>
+                <span className="flex items-center text-xs text-gray-700">
+                  Egresos
+                </span>
               </div>
               <span className="text-red-600 font-bold text-lg">-$ {formatNumber(expensesTotal)}</span>
             </div>

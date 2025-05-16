@@ -61,7 +61,7 @@ export default function TopProfileMenu({
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-bold">{title}</h1>
+          <h1 className="text-lg font-bold">{title}</h1>
           {rightContent ? rightContent : <div className="w-12"></div>}
         </div>
       </header>

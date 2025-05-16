@@ -1,3 +1,5 @@
+// Al clickear el producto en el inventario, se muestra esta página con los datos del producto.
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -9,12 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 // Sample product data (in a real app, this would come from an API or database)
 const sampleProducts = [
   {
     id: "1",
-    name: "Refresco Cola 600ml",
+    name: "Refresco ColaCola 600ml",
     quantity: 24,
     price: 18.5,
     cost: 12.0,
@@ -25,7 +28,7 @@ const sampleProducts = [
   },
   {
     id: "2",
-    name: "Pan Blanco",
+    name: "Pan BlancoBlanco",
     quantity: 10,
     price: 35.0,
     cost: 20.0,
@@ -162,18 +165,11 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   return (
     <div className="pb-6">
       {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => router.push("/inventario")}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Ver producto</h1>
-          <div className="w-12"></div> {/* Spacer for centering */}
-        </div>
-      </div>
+      <TopProfileMenu
+        simpleMode
+        title="Ver producto"
+        onBackClick={() => router.push("/inventario")}
+      />
 
       {/* Form content - with padding to account for fixed header */}
       <div className="mt-20 space-y-4 p-4">
@@ -196,7 +192,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
         {/* Barcode */}
         <div>
-          <Label htmlFor="barcode" className="text-lg font-medium">
+          <Label htmlFor="barcode" className="text-base font-bold">
             Código de barras
           </Label>
           <div className="mt-1 flex gap-2">
@@ -210,16 +206,16 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
             <Button
               type="button"
               variant="outline"
-              className="flex h-14 w-14 items-center justify-center rounded-xl border-gray-200"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border-gray-200"
             >
-              <Barcode className="h-6 w-6" />
+              <Barcode className="h-7 w-7" />
             </Button>
           </div>
         </div>
 
         {/* Product Name */}
         <div>
-          <Label htmlFor="name" className="text-lg font-medium">
+          <Label htmlFor="name" className="text-base font-bold">
             Nombre del producto <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -234,7 +230,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
         {/* Available Quantity */}
         <div>
-          <Label htmlFor="quantity" className="text-lg font-medium">
+          <Label htmlFor="quantity" className="text-base font-bold">
             Cantidad disponible
           </Label>
           <Input
@@ -250,7 +246,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
         {/* Price */}
         <div>
-          <Label htmlFor="price" className="text-lg font-medium">
+          <Label htmlFor="price" className="text-base font-bold">
             Precio <span className="text-red-500">*</span>
           </Label>
           <div className="relative mt-1">
@@ -274,7 +270,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         {/* Cost */}
         <div>
           <div className="flex items-center">
-            <Label htmlFor="cost" className="text-lg font-medium">
+            <Label htmlFor="cost" className="text-base font-bold">
               Costo
             </Label>
             <Info className="ml-2 h-5 w-5 text-gray-400" />
@@ -298,7 +294,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
         {/* Category */}
         <div>
-          <Label htmlFor="category" className="text-lg font-medium">
+          <Label htmlFor="category" className="text-base font-bold">
             Categoría
           </Label>
           <Select value={product.category} onValueChange={(value) => handleChange("category", value)}>
@@ -317,7 +313,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
         {/* Description */}
         <div>
-          <Label htmlFor="description" className="text-lg font-medium">
+          <Label htmlFor="description" className="text-base font-bold">
             Descripción
           </Label>
           <Textarea
@@ -349,7 +345,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         {/* Delete Button */}
         <button
           onClick={handleDelete}
-          className="flex w-full items-center justify-center py-2 text-lg font-medium text-red-500"
+          className="flex w-full items-center justify-center py-2 text-base font-medium text-red-500"
         >
           <Trash2 className="mr-2 h-5 w-5" />
           Eliminar producto

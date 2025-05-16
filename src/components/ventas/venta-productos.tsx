@@ -168,7 +168,7 @@ export default function ProductSale() {
 
   // Otherwise, render the product sale view
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-16">
+    <div className="flex flex-col min-h-screen bg-gray-100 pb-16 pt-16">
       {/* Header */}
       <TopProfileMenu 
         simpleMode={true}

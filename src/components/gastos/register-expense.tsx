@@ -181,7 +181,7 @@ export default function RegisterExpense() {
 
         {/* Expense Category */}
         <div>
-          <Label htmlFor="expense-category" className="text-lg font-medium">
+          <Label htmlFor="expense-category" className="text-base font-bold">
             Categoría del gasto <span className="text-red-500">*</span>
           </Label>
           <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
@@ -200,7 +200,7 @@ export default function RegisterExpense() {
 
         {/* Amount Input */}
         <div>
-          <Label htmlFor="amount" className="text-lg font-medium">
+          <Label htmlFor="amount" className="text-base font-bold">
             Valor <span className="text-red-500">*</span>
           </Label>
           <div className="mt-1 rounded-xl border border-gray-200 bg-white p-4">
@@ -226,7 +226,7 @@ export default function RegisterExpense() {
 
         {/* Supplier */}
         <div>
-          <Label htmlFor="supplier" className="text-lg font-medium">
+          <Label htmlFor="supplier" className="text-base font-bold">
             Proveedor
           </Label>
           {selectedSupplier ? (
@@ -266,7 +266,7 @@ export default function RegisterExpense() {
 
         {/* Payment Method Selection */}
         <div>
-          <Label className="text-lg font-medium">
+          <Label className="text-base font-bold">
             Método de pago <span className="text-red-500">*</span>
           </Label>
           <div className="grid grid-cols-3 gap-3 mt-1">
@@ -308,7 +308,7 @@ export default function RegisterExpense() {
 
         {/* Description Input */}
         <div>
-          <Label htmlFor="description" className="text-lg font-medium">
+          <Label htmlFor="description" className="text-base font-bold">
             Concepto
           </Label>
           <div className="mt-1 rounded-xl border border-gray-200 bg-white p-4">

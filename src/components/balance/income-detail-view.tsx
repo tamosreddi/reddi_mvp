@@ -7,6 +7,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 interface IncomeDetailProps {
   transaction: {
@@ -43,18 +44,14 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Detalle del ingreso</h1>
-          <div className="w-10"></div> {/* Spacer for balanced spacing */}
-        </div>
-      </div>
+      <TopProfileMenu
+        simpleMode
+        title="Detalle del ingreso"
+        onBackClick={onClose}
+      />
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4 mt-16">
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-2">Resumen del ingreso</h2>
 

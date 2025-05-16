@@ -1,3 +1,5 @@
+//Main view de página de inventario
+
 "use client"
 
 import { useState } from "react"
@@ -12,7 +14,7 @@ import CreateProductForm from "@/components/inventario/create-product-form"
 const sampleInventory = [
   {
     id: 1,
-    name: "Refresco Cola 600ml",
+    name: "Refresco Coca Cola 600ml",
     quantity: 24,
     price: 18.5,
     cost: 12.0,
@@ -141,7 +143,7 @@ export default function ViewInventory() {
         {/* Reports Button */}
         <Button
           variant="outline"
-          className="w-full rounded-xl border-gray-300 bg-white p-6 text-base"
+          className="w-full rounded-xl border-gray-300 bg-white px-6 text-sm"
           onClick={handleGenerateReport}
         >
           <FileText className="mr-2 h-5 w-5" />
@@ -152,14 +154,14 @@ export default function ViewInventory() {
         <div className="grid grid-cols-2 gap-4">
           {/* Total References */}
           <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
-            <h2 className="text-sm font-semibold text-gray-700">Total de referencias</h2>
-            <p className="text-2xl font-bold text-left mt-4">{totalReferences}</p>
+            <h2 className="text-sm font-semibold text-gray-700">Productos Totales</h2>
+            <p className="text-xl font-bold text-left mt-4">{totalReferences}</p>
           </div>
 
           {/* Total Cost */}
           <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
             <h2 className="text-sm font-semibold text-gray-700">Costo total</h2>
-            <p className="text-2xl font-bold text-left mt-4">
+            <p className="text-xl font-bold text-left mt-4">
               $
               {new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalCost)}
             </p>
@@ -171,7 +173,7 @@ export default function ViewInventory() {
           <Button
             variant="outline"
             className={cn(
-              "rounded-full px-4 py-2 whitespace-nowrap",
+              "rounded-full px-4 py-1 text-sm whitespace-nowrap",
               !selectedCategory ? "bg-yellow-400 border-yellow-400 text-gray-900" : "bg-white",
             )}
             onClick={() => setSelectedCategory(null)}
@@ -184,7 +186,7 @@ export default function ViewInventory() {
               key={category}
               variant="outline"
               className={cn(
-                "rounded-full px-4 py-2 whitespace-nowrap",
+                "rounded-full px-4 py-1 text-sm whitespace-nowrap",
                 selectedCategory === category ? "bg-yellow-400 border-yellow-400 text-gray-900" : "bg-white",
               )}
               onClick={() => setSelectedCategory(category)}
