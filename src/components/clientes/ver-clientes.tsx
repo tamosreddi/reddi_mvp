@@ -70,7 +70,11 @@ export default function ViewCustomers() {
       }
 
       // Return to the previous screen
-      router.push(returnTo)
+      if (returnTo) {
+        router.push(returnTo)
+      } else {
+        router.back()
+      }
     } else {
       // In the future, this could navigate to a customer detail view
       alert(`Ver detalles del cliente ${customerId}`)
@@ -83,7 +87,13 @@ export default function ViewCustomers() {
       <TopProfileMenu
         simpleMode={true}
         title={isSelecting ? "Seleccionar Cliente" : "Clientes"}
-        onBackClick={() => router.push("/dashboard/ventas/libre")}
+        onBackClick={() => {
+          if (returnTo) {
+            router.push(returnTo)
+          } else {
+            router.back()
+          }
+        }}
       />
 
       {/* Main Content - Add padding at the bottom to prevent content from being hidden behind the fixed button */}

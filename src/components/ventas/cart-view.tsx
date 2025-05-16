@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import PaymentMethodModal from "@/components/ventas/sale-confirmation"
+import PaymentMethodModal from "@/components/shared/payment-method-modal"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 // Definición de tipos
@@ -352,42 +352,37 @@ export default function CartView() {
       {/* Fixed bottom section - with ref to measure height */}
       <div
         ref={bottomSectionRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 space-y-4 z-40 shadow-lg"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 space-y-2 z-40 shadow-lg"
       >
         {/* Customer Selection */}
         {selectedCustomer ? (
-          <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between bg-blue-50 px-2 py-1 rounded-lg border border-blue-200">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                <User className="h-5 w-5 text-blue-600" />
+              <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                <User className="h-4 w-4 text-blue-600" />
               </div>
-              <div>
-                <h3 className="font-medium text-gray-900">{selectedCustomer.name}</h3>
-                {selectedCustomer.notes && (
-                  <p className="text-xs text-gray-600 line-clamp-1">{selectedCustomer.notes}</p>
-                )}
-              </div>
+              <h3 className="font-medium text-gray-900 text-sm">{selectedCustomer.name}</h3>
             </div>
-            <button onClick={removeSelectedCustomer} className="text-red-500 p-1" aria-label="Quitar cliente">
-              <Trash2 className="h-5 w-5" />
+            <button onClick={removeSelectedCustomer} className="text-red-500 p-0.5" aria-label="Quitar cliente">
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ) : (
           <button
-            onClick={navigateToCustomerSelection}
-            className="flex items-center justify-between w-full p-3 rounded-lg border border-gray-200 bg-white"
+            onClick={() => router.push('/dashboard/clientes/ver-cliente?select=true&returnTo=/dashboard/ventas/canasta')}
+            className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium shadow-sm"
           >
             <div className="flex items-center">
-              <User className="h-5 w-5 mr-2 text-gray-500" />
-              <span className="text-sm font-medium">Agregar un cliente a la venta</span>
+              <User className="h-4 w-4 mr-2 text-gray-500" />
+              <span className="text-xs font-medium">Agregar un cliente</span>
               <span className="text-xs text-gray-400 ml-1">(opcional)</span>
             </div>
-            <ChevronRight className="h-5 w-5 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-gray-400" />
           </button>
         )}
 
         {/* Total */}
-        <div className="flex justify-between items-center pt-2">
+        <div className="flex justify-between items-center pt-1 pb-1">
           <h3 className="text-xl text-gray-600">Total</h3>
           <div className="flex items-center">
             <span className="text-2xl font-bold">$ {cartTotal.toFixed(2)}</span>
@@ -398,7 +393,9 @@ export default function CartView() {
         {/* Confirm Button */}
         <Button
           onClick={openPaymentModal}
-          className="w-full bg-gray-900 text-white p-6 text-lg font-medium uppercase tracking-wide rounded-xl"
+          size="lg"
+          fullWidth
+          variant="primary"
           disabled={cartItems.length === 0}
         >
           CONFIRMAR VENTA
@@ -411,7 +408,6 @@ export default function CartView() {
         onClose={closePaymentModal}
         onConfirm={confirmSaleWithPaymentMethod}
         total={cartTotal}
-        paymentMethod={paymentMethod}
       />
     </div>
   )
