@@ -58,9 +58,6 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
       const response = await supabase.from("store_products").insert([
         {
           name,
-          quantity_available: quantity,
-          unit_price: price,
-          unit_cost: cost,
           category,
           description,
           barcode,
@@ -78,15 +75,30 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           await supabase.from("store_products").update({ image: publicUrl.data.publicUrl }).eq("id", response.data[0].id)
         }
       }
+      // Insertar en store_inventory si el producto fue creado
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const store_product_id = response.data[0].store_product_id;
+        const invRes = await supabase.from("store_inventory").insert([
+          {
+            store_id: selectedStore?.store_id,
+            product_reference_id: store_product_id,
+            product_type: "custom",
+            quantity,
+            unit_price: price,
+            unit_cost: cost,
+          }
+        ])
+        if (invRes.error) throw invRes.error;
+      }
       // Redirigir tras éxito
       if (onSuccess) {
         onSuccess()
       } else {
         router.push(referrer)
       }
-    } catch (error) {
-      console.error("Error al guardar el producto:", error)
-      alert("Hubo un error al guardar el producto. Por favor, inténtelo más tarde.")
+    } catch (error: any) {
+      console.error("Error al guardar el producto:", error?.message || error)
+      alert("Hubo un error al guardar el producto. " + (error?.message ? `\n\n${error.message}` : "Por favor, inténtelo más tarde."))
     }
   }
 

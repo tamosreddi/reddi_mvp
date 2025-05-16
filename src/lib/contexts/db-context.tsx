@@ -64,8 +64,8 @@ export const databaseSchema = {
     store_inventory: {
         inventory_id: "UUID - Identificador único del registro de inventario.",
         store_id: "UUID - Referencia a la tienda propietaria del inventario.",
-        product_id: "UUID - Referencia al producto del catálogo global, si aplica.",
-        store_product_id: "UUID - Referencia al producto personalizado de la tienda, si aplica.",
+        product_reference_id: "UUID - Referencia única al producto, puede ser global (products) o personalizado (store_products).",
+        product_type: "Texto - Tipo de producto, puede ser global (products) o custom (store_products).",
         quantity: "NUMERIC - Cantidad disponible del producto.",
         unit_price: "NUMERIC - Precio unitario para la tienda.",
         unit_cost: "NUMERIC - Costo unitario del producto.",
@@ -91,7 +91,6 @@ export const databaseSchema = {
         brand: "TEXT - Marca del producto personalizado, si aplica.",
         category: "TEXT - Categoría del producto (ej. alimentos, bebidas, panadería).",
         barcode: "VARCHAR - Código de barras del producto personalizado, si aplica.",
-        unit_cost: "NUMERIC - Costo unitario del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
     },
