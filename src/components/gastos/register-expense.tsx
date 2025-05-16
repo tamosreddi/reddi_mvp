@@ -119,7 +119,7 @@ export default function RegisterExpense() {
         user_id: user.id,
         store_id: selectedStore.store_id,
         transaction_type: 'expense',
-        value: 1,
+        value: Number.parseFloat(amount) || 0,
         quantity: 1,
         transaction_description: description,
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
