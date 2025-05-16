@@ -76,12 +76,12 @@ export default function CategoryCreateProductModal({
         >
           <X className="h-6 w-6 text-gray-500" />
         </button>
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Selecciona una categoría</h2>
-        <div className="max-h-60 overflow-y-auto flex flex-col gap-2 mb-6 pr-1">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Selecciona una categoría</h2>
+        <div className="max-h-60 overflow-y-auto flex flex-col gap-1 mb-4 pr-1">
           {categories.map((cat) => (
             <label
               key={cat}
-              className="flex items-center gap-3 px-2 py-3 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+              className="flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
             >
               <input
                 type="radio"
@@ -89,9 +89,9 @@ export default function CategoryCreateProductModal({
                 value={cat}
                 checked={selected === cat}
                 onChange={() => handleSelect(cat)}
-                className="form-radio h-5 w-5 text-gray-900 border-gray-300 focus:ring-2 focus:ring-gray-900"
+                className="form-radio h-4 w-4 text-gray-900 border-gray-300 focus:ring-2 focus:ring-gray-900"
               />
-              <span className="text-base text-gray-900 font-medium">{cat}</span>
+              <span className="text-sm text-gray-900 font-medium">{cat}</span>
             </label>
           ))}
         </div>
@@ -116,7 +116,7 @@ export default function CategoryCreateProductModal({
           variant="ghost"
           size="sm"
           fullWidth
-          className="mt-2"
+          className="mt-2 mb-0"
         >
           Cancelar
         </Button>
