@@ -32,7 +32,19 @@ export default function ProductSale() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("productCart")
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return []
+        }
+      }
+    }
+    return []
+  })
   const [categories, setCategories] = useState<string[]>([])
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)

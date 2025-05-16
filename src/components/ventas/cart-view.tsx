@@ -35,7 +35,19 @@ export default function CartView() {
   const router = useRouter()
   const [date, setDate] = useState<Date>(new Date())
   const [isPaid, setIsPaid] = useState(true)
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("productCart")
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return []
+        }
+      }
+    }
+    return []
+  })
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [bottomSectionHeight, setBottomSectionHeight] = useState(0)
