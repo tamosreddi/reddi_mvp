@@ -149,7 +149,7 @@ export default function ProductSale() {
 
   // Navegar a la página de canasta
   const navigateToCart = () => {
-    router.push("/venta/canasta")
+    router.push("/dashboard/ventas/canasta")
   }
 
   // If showing create product form, render it
@@ -173,7 +173,7 @@ export default function ProductSale() {
       <TopProfileMenu 
         simpleMode={true}
         title="Nueva venta"
-        onBackClick={() => router.back()}
+        onBackClick={() => router.push("/dashboard")}
         rightContent={
           <button 
             className="flex h-10 w-10 items-center justify-center" 

@@ -226,7 +226,7 @@ export default function ViewInventory() {
       {/* Action Buttons - Fixed at the bottom, above the navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-45 space-y-3 p-4 bg-gray-50 border-t border-gray-200 shadow-md">
         <Button
-          onClick={handleShowCreateProductForm}
+          onClick={() => router.push("/inventario/crear")}
           className="w-full rounded-xl bg-gray-800 p-6 text-lg font-medium text-white hover:bg-gray-700"
         >
           Crear producto

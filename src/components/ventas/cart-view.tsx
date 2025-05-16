@@ -1,3 +1,5 @@
+// Página de la canasta de compras, en Venta de Productos --> Canasta
+
 "use client"
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react"
@@ -10,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import PaymentMethodModal from "@/components/ventas/sale-confirmation"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 // Definición de tipos
 interface CartItem {
@@ -196,15 +199,18 @@ export default function CartView() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-yellow-400 p-4 h-16 flex items-center">
-        <button onClick={() => router.push("/venta/productos")} className="mr-4" aria-label="Volver">
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <h1 className="text-xl font-bold">Canasta</h1>
-      </div>
+      <TopProfileMenu
+        simpleMode={true}
+        title="Canasta"
+        onBackClick={() => router.push("/dashboard/ventas/productos")}
+      />
 
       {/* Main Content - Dynamic padding based on bottom section height */}
-      <div ref={mainContentRef} className="flex-1 p-4 space-y-4" style={{ paddingBottom: `${bottomSectionHeight}px` }}>
+      <div
+        ref={mainContentRef}
+        className="flex-1 p-4 space-y-4 pt-20"
+        style={{ paddingBottom: `${bottomSectionHeight}px` }}
+      >
         {/* Date and Payment Status */}
         <div className="grid grid-cols-2 gap-3">
           <Popover>
@@ -277,7 +283,6 @@ export default function CartView() {
                         <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
-                    <p className="text-sm text-gray-500">Categoría: {item.category}</p>
                   </div>
                 </div>
 
@@ -303,13 +308,13 @@ export default function CartView() {
                     <button onClick={() => handlePriceEdit(item.id)} className="flex items-center text-gray-700 mr-2">
                       <Edit className="h-4 w-4 mr-1" />
                     </button>
-                    <span className="font-bold text-lg">${(item.price * item.cartQuantity).toFixed(2)}</span>
+                    <span className="font-bold text-lg">${item.price.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="mt-2 text-sm text-gray-500 flex justify-between">
-                  <span>Precio unitario: ${item.price.toFixed(2)}</span>
-                  <span>{item.quantity} disponibles</span>
+                {/* Precio total debajo del precio unitario, alineado a la derecha */}
+                <div className="flex justify-end mt-1">
+                  <span className="text-sm text-gray-500">Precio total: ${(item.price * item.cartQuantity).toFixed(2)}</span>
                 </div>
               </div>
             ))
