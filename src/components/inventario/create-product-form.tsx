@@ -9,12 +9,12 @@ import { ArrowLeft, Barcode, Info, Upload } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import CategoryCreateProductModal from "@/components/shared/category_create_product_modal"
 
 interface CreateProductFormProps {
   initialReferrer?: string
@@ -35,6 +35,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   const router = useRouter()
   const searchParams = useSearchParams()
   const { selectedStore } = useStore()
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
 
   // Obtain referrer from props or search params as fallback
   const referrer = initialReferrer || searchParams.get("referrer") || "/inventario"
@@ -252,19 +253,22 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           <Label htmlFor="category" className="text-lg font-medium">
             Categoría
           </Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger id="category" className="mt-1 rounded-xl border-gray-200">
-              <SelectValue placeholder="Selecciona una opción" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <button
+            type="button"
+            className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-gray-900"
+            onClick={() => setIsCategoryModalOpen(true)}
+          >
+            {category ? category : "Selecciona una opción"}
+          </button>
         </div>
+        <CategoryCreateProductModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onConfirm={(cat) => {
+            setCategory(cat)
+            setIsCategoryModalOpen(false)
+          }}
+        />
 
         {/* Description */}
         <div>

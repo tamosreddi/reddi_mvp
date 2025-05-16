@@ -329,10 +329,9 @@ export default function RegisterExpense() {
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-white p-4 border-t border-gray-200">
           <Button
             type="submit"
-            className={cn(
-              "w-full rounded-xl p-6 text-lg font-medium transition-colors",
-              isFormValid ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400",
-            )}
+            size="lg"
+            fullWidth
+            variant="primary"
             disabled={!isFormValid || isLoading}
             isLoading={isLoading}
           >
