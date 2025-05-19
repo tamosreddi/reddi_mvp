@@ -12,65 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
-
-// Sample product data (in a real app, this would come from an API or database)
-const sampleProducts = [
-  {
-    id: "1",
-    name: "Refresco ColaCola 600ml",
-    quantity: 24,
-    price: 18.5,
-    cost: 12.0,
-    category: "Bebidas",
-    image: "/refreshing-drink.png",
-    barcode: "7501234567890",
-    description: "Refresco de cola en botella de 600ml",
-  },
-  {
-    id: "2",
-    name: "Pan BlancoBlanco",
-    quantity: 10,
-    price: 35.0,
-    cost: 20.0,
-    category: "Panadería",
-    image: "/cooking-pan.png",
-    barcode: "7509876543210",
-    description: "Pan blanco de caja, ideal para sándwiches",
-  },
-  {
-    id: "3",
-    name: "Leche 1L",
-    quantity: 15,
-    price: 24.0,
-    cost: 18.0,
-    category: "Lácteos",
-    image: "/glass-of-milk.png",
-    barcode: "7501122334455",
-    description: "Leche entera pasteurizada, 1 litro",
-  },
-  {
-    id: "4",
-    name: "Jabón de Baño",
-    quantity: 20,
-    price: 15.5,
-    cost: 10.0,
-    category: "Higiene",
-    image: "/jabon.png",
-    barcode: "7506677889900",
-    description: "Jabón de baño con aroma a lavanda",
-  },
-  {
-    id: "5",
-    name: "Papel Higiénico (4 rollos)",
-    quantity: 12,
-    price: 45.0,
-    cost: 30.0,
-    category: "Higiene",
-    image: "/crumpled-paper.png",
-    barcode: "7503344556677",
-    description: "Paquete de 4 rollos de papel higiénico",
-  },
-]
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 interface ProductDetailViewProps {
   productId: string
@@ -99,26 +42,60 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   // Categories
   const categories = ["Bebidas", "Panadería", "Lácteos", "Higiene", "Snacks", "Abarrotes", "Granos", "Otro"]
 
-  // Load product data
+  // Load product data from Supabase
+  const { selectedStore } = useStore();
   useEffect(() => {
-    setIsLoading(true)
-    // In a real app, this would be an API call
-    const foundProduct = sampleProducts.find((p) => p.id === productId)
-
-    if (foundProduct) {
-      setProduct(foundProduct)
-    } else {
-      // If product not found, show error and redirect
-      toast({
-        title: "Producto no encontrado",
-        description: "No se pudo encontrar el producto solicitado",
-        variant: "destructive",
-      })
-      router.push("/inventario")
-    }
-
-    setIsLoading(false)
-  }, [productId, router, toast])
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      // 1. Buscar el registro de inventario
+      const { data: inventory, error: invError } = await supabase
+        .from("store_inventory")
+        .select("*")
+        .eq("inventory_id", productId)
+        .single();
+      if (invError || !inventory) {
+        toast({
+          title: "Producto no encontrado",
+          description: "No se pudo encontrar el producto solicitado",
+          variant: "destructive",
+        });
+        router.push("/inventario");
+        setIsLoading(false);
+        return;
+      }
+      let productDetails = null;
+      if (inventory.product_type === "custom") {
+        // Buscar en store_products
+        const { data } = await supabase
+          .from("store_products")
+          .select("name, category, image, barcode, description")
+          .eq("store_product_id", inventory.product_reference_id)
+          .single();
+        productDetails = data;
+      } else if (inventory.product_type === "global") {
+        // Buscar en products
+        const { data } = await supabase
+          .from("products")
+          .select("name, category, brand, barcode, description, image")
+          .eq("product_id", inventory.product_reference_id)
+          .single();
+        productDetails = data;
+      }
+      setProduct({
+        id: inventory.inventory_id,
+        name: productDetails?.name || "",
+        quantity: inventory.quantity,
+        price: Number(inventory.unit_price),
+        cost: Number(inventory.unit_cost),
+        category: productDetails?.category || "",
+        image: productDetails?.image || "/Groserybasket.png",
+        barcode: productDetails?.barcode || "",
+        description: productDetails?.description || "",
+      });
+      setIsLoading(false);
+    };
+    fetchProduct();
+  }, [productId, router, toast, selectedStore]);
 
   // Handle form input changes
   const handleChange = (field: string, value: string | number) => {
@@ -257,7 +234,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
               id="price"
               type="number"
               min="0"
-              step="0.01"
+              step="0.50"
               value={product.price}
               onChange={(e) => handleChange("price", Number.parseFloat(e.target.value) || 0)}
               className="rounded-xl border-gray-200 pl-7"
@@ -283,7 +260,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
               id="cost"
               type="number"
               min="0"
-              step="0.01"
+              step="0.50"
               value={product.cost}
               onChange={(e) => handleChange("cost", Number.parseFloat(e.target.value) || 0)}
               className="rounded-xl border-gray-200 pl-7"

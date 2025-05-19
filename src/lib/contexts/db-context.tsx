@@ -55,6 +55,7 @@ export const databaseSchema = {
         name: "TEXT - Nombre del producto.",
         description: "TEXT - Descripción del producto.",
         brand: "TEXT - Marca del producto.",
+        image: "TEXT - URL de la imagen del producto.",
         category: "TEXT - Categoría del producto (ej. bebidas, snacks, limpieza).",
         distributor_id: "UUID - Referencia al distribuidor que provee el producto, si aplica.",
         barcode: "VARCHAR - Código de barras del producto.",
