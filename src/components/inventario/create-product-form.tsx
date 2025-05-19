@@ -15,6 +15,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import CategoryCreateProductModal from "@/components/shared/category_create_product_modal"
+import { NewSelector } from "@/components/ui/new-selector"
 
 interface CreateProductFormProps {
   initialReferrer?: string
@@ -37,10 +38,20 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   const { selectedStore } = useStore()
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
 
+  const defaultCategories = [
+    "Bebidas",
+    "Panadería",
+    "Lácteos",
+    "Higiene",
+    "Snacks",
+    "Abarrotes",
+    "Granos",
+    "Otro"
+  ];
+  const [categories, setCategories] = useState(defaultCategories);
+
   // Obtain referrer from props or search params as fallback
   const referrer = initialReferrer || searchParams.get("referrer") || "/inventario"
-
-  const categories = ["Bebidas", "Panadería", "Lácteos", "Higiene", "Snacks", "Abarrotes", "Otro"]
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -253,20 +264,28 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           <Label htmlFor="category" className="text-lg font-medium">
             Categoría
           </Label>
-          <button
-            type="button"
-            className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-gray-900"
-            onClick={() => setIsCategoryModalOpen(true)}
-          >
-            {category ? category : "Selecciona una opción"}
-          </button>
+          <NewSelector
+            options={categories}
+            value={category}
+            onChange={(val) => {
+              if (val === "Otro") {
+                setIsCategoryModalOpen(true)
+              } else {
+                setCategory(val)
+              }
+            }}
+            placeholder="Selecciona una categoría"
+          />
         </div>
         <CategoryCreateProductModal
           isOpen={isCategoryModalOpen}
           onClose={() => setIsCategoryModalOpen(false)}
-          onConfirm={(cat) => {
-            setCategory(cat)
-            setIsCategoryModalOpen(false)
+          onConfirm={(newCat) => {
+            if (newCat) {
+              setCategories((prev) => [...prev.filter((c) => c !== "Otro"), newCat, "Otro"]);
+              setCategory(newCat);
+            }
+            setIsCategoryModalOpen(false);
           }}
         />
 

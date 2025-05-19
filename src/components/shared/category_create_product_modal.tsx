@@ -29,6 +29,7 @@ export default function CategoryCreateProductModal({
   const [selected, setSelected] = useState<string>("")
   const [isClient, setIsClient] = useState(false)
   const router = useRouter()
+  const [newCategory, setNewCategory] = useState("");
 
   useEffect(() => {
     if (isOpen) setIsVisible(true)
@@ -74,34 +75,31 @@ export default function CategoryCreateProductModal({
         >
           <X className="h-6 w-6 text-gray-500" />
         </button>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Selecciona una categoría</h2>
-        <div className="max-h-60 overflow-y-auto flex flex-col gap-1 mb-4 pr-1">
-          {categories.map((cat) => (
-            <label
-              key={cat}
-              className="flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
-            >
-              <input
-                type="radio"
-                name="category"
-                value={cat}
-                checked={false}
-                onChange={() => handleSelect(cat)}
-                className="form-radio h-4 w-4 text-gray-900 border-gray-300 focus:ring-2 focus:ring-gray-900"
-              />
-              <span className="text-sm text-gray-900 font-medium">{cat}</span>
-            </label>
-          ))}
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Crear nueva categoría</h2>
+        <div className="mb-4">
+          <label htmlFor="new-category" className="block text-sm font-medium text-gray-700 mb-2">Nombre de la Nueva Categoría</label>
+          <input
+            id="new-category"
+            type="text"
+            value={newCategory}
+            onChange={e => setNewCategory(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900"
+            placeholder="Ej: Carnes, Verduras, etc."
+            autoFocus
+          />
         </div>
         <Button
           onClick={() => {
-            router.push("/dashboard/categorias/crear-categoria")
-            onClose()
+            if (newCategory.trim()) {
+              onConfirm(newCategory.trim());
+              setNewCategory("");
+            }
           }}
           variant="primary"
           size="lg"
           fullWidth
           type="button"
+          disabled={!newCategory.trim()}
         >
           Crear nueva categoría
         </Button>
