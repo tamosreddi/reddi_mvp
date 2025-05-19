@@ -69,6 +69,7 @@ export const databaseSchema = {
         product_type: "Texto - Tipo de producto, puede ser global (products) o custom (store_products).",
         quantity: "NUMERIC - Cantidad disponible del producto.",
         unit_price: "NUMERIC - Precio unitario para la tienda.",
+        name_alias: "TEXT - Nombre alternativo del producto para la tienda. Si está presente, se muestra este nombre en vez del nombre original del producto.",
         unit_cost: "NUMERIC - Costo unitario del producto.",
         min_stock: "NUMERIC - Mínima cantidad antes de alertar al usuario.",
         expiration_date: "TIMESTAMPTZ - Fecha de expiración del producto, si aplica.",

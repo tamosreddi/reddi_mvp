@@ -26,7 +26,9 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   // Product state
   const [product, setProduct] = useState({
     id: "",
+    store_product_id: "",
     name: "",
+    name_alias: "",
     quantity: 0,
     price: 0,
     cost: 0,
@@ -34,6 +36,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
     image: "",
     barcode: "",
     description: "",
+    product_type: "",
   })
 
   // Loading state
@@ -83,7 +86,9 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       }
       setProduct({
         id: inventory.inventory_id,
+        store_product_id: inventory.product_type === "custom" ? inventory.product_reference_id : "",
         name: productDetails?.name || "",
+        name_alias: inventory.name_alias || "",
         quantity: inventory.quantity,
         price: Number(inventory.unit_price),
         cost: Number(inventory.unit_cost),
@@ -91,6 +96,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         image: productDetails?.image || "/Groserybasket.png",
         barcode: productDetails?.barcode || "",
         description: productDetails?.description || "",
+        product_type: inventory.product_type,
       });
       setIsLoading(false);
     };
@@ -106,15 +112,69 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   }
 
   // Handle save
-  const handleSave = () => {
-    // In a real app, this would be an API call to update the product
-    toast({
-      title: "Cambios guardados",
-      description: "Los cambios al producto han sido guardados exitosamente",
-      variant: "success",
-    })
-    router.push("/inventario")
-  }
+  const handleSave = async () => {
+    setIsLoading(true);
+    let error = null;
+
+    console.log("PRODUCT STATE:", product);
+
+    if (product.product_type === "global") {
+      // Solo actualiza el alias y los campos de inventario
+      const { error: invError } = await supabase
+        .from("store_inventory")
+        .update({
+          name_alias: product.name_alias,
+          quantity: product.quantity,
+          unit_price: product.price,
+          unit_cost: product.cost,
+        })
+        .eq("inventory_id", product.id);
+
+      error = invError;
+    } else if (product.product_type === "custom") {
+      // Actualiza el producto personalizado
+      const { error: prodError } = await supabase
+        .from("store_products")
+        .update({
+          name: product.name,
+          category: product.category,
+          barcode: product.barcode,
+          description: product.description,
+        })
+        .eq("store_product_id", product.store_product_id);
+
+      // Actualiza el inventario
+      const { error: invError } = await supabase
+        .from("store_inventory")
+        .update({
+          quantity: product.quantity,
+          unit_price: product.price,
+          unit_cost: product.cost,
+        })
+        .eq("inventory_id", product.id);
+
+      console.log("UPDATE store_products error:", prodError);
+      console.log("UPDATE store_inventory error:", invError);
+
+      error = prodError || invError;
+    }
+
+    setIsLoading(false);
+    if (!error) {
+      toast({
+        title: "Cambios guardados",
+        description: "Los cambios al producto han sido guardados exitosamente",
+        variant: "success",
+      });
+      router.push("/inventario");
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Handle delete
   const handleDelete = () => {
@@ -195,14 +255,23 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           <Label htmlFor="name" className="text-base font-bold">
             Nombre del producto <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="name"
-            value={product.name}
-            onChange={(e) => handleChange("name", e.target.value)}
-            className="mt-1 rounded-xl border-gray-200"
-            placeholder="Ej: Refresco Cola 600ml"
-            required
-          />
+          {product.product_type === "custom" ? (
+            <Input
+              id="name"
+              value={product.name}
+              onChange={(e) => handleChange("name", e.target.value)}
+              className="mt-1 rounded-xl border-gray-200"
+              placeholder="Ej: Refresco Cola 600ml"
+            />
+          ) : (
+            <Input
+              id="name_alias"
+              value={product.name_alias !== "" ? product.name_alias : product.name}
+              onChange={(e) => handleChange("name_alias", e.target.value)}
+              className="mt-1 rounded-xl border-gray-200"
+              placeholder={product.name || "Ej: Refresco Cola 600ml"}
+            />
+          )}
         </div>
 
         {/* Available Quantity */}

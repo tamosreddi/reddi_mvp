@@ -63,6 +63,7 @@ export default function ViewInventory() {
           products.push({
             id: item.inventory_id,
             name: product.name,
+            name_alias: item.name_alias,
             category: product.category,
             image: 'image' in product && product.image ? product.image : "/Groserybasket.png",
             quantity: item.quantity,
@@ -148,7 +149,7 @@ export default function ViewInventory() {
       <TopProfileMenu onSearchClick={handleSearchClick} />
 
       {/* Main Content - Add padding at the bottom to prevent products from being hidden */}
-      <div className="flex-1 p-4 space-y-4">
+      <div className="flex-1 p-4 space-y-4 pb-40">
         {/* Reports Button */}
         <Button
           variant="outline"
@@ -218,7 +219,9 @@ export default function ViewInventory() {
                   <img src={item.image || "/Groserybasket.png"} alt={item.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-sm text-gray-900">{item.name}</h3>
+                  <h3 className="font-sm text-gray-900">
+                    {item.name_alias ? item.name_alias : item.name}
+                  </h3>
                   <p className="text-sm font-semibold">${item.price.toFixed(2)}</p>
                   <p className="text-sm text-gray-600">{item.quantity} disponibles</p>
                 </div>
