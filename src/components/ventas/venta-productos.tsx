@@ -164,6 +164,13 @@ export default function ProductSale() {
     router.push("/dashboard/ventas/canasta")
   }
 
+  const handleBackToDashboard = () => {
+    localStorage.removeItem("productCart");
+    localStorage.removeItem("selectedCustomer");
+    // Redirige al dashboard
+    router.push("/dashboard");
+  };
+
   // If showing create product form, render it
   if (showCreateProductForm) {
     return (
@@ -185,7 +192,7 @@ export default function ProductSale() {
       <TopProfileMenu 
         simpleMode={true}
         title="Nueva venta"
-        onBackClick={() => router.push("/dashboard")}
+        onBackClick={handleBackToDashboard}
         rightContent={
           <button 
             className="flex h-10 w-10 items-center justify-center" 

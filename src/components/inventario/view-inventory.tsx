@@ -219,7 +219,7 @@ export default function ViewInventory() {
                   <img src={item.image || "/Groserybasket.png"} alt={item.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-sm text-gray-900">
+                  <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
                     {item.name_alias ? item.name_alias : item.name}
                   </h3>
                   <p className="text-sm font-semibold">${item.price.toFixed(2)}</p>

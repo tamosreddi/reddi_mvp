@@ -82,7 +82,7 @@ export default function TopProfileMenu({
                 <button className="flex items-center focus:outline-none">
                   <div className="text-left">
                     <div className="flex items-center">
-                      <h1 className="text-base font-black text-gray-900 truncate max-w-[200px]">
+                      <h1 className="text-base font-black text-gray-900 truncate max-w-[250px]">
                         {selectedStore ? selectedStore.store_name : "Cargando..."}
                       </h1>
                       <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", isOpen && "rotate-180")} />

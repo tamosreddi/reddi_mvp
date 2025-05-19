@@ -200,14 +200,19 @@ export default function RegisterSale() {
       <TopProfileMenu 
         simpleMode={true}
         title="Nueva venta libre"
-        onBackClick={() => router.push('/dashboard')}
+        onBackClick={() => {
+          setSelectedCustomer(null);
+          localStorage.removeItem("selectedCustomer");
+          localStorage.removeItem("registerSaleForm");
+          router.push('/dashboard');
+        }}
       />
       {/* Form content - with padding to account for fixed header */}
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
         {/* Date and Payment Status */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={date} onChange={setDate} />
-          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagada", credit: "A Crédito" }} className="h-12" />
+          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" />
         </div>
 
         {/* Value Input - Redesigned */}

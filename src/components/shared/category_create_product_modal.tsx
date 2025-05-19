@@ -44,14 +44,11 @@ export default function CategoryCreateProductModal({
   }, [])
 
   const handleSelect = (cat: string) => {
-    setSelected(cat)
+    onConfirm(cat)
+    onClose()
   }
 
-  // Manejar cierre del modal y confirmar selección si existe
-  const handleClose = () => {
-    if (selected) {
-      onConfirm(selected)
-    }
+  const handleCancel = () => {
     onClose()
   }
 
@@ -62,7 +59,7 @@ export default function CategoryCreateProductModal({
       className={`fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 transition-opacity duration-300 ${
         isOpen ? "opacity-100" : "opacity-0"
       }`}
-      onClick={handleClose}
+      onClick={handleCancel}
     >
       <div
         className={`w-full max-w-md rounded-t-2xl bg-white p-6 shadow-lg transition-transform duration-300 relative z-51 ${
@@ -71,7 +68,7 @@ export default function CategoryCreateProductModal({
         onClick={e => e.stopPropagation()}
       >
         <button
-          onClick={handleClose}
+          onClick={handleCancel}
           className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition absolute top-4 right-4 z-10"
           aria-label="Cerrar"
         >
@@ -88,7 +85,7 @@ export default function CategoryCreateProductModal({
                 type="radio"
                 name="category"
                 value={cat}
-                checked={selected === cat}
+                checked={false}
                 onChange={() => handleSelect(cat)}
                 className="form-radio h-4 w-4 text-gray-900 border-gray-300 focus:ring-2 focus:ring-gray-900"
               />
@@ -104,19 +101,17 @@ export default function CategoryCreateProductModal({
           variant="primary"
           size="lg"
           fullWidth
+          type="button"
         >
           Crear nueva categoría
         </Button>
         <Button
-          onClick={() => {
-            setSelected("");
-            onConfirm("");
-            onClose();
-          }}
+          onClick={handleCancel}
           variant="ghost"
           size="sm"
           fullWidth
           className="mt-2 mb-0"
+          type="button"
         >
           Cancelar
         </Button>

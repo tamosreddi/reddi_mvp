@@ -205,6 +205,7 @@ export default function CartView() {
     localStorage.removeItem("selectedCustomer")
 
     setIsPaymentModalOpen(false)
+    localStorage.removeItem("productCart")
     router.push("/")
   }
 
@@ -264,7 +265,7 @@ export default function CartView() {
               )}
               onClick={() => setIsPaid(false)}
             >
-              A crédito
+              Deuda
             </button>
           </div>
         </div>
