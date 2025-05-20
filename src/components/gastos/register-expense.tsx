@@ -20,7 +20,7 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
-import CalendarSelect from "@/components/ui/calendar-select"
+import { DatePicker } from "@/components/ui/DatePicker"
 
 interface Supplier {
   id: number
@@ -29,7 +29,7 @@ interface Supplier {
 }
 
 export default function RegisterExpense() {
-  const [date, setDate] = useState<Date>(new Date())
+  const [date, setDate] = useState<Date | undefined>(new Date())
   const [isPaid, setIsPaid] = useState(true)
   const [expenseCategory, setExpenseCategory] = useState("")
   const [amount, setAmount] = useState("")
@@ -125,7 +125,7 @@ export default function RegisterExpense() {
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
         is_paid: isPaid,
         transaction_subtype: expenseCategory,
-        transaction_date: date.toISOString(),
+        transaction_date: date?.toISOString() || "",
         stakeholder_id: selectedSupplier?.id || null,
         created_by: user.id,
         stakeholder_type: 'supplier',
@@ -174,7 +174,14 @@ export default function RegisterExpense() {
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
         {/* Date and Payment Status on the same line */}
         <div className="grid grid-cols-2 gap-3">
-          <CalendarSelect value={date} onChange={setDate} className="h-12" />
+          <div className="flex flex-col">
+            <label className="text-base font-bold mb-2">Fecha</label>
+            <DatePicker
+              date={date}
+              onDateChange={setDate}
+              className="w-full"
+            />
+          </div>
 
           <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagado", credit: "Deuda" }} className="h-12" />
         </div>

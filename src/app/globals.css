@@ -68,86 +68,24 @@
   }
 }
 
-/* Calendar Styles - New York Theme */
-.rdp {
-  --rdp-cell-size: 40px;
-  --rdp-accent-color: #000 !important;
-  --rdp-background-color: #fff !important;
-  --rdp-accent-color-dark: #000 !important;
-  --rdp-background-color-dark: #fff !important;
-  --rdp-outline: 2px solid var(--rdp-accent-color) !important;
-  --rdp-outline-selected: 2px solid var(--rdp-accent-color) !important;
-  margin: 0;
-}
-
-.rdp-months {
-  display: flex;
-  justify-content: center;
-}
-
-.rdp-month {
-  background-color: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
+/* Sobrescribe el borde azul del día seleccionado de react-day-picker */
 .rdp-day_selected,
 .rdp-day_selected:focus,
-.rdp-day_selected:hover {
-  background: #000 !important;
+.rdp-day_selected:active,
+.rdp-day_selected:focus-visible,
+.rdp-day:focus,
+.rdp-day:active,
+.rdp-day:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.rdp-day_selected {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: #000 !important; /* O el color que prefieras */
   color: #fff !important;
-}
-
-.rdp-day_selected:focus-visible {
-  outline: 2px solid #000 !important;
-  outline-offset: 2px !important;
-}
-
-.rdp-day_selected:hover:not([disabled]):not(.rdp-day_selected) {
-  background: #000 !important;
-  color: #fff !important;
-}
-
-.rdp-day_selected:active:not([disabled]) {
-  background: #000 !important;
-  color: #fff !important;
-}
-
-.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-  background: #f3f4f6 !important;
-}
-
-.rdp-button:focus-visible:not([disabled]) {
-  outline: 2px solid #000 !important;
-  outline-offset: 2px !important;
-}
-
-.rdp-nav_button:hover {
-  background: #f3f4f6 !important;
-}
-
-.rdp-nav_button:focus-visible {
-  outline: 2px solid #000 !important;
-  outline-offset: 2px !important;
-}
-
-.rdp-day_today {
-  font-weight: bold;
-  color: #000 !important;
-}
-
-.rdp-day_selected.rdp-day_today {
-  color: #fff !important;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 640px) {
-  .rdp {
-    --rdp-cell-size: 36px;
-  }
-  
-  .rdp-month {
-    padding: 12px;
-  }
+  border-radius: 0.5rem !important;
 } 
