@@ -59,14 +59,24 @@ export default function PaymentMethodModal({
 
     setIsLoading(true)
     try {
+      // Mapeo de métodos de pago a los valores válidos para la base de datos
+      const paymentMethodMap: Record<string, string> = {
+        efectivo: "cash",
+        tarjeta: "card",
+        transferencia: "transfer",
+        otro: "other"
+      };
+
       const payload = {
         storeId,
         userId: user.id,
-        paymentMethod: selectedMethod,
+        paymentMethod: paymentMethodMap[selectedMethod] || "cash",
         total,
         date: new Date().toISOString(),
         items: cartItems
       }
+
+      console.log("Payload enviado a /api/ventas/registrar-venta:", payload);
 
       const response = await fetch('/api/ventas/registrar-venta', {
         method: 'POST',
@@ -77,6 +87,7 @@ export default function PaymentMethodModal({
       })
 
       const data = await response.json()
+      console.log("Respuesta del backend:", data);
 
       if (!data.success) {
         throw new Error(data.error || 'Error al registrar la venta')

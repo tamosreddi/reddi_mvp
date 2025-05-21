@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Payload incompleto o inválido' }, { status: 400 })
     }
 
+    const totalAmount = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
     // 1. Insertar la transacción
     const { data: transaction, error: transactionError } = await supabase
       .from('transactions')
@@ -21,11 +23,11 @@ export async function POST(req: NextRequest) {
           store_id: storeId,
           user_id: userId,
           payment_method: paymentMethod,
-          total_amount: total,
           transaction_date: date,
           stakeholder_id: customer?.id || null,
           stakeholder_type: customer ? 'client' : null,
           transaction_type: 'sale',
+          total_amount: totalAmount,
           created_at: new Date().toISOString(),
         }
       ])
@@ -44,7 +46,6 @@ export async function POST(req: NextRequest) {
       quantity: item.quantity,
       unit_price: item.unitPrice,
       store_id: storeId,
-      total_amount: item.unitPrice * item.quantity,
       created_at: new Date().toISOString(),
     }))
 

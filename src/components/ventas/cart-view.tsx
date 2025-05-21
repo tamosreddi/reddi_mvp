@@ -13,6 +13,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import PaymentMethodModal from "@/components/shared/payment-method-modal"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { useStore } from "@/lib/contexts/StoreContext"
 
 // Definición de tipos
 interface CartItem {
@@ -57,6 +58,7 @@ export default function CartView() {
   const bottomSectionRef = useRef<HTMLDivElement>(null)
   const mainContentRef = useRef<HTMLDivElement>(null)
   const [paymentMethod, setPaymentMethod] = useState<string>("Efectivo")
+  const { selectedStore } = useStore()
 
   // Measure the height of the bottom section using useLayoutEffect for more accurate measurements
   useLayoutEffect(() => {
@@ -422,7 +424,7 @@ export default function CartView() {
         onConfirm={confirmSaleWithPaymentMethod}
         total={cartTotal}
         cartItems={transformCartItems()}
-        storeId="1" // TODO: Get this from your store context or auth
+        storeId={selectedStore?.store_id || ""}
       />
     </div>
   )
