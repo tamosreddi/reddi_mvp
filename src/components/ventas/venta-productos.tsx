@@ -33,19 +33,7 @@ export default function ProductSale() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("productCart")
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {
-          return []
-        }
-      }
-    }
-    return []
-  })
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<string[]>([])
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
@@ -58,7 +46,7 @@ export default function ProductSale() {
     // 1. Obtener inventario de la tienda (solo productos custom por ahora)
     const { data: inventory, error } = await supabase
       .from("store_inventory")
-      .select("product_reference_id, quantity, unit_price, unit_cost")
+      .select("product_reference_id, quantity, name_alias, unit_price")
       .eq("store_id", selectedStore.store_id)
       .eq("product_type", "custom")
     if (error) {
@@ -103,7 +91,9 @@ export default function ProductSale() {
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
-    localStorage.setItem("productCart", JSON.stringify(cart))
+    if (typeof window !== "undefined") {
+      localStorage.setItem("productCart", JSON.stringify(cart))
+    }
   }, [cart])
 
   // Filtrar productos basados en búsqueda y categoría

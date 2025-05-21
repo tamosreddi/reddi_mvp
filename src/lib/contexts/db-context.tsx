@@ -1,7 +1,5 @@
 // Para definir las tablas en Supabase y que Crusor tenga contexto de las tablas
 
-// Para definir las tablas en Supabase y que Cursor tenga contexto de las tablas
-
 export const databaseSchema = {
     user: {
         user_id: "UUID - Identificador único del usuario, debe ser igual al ID en auth.users.",
@@ -76,11 +74,9 @@ export const databaseSchema = {
         product_reference_id: "UUID - Referencia única al producto, puede ser global (products) o personalizado (store_products).",
         product_type: "Texto - Tipo de producto, puede ser global (products) o custom (store_products).",
         quantity: "NUMERIC - Cantidad disponible del producto.",
-        unit_price: "NUMERIC - Precio unitario para la tienda.",
         name_alias: "TEXT - Nombre alternativo del producto para la tienda. Si está presente, se muestra este nombre en vez del nombre original del producto.",
-        unit_cost: "NUMERIC - Costo unitario del producto.",
         min_stock: "NUMERIC - Mínima cantidad antes de alertar al usuario.",
-        expiration_date: "TIMESTAMPTZ - Fecha de expiración del producto, si aplica.",
+        unit_price: "NUMERIC - Precio unitario del producto.",
         last_change: "TIMESTAMPTZ - Fecha del último cambio de inventario.",
         created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro."
@@ -102,7 +98,21 @@ export const databaseSchema = {
         category: "TEXT - Categoría del producto (ej. alimentos, bebidas, panadería).",
         barcode: "VARCHAR - Código de barras del producto personalizado, si aplica.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
-        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto.",
+        image: "TEXT - URL de la imagen del producto personalizado."
+    },
+    inventory_batches: {
+        batch_id: "UUID - Identificador único del lote de inventario.",
+        store_id: "UUID - Referencia a la tienda que recibió este lote.",
+        product_reference_id: "UUID - Referencia al producto (puede ser global o personalizado).",
+        product_type: "TEXT - Indica si el producto es 'global' (products) o 'custom' (store_products).",
+        quantity_received: "NUMERIC - Cantidad total recibida en el lote.",
+        quantity_remaining: "NUMERIC - Cantidad restante disponible en el lote.",
+        unit_cost: "NUMERIC - Costo unitario por producto en el lote.",
+        received_date: "TIMESTAMPTZ - Fecha en que se registró la recepción del lote.",
+        expiration_date: "TIMESTAMPTZ - Fecha de caducidad del lote, si aplica.",
+        created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro."
     },
     clients: {
         client_id: "UUID - Identificador único del cliente.",
@@ -120,3 +130,16 @@ export const databaseSchema = {
     }
 };
 
+const tablesContext = {
+    user: "Contiene los datos básicos del usuario dueño de una o más tiendas. Incluye nombre, email, RFC, teléfono, y estado de la cuenta.",
+    stores: "Información general de cada tienda, incluyendo el propietario (user_id), nombre, dirección, categoría y datos de contacto.",
+    store_products: "Contiene los productos personalizados creados por cada tienda. Aquí se guarda información como nombre, descripción, marca y categoría.",
+    products: "Catálogo global de productos estándar. Usados por múltiples tiendas para registrar ventas o compras rápidas sin personalización.",
+    store_inventory: "Representa el estado actual del inventario de una tienda. Incluye cantidades disponibles y el producto vinculado (global o personalizado).",
+    inventory_batches: "Registra cada entrada de producto al inventario. Se usa para controlar el stock restante, costos y las fechas de recepción o caducidad.",
+    transaction_item_batches: "Relaciona productos vendidos con los lotes específicos desde los cuales se descuentan las unidades. Permite control preciso del stock.",
+    transactions: "Contiene eventos financieros como ventas, gastos o compras. Es la tabla principal para registrar el flujo económico y enlazar con productos o proveedores.",
+    transaction_items: "Desglosa los productos involucrados en cada transacción. Cada fila representa un producto específico vendido o comprado.",
+    distributors: "Registra información de distribuidores que abastecen productos a las tiendas. Se puede relacionar con productos y transacciones de compra.",
+    clients: "Contiene la información de clientes frecuentes de la tienda. Se usa para registrar ventas personalizadas o historial por cliente."
+  };

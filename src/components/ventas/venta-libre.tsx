@@ -112,14 +112,14 @@ export default function RegisterSale() {
         user_id: user.id,
         store_id: selectedStore.store_id,
         transaction_type: 'income',
-        value: Number(value),
-        quantity: 1,
+        transaction_subtype: 'free_sale',
         transaction_description: concept,
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
         transaction_date: date.toISOString(),
         stakeholder_id: selectedCustomer?.client_id || null,
         stakeholder_type: selectedCustomer ? 'client' : null,
         is_paid: isPaid,
+        total_amount: Number(value),
       }
 
       console.log('Enviando a Supabase:', transactionData)

@@ -84,6 +84,24 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           .single();
         productDetails = data;
       }
+
+      // Obtener el batch más reciente con stock
+      let batchCost = null;
+      if (inventory) {
+        const { data: batches } = await supabase
+          .from("inventory_batches")
+          .select("unit_cost")
+          .eq("product_reference_id", inventory.product_reference_id)
+          .eq("store_id", inventory.store_id)
+          .gt("quantity_remaining", 0)
+          .order("received_date", { ascending: false })
+          .limit(1);
+
+        if (batches && batches.length > 0) {
+          batchCost = batches[0].unit_cost;
+        }
+      }
+
       setProduct({
         id: inventory.inventory_id,
         store_product_id: inventory.product_type === "custom" ? inventory.product_reference_id : "",
@@ -91,7 +109,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         name_alias: inventory.name_alias || "",
         quantity: inventory.quantity,
         price: Number(inventory.unit_price),
-        cost: Number(inventory.unit_cost),
+        cost: batchCost !== null && batchCost !== undefined ? Number(batchCost) : 0,
         category: productDetails?.category || "",
         image: productDetails?.image || "/Groserybasket.png",
         barcode: productDetails?.barcode || "",
@@ -190,6 +208,9 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       router.push("/inventario")
     }
   }
+
+  // Estado para mostrar el tooltip de información de costo
+  const [showCostInfo, setShowCostInfo] = useState(false);
 
   if (isLoading) {
     return (
@@ -319,24 +340,33 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
             <Label htmlFor="cost" className="text-base font-bold">
               Costo
             </Label>
-            <Info className="ml-2 h-5 w-5 text-gray-400" />
+            <button
+              type="button"
+              className="ml-2 focus:outline-none"
+              onClick={() => setShowCostInfo((v) => !v)}
+              tabIndex={0}
+              aria-label="Información sobre el costo"
+            >
+              <Info className="h-5 w-5 text-gray-400" />
+            </button>
           </div>
           <div className="relative mt-1">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <span className="text-gray-500">$</span>
             </div>
-            <Input
-              id="cost"
-              type="number"
-              min="0"
-              step="0.50"
-              value={product.cost}
-              onChange={(e) => handleChange("cost", Number.parseFloat(e.target.value) || 0)}
-              className="rounded-xl border-gray-200 pl-7"
-              placeholder="0"
-            />
+            <div
+              className="rounded-xl border border-gray-200 pl-7 bg-gray-100 text-gray-500 h-12 flex items-center select-none cursor-default w-full"
+              style={{ userSelect: 'none' }}
+            >
+              {product.cost}
+            </div>
           </div>
         </div>
+        {showCostInfo && (
+          <div className="mt-1 mb-2 bg-gray-100 border border-gray-300 rounded p-2 text-xs text-gray-700 max-w-xs">
+            Si se necesita cambiar el costo por unidad de este producto, es recomendable eliminar el producto existente y crear uno nuevo.
+          </div>
+        )}
 
         {/* Category */}
         <div>

@@ -65,6 +65,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Aquí normalmente guardarías el producto en tu base de datos
+    // Para guardar en STORE_PRODUCTS
 
     try {
       const response = await supabase.from("store_products").insert([
@@ -87,7 +88,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           await supabase.from("store_products").update({ image: publicUrl.data.publicUrl }).eq("id", response.data[0].id)
         }
       }
-      // Insertar en store_inventory si el producto fue creado
+      // Insertar en STORE_INVENTORY si el producto fue creado
       if (Array.isArray(response.data) && response.data.length > 0) {
         const store_product_id = response.data[0].store_product_id;
         const invRes = await supabase.from("store_inventory").insert([
@@ -97,10 +98,24 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             product_type: "custom",
             quantity,
             unit_price: price,
-            unit_cost: cost,
           }
         ])
         if (invRes.error) throw invRes.error;
+
+        // Insertar en INVENTORY_BATCHES
+        const batchRes = await supabase.from("inventory_batches").insert([
+          {
+            store_id: selectedStore?.store_id,
+            product_reference_id: store_product_id,
+            product_type: "custom",
+            quantity_received: quantity,
+            quantity_remaining: quantity,
+            unit_cost: cost || null,
+            received_date: new Date().toISOString(),
+            expiration_date: null,
+          }
+        ])
+        if (batchRes.error) throw batchRes.error;
       }
       // Redirigir tras éxito
       if (onSuccess) {
