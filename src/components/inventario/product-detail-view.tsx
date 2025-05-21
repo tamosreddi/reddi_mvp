@@ -125,7 +125,9 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   const handleChange = (field: string, value: string | number) => {
     setProduct((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: (field === "price" || field === "cost" || field === "quantity")
+        ? value === "" ? "" : Number(value)
+        : value,
     }))
   }
 
@@ -133,6 +135,91 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   const handleSave = async () => {
     setIsLoading(true);
     let error = null;
+
+    // 1. Obtener todos los batches activos (quantity_remaining > 0) para este producto y tienda
+    const { data: batches, error: batchFetchError } = await supabase
+      .from("inventory_batches")
+      .select("batch_id, quantity_remaining, unit_cost, received_date")
+      .eq("product_reference_id", product.product_type === "custom" ? product.store_product_id : product.id)
+      .eq("store_id", selectedStore?.store_id)
+      .gt("quantity_remaining", 0)
+      .order("received_date", { ascending: true }); // FIFO
+
+    if (batchFetchError) {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "No se pudieron obtener los batches de inventario.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 2. Calcular el total actual y la diferencia con la cantidad nueva
+    const currentTotal = batches.reduce((sum, b) => sum + Number(b.quantity_remaining), 0);
+    const newTotal = Number(product.quantity);
+    const diff = newTotal - currentTotal;
+
+    // 3. Aquí irá la lógica para aumentar o disminuir inventario según diff
+    //    - Si diff > 0: crear nuevo batch
+    //    - Si diff < 0: restar de batches existentes (FIFO)
+    //    - Si diff === 0: no hacer nada
+
+    if (diff > 0) {
+      // Aumentar inventario: crear un nuevo batch
+      // Usar el último unit_cost conocido (del batch más reciente) o 0 si no hay batches
+      let lastCost = 0;
+      if (batches.length > 0) {
+        lastCost = Number(batches[batches.length - 1].unit_cost) || 0;
+      } else if (product.cost) {
+        lastCost = Number(product.cost) || 0;
+      }
+      const { error: batchInsertError } = await supabase.from("inventory_batches").insert([
+        {
+          store_id: selectedStore?.store_id,
+          product_reference_id: product.product_type === "custom" ? product.store_product_id : product.id,
+          product_type: product.product_type,
+          quantity_received: diff,
+          quantity_remaining: diff,
+          unit_cost: lastCost,
+          received_date: new Date().toISOString(),
+          expiration_date: null,
+        }
+      ]);
+      if (batchInsertError) {
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "No se pudo crear el nuevo batch de inventario.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (diff < 0) {
+      // Reducir inventario: restar unidades de los batches existentes (FIFO)
+      let toRemove = Math.abs(diff);
+      for (const batch of batches) {
+        if (toRemove <= 0) break;
+        const removeQty = Math.min(Number(batch.quantity_remaining), toRemove);
+        const newQty = Number(batch.quantity_remaining) - removeQty;
+        const { error: updateBatchError } = await supabase
+          .from("inventory_batches")
+          .update({ quantity_remaining: newQty })
+          .eq("batch_id", batch.batch_id);
+        if (updateBatchError) {
+          setIsLoading(false);
+          toast({
+            title: "Error",
+            description: "No se pudo actualizar el inventario por lotes.",
+            variant: "destructive",
+          });
+          return;
+        }
+        toRemove -= removeQty;
+      }
+    }
 
     console.log("PRODUCT STATE:", product);
 
@@ -175,6 +262,38 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       console.log("UPDATE store_inventory error:", invError);
 
       error = prodError || invError;
+    }
+
+    // Después de la lógica de batches (aumentar/reducir), actualiza el unit_cost en todos los batches activos
+    const { error: updateCostError } = await supabase
+      .from("inventory_batches")
+      .update({ unit_cost: Number(product.cost) })
+      .eq("product_reference_id", product.product_type === "custom" ? product.store_product_id : product.id)
+      .eq("store_id", selectedStore?.store_id)
+      .gt("quantity_remaining", 0);
+    if (updateCostError) {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el costo en los batches activos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error: priceUpdateError } = await supabase
+      .from("store_inventory")
+      .update({ unit_price: Number(product.price) })
+      .eq("inventory_id", product.id);
+
+    if (priceUpdateError) {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el precio del producto.",
+        variant: "destructive",
+      });
+      return;
     }
 
     setIsLoading(false);
@@ -354,12 +473,16 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <span className="text-gray-500">$</span>
             </div>
-            <div
-              className="rounded-xl border border-gray-200 pl-7 bg-gray-100 text-gray-500 h-12 flex items-center select-none cursor-default w-full"
-              style={{ userSelect: 'none' }}
-            >
-              {product.cost}
-            </div>
+            <Input
+              id="cost"
+              type="number"
+              min="0"
+              step="0.5"
+              value={product.cost}
+              onChange={(e) => handleChange("cost", e.target.value)}
+              className="rounded-xl border-gray-200 pl-7"
+              placeholder="0"
+            />
           </div>
         </div>
         {showCostInfo && (
