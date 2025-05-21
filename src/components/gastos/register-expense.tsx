@@ -3,17 +3,13 @@
 import type React from "react"
 
 import { useState, useMemo, useEffect } from "react"
-import { ArrowLeft, CalendarIcon, Tag, User, Trash2 } from "lucide-react"
+import { Tag, User, Trash2 } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
@@ -119,16 +115,14 @@ export default function RegisterExpense() {
         user_id: user.id,
         store_id: selectedStore.store_id,
         transaction_type: 'expense',
-        value: Number.parseFloat(amount) || 0,
-        quantity: 1,
         transaction_description: description,
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
         is_paid: isPaid,
         transaction_subtype: expenseCategory,
         transaction_date: date?.toISOString() || "",
         stakeholder_id: selectedSupplier?.id || null,
-        created_by: user.id,
         stakeholder_type: 'supplier',
+        total_amount: Number.parseFloat(amount) || 0,
       }
 
       console.log('Sending transaction data:', transactionData)

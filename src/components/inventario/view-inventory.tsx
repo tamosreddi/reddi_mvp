@@ -11,6 +11,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import CreateProductForm from "@/components/inventario/create-product-form"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import SelectProductModal from "@/components/shared/select_product_modal"
 
 export default function ViewInventory() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -22,6 +23,8 @@ export default function ViewInventory() {
   const [loading, setLoading] = useState(true)
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
+  // New state to control whether to show the select product modal
+  const [showSelectProductModal, setShowSelectProductModal] = useState(false)
 
   // Fetch inventory from Supabase
   useEffect(() => {
@@ -238,12 +241,25 @@ export default function ViewInventory() {
       {/* Action Buttons - Fixed at the bottom, above the navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-45 p-4 pb-20 bg-gray-50 border-t border-gray-200 shadow-md">
         <Button
-          onClick={() => router.push("/inventario/crear")}
+          onClick={() => setShowSelectProductModal(true)}
           className="w-full rounded-xl bg-gray-800 p-5 text-lg font-medium text-white hover:bg-gray-700"
         >
           Crear producto
         </Button>
       </div>
+      <SelectProductModal
+        isOpen={showSelectProductModal}
+        onClose={() => setShowSelectProductModal(false)}
+        onSelect={(type) => {
+          setShowSelectProductModal(false)
+          if (type === 'custom') {
+            router.push('/inventario/crear')
+          } else {
+            console.log('Tipo de producto seleccionado:', type)
+            // Aquí puedes manejar la lógica para inventario
+          }
+        }}
+      />
     </div>
   )
 }

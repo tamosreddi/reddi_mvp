@@ -119,7 +119,6 @@ export default function RegisterSale() {
         transaction_date: date.toISOString(),
         stakeholder_id: selectedCustomer?.client_id || null,
         stakeholder_type: selectedCustomer ? 'client' : null,
-        created_by: user.id,
         is_paid: isPaid,
       }
 
