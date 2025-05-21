@@ -231,7 +231,6 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           name_alias: product.name_alias,
           quantity: product.quantity,
           unit_price: product.price,
-          unit_cost: product.cost,
         })
         .eq("inventory_id", product.id);
 
@@ -254,7 +253,6 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         .update({
           quantity: product.quantity,
           unit_price: product.price,
-          unit_cost: product.cost,
         })
         .eq("inventory_id", product.id);
 
@@ -276,6 +274,32 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       toast({
         title: "Error",
         description: "No se pudo actualizar el costo en los batches activos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Sumar los quantity_remaining de todos los batches activos y actualizar store_inventory.quantity
+    const { data: updatedBatches } = await supabase
+      .from("inventory_batches")
+      .select("quantity_remaining")
+      .eq("product_reference_id", product.product_type === "custom" ? product.store_product_id : product.id)
+      .eq("store_id", selectedStore?.store_id)
+      .gt("quantity_remaining", 0);
+
+    const newQuantity = updatedBatches
+      ? updatedBatches.reduce((sum, b) => sum + Number(b.quantity_remaining), 0)
+      : 0;
+
+    const { error: updateInventoryQtyError } = await supabase
+      .from("store_inventory")
+      .update({ quantity: newQuantity })
+      .eq("inventory_id", product.id);
+    if (updateInventoryQtyError) {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la cantidad total en inventario.",
         variant: "destructive",
       });
       return;
