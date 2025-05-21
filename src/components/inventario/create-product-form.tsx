@@ -157,29 +157,6 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           </label>
         </div>
 
-        {/* Barcode */}
-        <div>
-          <Label htmlFor="barcode" className="text-lg font-medium">
-            Código de barras
-          </Label>
-          <div className="mt-1 flex gap-2">
-            <Input
-              id="barcode"
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              className="rounded-xl border-gray-200"
-              placeholder="Escribe el código o escanéalo"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="flex h-14 w-14 items-center justify-center rounded-xl border-gray-200"
-            >
-              <Barcode className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
-
         {/* Product Name */}
         <div>
           <Label htmlFor="name" className="text-lg font-medium">
@@ -192,22 +169,6 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             className="mt-1 rounded-xl border-gray-200"
             placeholder="Ej: Refresco Cola 600ml"
             required
-          />
-        </div>
-
-        {/* Available Quantity */}
-        <div>
-          <Label htmlFor="quantity" className="text-lg font-medium">
-            Cantidad disponible
-          </Label>
-          <Input
-            id="quantity"
-            type="number"
-            min="0"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            className="mt-1 rounded-xl border-gray-200"
-            placeholder="0"
           />
         </div>
 
@@ -259,6 +220,22 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           </div>
         </div>
 
+        {/* Available Quantity */}
+        <div>
+          <Label htmlFor="quantity" className="text-lg font-medium">
+            Cantidad disponible
+          </Label>
+          <Input
+            id="quantity"
+            type="number"
+            min="0"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            className="mt-1 rounded-xl border-gray-200"
+            placeholder="0"
+          />
+        </div>
+
         {/* Category */}
         <div>
           <Label htmlFor="category" className="text-lg font-medium">
@@ -301,6 +278,29 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             className="mt-1 min-h-[100px] rounded-xl border-gray-200"
             placeholder="Añadir una descripción ayudará a tus clientes a elegir más fácil"
           />
+        </div>
+
+        {/* Barcode */}
+        <div>
+          <Label htmlFor="barcode" className="text-lg font-medium">
+            Código de barras (Opcional)
+          </Label>
+          <div className="mt-1 flex gap-2">
+            <Input
+              id="barcode"
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              className="rounded-xl border-gray-200"
+              placeholder="Escribe el código o escanéalo"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="flex h-14 w-14 items-center justify-center rounded-xl border-gray-200"
+            >
+              <Barcode className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
 
         {/* Required Fields Note */}

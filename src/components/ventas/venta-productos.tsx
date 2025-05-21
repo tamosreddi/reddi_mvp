@@ -424,8 +424,12 @@ export default function ProductSale() {
         onClose={() => setShowSelectProductModal(false)}
         onSelect={(type) => {
           setShowSelectProductModal(false)
-          console.log('Tipo de producto seleccionado:', type)
-          // Aquí puedes manejar la lógica para cada tipo
+          if (type === 'custom') {
+            setShowCreateProductForm(true)
+          } else {
+            console.log('Tipo de producto seleccionado:', type)
+            // Aquí puedes manejar la lógica para inventario
+          }
         }}
       />
     </div>
