@@ -1,3 +1,5 @@
+// Para seleccionar la categoria de un producto
+
 "use client"
 
 import { useState, useEffect } from "react"

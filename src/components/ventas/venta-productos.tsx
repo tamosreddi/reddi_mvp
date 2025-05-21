@@ -10,6 +10,7 @@ import CreateProductForm from "@/components/inventario/create-product-form"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
+import SelectProductModal from "@/components/shared/select_product_modal"
 
 // Definición de tipos
 interface Product {
@@ -48,6 +49,8 @@ export default function ProductSale() {
   const [categories, setCategories] = useState<string[]>([])
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
+  // New state to control whether to show the select product modal
+  const [showSelectProductModal, setShowSelectProductModal] = useState(false)
 
   // Nueva función para refrescar inventario
   const fetchInventory = async () => {
@@ -254,7 +257,7 @@ export default function ProductSale() {
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
           {/* New Product Button */}
           <button
-            onClick={handleShowCreateProductForm}
+            onClick={() => setShowSelectProductModal(true)}
             className="flex flex-col items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded-lg aspect-square hover:bg-gray-50 transition-colors group"
           >
             <div className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center mb-1 group-hover:bg-yellow-100 transition-colors">
@@ -277,12 +280,11 @@ export default function ProductSale() {
                   isOutOfStock
                     ? "opacity-70"
                     : "cursor-pointer hover:shadow-md transition-all hover:translate-y-[-2px]",
+                  "p-1 sm:p-2"
                 )}
               >
                 {/* Product Image - Improved sizing and styling */}
-                <div
-                  className={cn("h-20 sm:h-32 bg-gray-200 relative flex items-center justify-center")}
-                >
+                <div className={cn("h-16 sm:h-20 bg-gray-200 flex items-center justify-center")}>
                   <img
                     src={product.image || "/Groserybasket.png"}
                     alt={product.name}
@@ -290,7 +292,7 @@ export default function ProductSale() {
                       `w-full h-full max-h-full max-w-full grayscale ` +
                       (
                         !product.image || product.image === "/Groserybasket.png"
-                          ? "object-contain p-2"
+                          ? "object-contain p-1"
                           : "object-cover"
                       )
                     }
@@ -315,23 +317,25 @@ export default function ProductSale() {
                 )}
 
                 {/* Product Info - Improved layout and spacing */}
-                <div className="p-2 flex-1 flex flex-col justify-between">
+                <div className="p-1 sm:p-2 flex-1 flex flex-col justify-between">
                   {/* Price */}
-                  <p className="text-base font-bold text-gray-900">$ {product.price.toLocaleString()}</p>
+                  <p className="text-xs sm:text-base font-bold text-gray-900 leading-tight">$ {product.price.toLocaleString()}</p>
 
                   {/* Product Name - Ensure it wraps properly */}
-                  <h3 className="font-medium text-sm leading-tight line-clamp-2 min-h-[2.5rem] text-gray-800">
+                  <h3 className="font-normal sm:font-medium text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] text-gray-800">
                     {product.name}
                   </h3>
 
                   {/* Availability */}
                   <p
                     className={cn(
-                      "text-xs mt-1",
-                      product.quantity < 0 ? "text-red-500" : product.quantity === 0 ? "text-red-500" : "text-gray-500",
+                      "text-[10px] sm:text-xs mt-1",
+                      product.quantity <= 0 ? "text-red-500" : "text-gray-500"
                     )}
                   >
-                    {product.quantity} disponibles
+                    <span className="sm:hidden">DISP</span>
+                    <span className="hidden sm:inline">disponibles</span>
+                    : {product.quantity}
                   </p>
 
                   {/* Add/Remove Buttons */}
@@ -413,6 +417,17 @@ export default function ProductSale() {
           </div>
         </div>
       )}
+
+      {/* Select Product Modal */}
+      <SelectProductModal
+        isOpen={showSelectProductModal}
+        onClose={() => setShowSelectProductModal(false)}
+        onSelect={(type) => {
+          setShowSelectProductModal(false)
+          console.log('Tipo de producto seleccionado:', type)
+          // Aquí puedes manejar la lógica para cada tipo
+        }}
+      />
     </div>
   )
 }

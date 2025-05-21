@@ -32,7 +32,7 @@ export default function PaymentMethodModal({ isOpen, onClose, onConfirm, total }
   const handleConfirm = () => {
     // Skip the onConfirm callback to avoid any additional confirmations
     // Just navigate directly to the confirmation page
-    router.push(`/venta/confirmacion?total=${total}&paymentMethod=${selectedMethod}`)
+    router.push(`/dashboard/ventas/confirmacion?total=${total}&paymentMethod=${selectedMethod}`)
   }
 
   if (!isVisible) return null

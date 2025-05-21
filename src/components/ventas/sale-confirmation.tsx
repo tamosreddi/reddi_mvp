@@ -54,7 +54,7 @@ export default function SaleConfirmation({
         <h1 className="text-2xl font-bold mb-4">¡Creaste una venta!</h1>
 
         {/* Subtitle - Improved spacing and reduced font size */}
-        <p className="text-lg mb-10">Se registró en tu balance por un valor de {total} US$.</p>
+        {/* <p className="text-lg mb-10">Se registró en tu balance por un valor de {total} US$.</p> */}
 
         {/* Sale name input - Improved styling */}
         <div className="w-full max-w-md mb-16">
