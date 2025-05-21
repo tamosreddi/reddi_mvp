@@ -10,7 +10,7 @@ import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/lib/hooks/use-toast"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
@@ -21,7 +21,7 @@ interface ProductDetailViewProps {
 
 export default function ProductDetailView({ productId }: ProductDetailViewProps) {
   const router = useRouter()
-  const { toast } = useToast()
+  const toast = useToast()
 
   // Product state
   const [product, setProduct] = useState({
@@ -57,11 +57,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         .eq("inventory_id", productId)
         .single();
       if (invError || !inventory) {
-        toast({
-          title: "Producto no encontrado",
-          description: "No se pudo encontrar el producto solicitado",
-          variant: "destructive",
-        });
+        toast.error("Producto no encontrado");
         router.push("/inventario");
         setIsLoading(false);
         return;
@@ -126,7 +122,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
     setProduct((prev) => ({
       ...prev,
       [field]: (field === "price" || field === "cost" || field === "quantity")
-        ? value === "" ? "" : Number(value)
+        ? Number(value)
         : value,
     }))
   }
@@ -147,11 +143,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
     if (batchFetchError) {
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "No se pudieron obtener los batches de inventario.",
-        variant: "destructive",
-      });
+      toast.error("No se pudieron obtener los batches de inventario.");
       return;
     }
 
@@ -188,11 +180,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       ]);
       if (batchInsertError) {
         setIsLoading(false);
-        toast({
-          title: "Error",
-          description: "No se pudo crear el nuevo batch de inventario.",
-          variant: "destructive",
-        });
+        toast.error("No se pudo crear el nuevo batch de inventario.");
         return;
       }
     }
@@ -210,11 +198,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           .eq("batch_id", batch.batch_id);
         if (updateBatchError) {
           setIsLoading(false);
-          toast({
-            title: "Error",
-            description: "No se pudo actualizar el inventario por lotes.",
-            variant: "destructive",
-          });
+          toast.error("No se pudo actualizar el inventario por lotes.");
           return;
         }
         toRemove -= removeQty;
@@ -271,11 +255,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       .gt("quantity_remaining", 0);
     if (updateCostError) {
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el costo en los batches activos.",
-        variant: "destructive",
-      });
+      toast.error("No se pudo actualizar el costo en los batches activos.");
       return;
     }
 
@@ -297,11 +277,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       .eq("inventory_id", product.id);
     if (updateInventoryQtyError) {
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la cantidad total en inventario.",
-        variant: "destructive",
-      });
+      toast.error("No se pudo actualizar la cantidad total en inventario.");
       return;
     }
 
@@ -312,28 +288,16 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
     if (priceUpdateError) {
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el precio del producto.",
-        variant: "destructive",
-      });
+      toast.error("No se pudo actualizar el precio del producto.");
       return;
     }
 
     setIsLoading(false);
     if (!error) {
-      toast({
-        title: "Cambios guardados",
-        description: "Los cambios al producto han sido guardados exitosamente",
-        variant: "success",
-      });
+      toast.success("Cambios guardados");
       router.push("/inventario");
     } else {
-      toast({
-        title: "Error",
-        description: "No se pudieron guardar los cambios. Intenta de nuevo.",
-        variant: "destructive",
-      });
+      toast.error("No se pudieron guardar los cambios. Intenta de nuevo.");
     }
   };
 
@@ -343,11 +307,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
     const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este producto?")
 
     if (confirmDelete) {
-      toast({
-        title: "Producto eliminado",
-        description: "El producto ha sido eliminado exitosamente",
-        variant: "success",
-      })
+      toast.success("Producto eliminado");
       router.push("/inventario")
     }
   }
@@ -447,9 +407,10 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
             id="quantity"
             type="number"
             min="0"
+            step="1"
             value={product.quantity}
-            onChange={(e) => handleChange("quantity", Number.parseInt(e.target.value) || 0)}
-            className="mt-1 rounded-xl border-gray-200"
+            onChange={(e) => handleChange("quantity", Number(e.target.value))}
+            className="rounded-xl border-gray-200"
             placeholder="0"
           />
         </div>

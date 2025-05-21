@@ -20,6 +20,8 @@ interface Product {
   quantity: number
   category: string
   image: string
+  productId: string
+  productType: string
 }
 
 interface CartItem extends Product {
@@ -78,6 +80,8 @@ export default function ProductSale() {
         quantity: Number(inv.quantity) || 0,
         category: prod?.category || "Sin categoría",
         image: prod?.image || "/Groserybasket.png",
+        productId: inv.product_reference_id.toString(),
+        productType: "custom"
       }
     })
     setProducts(productsMapped)
@@ -117,7 +121,12 @@ export default function ProductSale() {
         )
       } else {
         // Si no existe, añadirlo con cantidad 1
-        return [...prevCart, { ...product, cartQuantity: 1 }]
+        return [...prevCart, { 
+          ...product, 
+          cartQuantity: 1,
+          productId: product.id.toString(),
+          productType: "custom"
+        }]
       }
     })
   }

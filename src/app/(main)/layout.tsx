@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 import BottomNavigation from "@/components/shared/bottom-navigation";
 import { StoreProvider } from "@/lib/contexts/StoreContext";
+import { Toaster } from "sonner";
 
 // Lista de rutas donde SÍ quieres mostrar el navigation menu
 const navigationVisibleRoutes = [
@@ -27,6 +28,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <StoreProvider>
       {children}
       {showNavigation && <BottomNavigation />}
+      <Toaster />
     </StoreProvider>
   );
 }

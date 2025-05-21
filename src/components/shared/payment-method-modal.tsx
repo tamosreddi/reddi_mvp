@@ -5,18 +5,40 @@ import { X } from "lucide-react"
 import Button from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/hooks/useAuth"
+import { toast } from "sonner"
+import type { AuthContextType } from "@/lib/contexts/AuthContext"
+
+interface CartItem {
+  productId: string
+  productType: string
+  quantity: number
+  unitPrice: number
+}
 
 interface PaymentMethodModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: (method: string) => void
   total: number
+  cartItems: CartItem[]
+  storeId: string
 }
 
-export default function PaymentMethodModal({ isOpen, onClose, onConfirm, total }: PaymentMethodModalProps) {
+export default function PaymentMethodModal({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  total, 
+  cartItems,
+  storeId 
+}: PaymentMethodModalProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState("efectivo")
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const auth = useAuth() as AuthContextType
+  const user = auth.user
 
   useEffect(() => {
     if (isOpen) {
@@ -29,10 +51,45 @@ export default function PaymentMethodModal({ isOpen, onClose, onConfirm, total }
     }
   }, [isOpen])
 
-  const handleConfirm = () => {
-    // Skip the onConfirm callback to avoid any additional confirmations
-    // Just navigate directly to the confirmation page
-    router.push(`/dashboard/ventas/confirmacion?total=${total}&paymentMethod=${selectedMethod}`)
+  const handleConfirm = async () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para realizar una venta")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const payload = {
+        storeId,
+        userId: user.id,
+        paymentMethod: selectedMethod,
+        total,
+        date: new Date().toISOString(),
+        items: cartItems
+      }
+
+      const response = await fetch('/api/ventas/registrar-venta', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Error al registrar la venta')
+      }
+
+      toast.success("Venta registrada exitosamente")
+      router.push(`/dashboard/ventas/confirmacion?total=${total}&paymentMethod=${selectedMethod}&transactionId=${data.transactionId}`)
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al registrar la venta')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isVisible) return null
@@ -105,8 +162,9 @@ export default function PaymentMethodModal({ isOpen, onClose, onConfirm, total }
           size="lg"
           fullWidth
           variant="primary"
+          disabled={isLoading}
         >
-          CREAR VENTA
+          {isLoading ? "PROCESANDO..." : "CREAR VENTA"}
         </Button>
       </div>
     </div>

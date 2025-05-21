@@ -23,6 +23,8 @@ interface CartItem {
   cartQuantity: number
   category: string
   image?: string
+  productId: string
+  productType: string
 }
 
 interface Customer {
@@ -207,6 +209,16 @@ export default function CartView() {
     setIsPaymentModalOpen(false)
     localStorage.removeItem("productCart")
     router.push("/")
+  }
+
+  // Transform cart items to match the API payload format
+  const transformCartItems = () => {
+    return cartItems.map(item => ({
+      productId: item.productId,
+      productType: item.productType,
+      quantity: item.cartQuantity,
+      unitPrice: item.price
+    }))
   }
 
   return (
@@ -409,6 +421,8 @@ export default function CartView() {
         onClose={closePaymentModal}
         onConfirm={confirmSaleWithPaymentMethod}
         total={cartTotal}
+        cartItems={transformCartItems()}
+        storeId="1" // TODO: Get this from your store context or auth
       />
     </div>
   )

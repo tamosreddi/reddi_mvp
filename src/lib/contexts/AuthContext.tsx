@@ -88,3 +88,5 @@ export function useAuth() {
 }
 
 export { AuthContext };
+
+export type { AuthContextType };
