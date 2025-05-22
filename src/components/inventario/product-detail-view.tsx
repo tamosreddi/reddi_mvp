@@ -47,7 +47,10 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
   // Load product data from Supabase
   const { selectedStore } = useStore();
+  console.log("productId recibido:", productId);
+  console.log("selectedStore:", selectedStore);
   useEffect(() => {
+    if (!productId || !selectedStore?.store_id) return;
     const fetchProduct = async () => {
       setIsLoading(true);
       // 1. Buscar el registro de inventario
@@ -56,56 +59,44 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         .select("*")
         .eq("inventory_id", productId)
         .single();
+      console.log("Inventario encontrado:", inventory, "Error:", invError);
+
       if (invError || !inventory) {
         toast.error("Producto no encontrado");
         router.push("/inventario");
         setIsLoading(false);
         return;
       }
+
+      // 2. Buscar detalles secundarios (no bloqueante)
       let productDetails = null;
       if (inventory.product_type === "custom") {
-        // Buscar en store_products
         const { data } = await supabase
           .from("store_products")
           .select("name, category, image, barcode, description")
           .eq("store_product_id", inventory.product_reference_id)
           .single();
         productDetails = data;
+        console.log("Detalles store_products:", productDetails);
       } else if (inventory.product_type === "global") {
-        // Buscar en products
         const { data } = await supabase
           .from("products")
           .select("name, category, brand, barcode, description, image")
           .eq("product_id", inventory.product_reference_id)
           .single();
         productDetails = data;
+        console.log("Detalles products:", productDetails);
       }
 
-      // Obtener el batch más reciente con stock
-      let batchCost = null;
-      if (inventory) {
-        const { data: batches } = await supabase
-          .from("inventory_batches")
-          .select("unit_cost")
-          .eq("product_reference_id", inventory.product_reference_id)
-          .eq("store_id", inventory.store_id)
-          .gt("quantity_remaining", 0)
-          .order("received_date", { ascending: false })
-          .limit(1);
-
-        if (batches && batches.length > 0) {
-          batchCost = batches[0].unit_cost;
-        }
-      }
-
+      // 3. Muestra el producto aunque productDetails sea null
       setProduct({
         id: inventory.inventory_id,
         store_product_id: inventory.product_type === "custom" ? inventory.product_reference_id : "",
-        name: productDetails?.name || "",
+        name: productDetails?.name || "Sin nombre",
         name_alias: inventory.name_alias || "",
         quantity: inventory.quantity,
         price: Number(inventory.unit_price),
-        cost: batchCost !== null && batchCost !== undefined ? Number(batchCost) : 0,
+        cost: 0, // calcula si es necesario
         category: productDetails?.category || "",
         image: productDetails?.image || "/Groserybasket.png",
         barcode: productDetails?.barcode || "",
@@ -115,7 +106,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       setIsLoading(false);
     };
     fetchProduct();
-  }, [productId, router, toast, selectedStore]);
+  }, [productId, selectedStore]);
 
   // Handle form input changes
   const handleChange = (field: string, value: string | number) => {

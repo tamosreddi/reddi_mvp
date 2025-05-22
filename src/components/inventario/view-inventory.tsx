@@ -64,7 +64,7 @@ export default function ViewInventory() {
         }
         if (product) {
           products.push({
-            id: item.inventory_id,
+            id: String(item.inventory_id),
             name: product.name,
             name_alias: item.name_alias,
             category: product.category,
@@ -115,7 +115,7 @@ export default function ViewInventory() {
   }
 
   // Navigate to product detail view
-  const navigateToProductDetail = (productId: number) => {
+  const navigateToProductDetail = (productId: string) => {
     router.push(`/inventario/${productId}`)
   }
 
@@ -216,7 +216,7 @@ export default function ViewInventory() {
               <button
                 key={item.id}
                 className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left hover:bg-gray-50"
-                onClick={() => navigateToProductDetail(item.id)}
+                onClick={() => navigateToProductDetail(String(item.id))}
               >
                 <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
                   <img src={item.image || "/Groserybasket.png"} alt={item.name} className="h-full w-full object-cover" />
