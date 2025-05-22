@@ -88,7 +88,20 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         console.log("Detalles products:", productDetails);
       }
 
-      // 3. Muestra el producto aunque productDetails sea null
+      // 3. Buscar el batch más reciente para este producto y tienda
+      let lastCost = 0;
+      const { data: batches } = await supabase
+        .from("inventory_batches")
+        .select("unit_cost, received_date")
+        .eq("product_reference_id", inventory.product_reference_id)
+        .eq("store_id", selectedStore.store_id)
+        .order("received_date", { ascending: false })
+        .limit(1);
+      if (batches && batches.length > 0) {
+        lastCost = Number(batches[0].unit_cost) || 0;
+      }
+
+      // 4. Muestra el producto aunque productDetails sea null
       setProduct({
         id: inventory.inventory_id,
         store_product_id: inventory.product_type === "custom" ? inventory.product_reference_id : "",
@@ -96,7 +109,9 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         name_alias: inventory.name_alias || "",
         quantity: inventory.quantity,
         price: Number(inventory.unit_price),
-        cost: 0, // calcula si es necesario
+        cost: inventory.unit_cost !== undefined && inventory.unit_cost !== null && inventory.unit_cost !== 0
+          ? Number(inventory.unit_cost)
+          : lastCost,
         category: productDetails?.category || "",
         image: productDetails?.image || "/Groserybasket.png",
         barcode: productDetails?.barcode || "",

@@ -25,6 +25,7 @@ export default function ViewInventory() {
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
   // New state to control whether to show the select product modal
   const [showSelectProductModal, setShowSelectProductModal] = useState(false)
+  const [totalCost, setTotalCost] = useState(0)
 
   // Fetch inventory from Supabase
   useEffect(() => {
@@ -43,8 +44,12 @@ export default function ViewInventory() {
       }
       // 2. For each inventory item, get product details
       const products: any[] = []
+      let totalCost = 0
+
       for (const item of inventoryRows) {
         let product = null
+        let lastCost = 0
+
         if (item.product_type === "custom") {
           // Custom product
           const { data } = await supabase
@@ -62,6 +67,19 @@ export default function ViewInventory() {
             .single()
           product = data
         }
+
+        // Buscar el batch más reciente para este producto y tienda
+        const { data: batches } = await supabase
+          .from("inventory_batches")
+          .select("unit_cost, received_date")
+          .eq("product_reference_id", item.product_reference_id)
+          .eq("store_id", selectedStore.store_id)
+          .order("received_date", { ascending: false })
+          .limit(1)
+        if (batches && batches.length > 0) {
+          lastCost = Number(batches[0].unit_cost) || 0
+        }
+
         if (product) {
           products.push({
             id: String(item.inventory_id),
@@ -71,11 +89,13 @@ export default function ViewInventory() {
             image: 'image' in product && product.image ? product.image : "/Groserybasket.png",
             quantity: item.quantity,
             price: Number(item.unit_price),
-            cost: Number(item.unit_cost),
+            cost: lastCost,
           })
+          totalCost += lastCost * item.quantity
         }
       }
       setInventory(products)
+      setTotalCost(totalCost)
       setLoading(false)
     }
     fetchInventory()
@@ -93,9 +113,6 @@ export default function ViewInventory() {
 
   // Calculate total references (unique products)
   const totalReferences = inventory.length
-
-  // Calculate total cost of inventory
-  const totalCost = inventory.reduce((sum, item) => sum + item.cost * item.quantity, 0)
 
   // Handle report generation
   const handleGenerateReport = () => {

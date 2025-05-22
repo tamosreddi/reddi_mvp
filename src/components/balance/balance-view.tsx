@@ -223,7 +223,10 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
 
   // Calculate totals for the selected date
   const incomesTotal = incomeTransactions
-    .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate))
+    .filter((t) => (
+      t.transaction_type === "income" ||
+      (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+    ) && isSameDay(new Date(t.transaction_date), selectedDate))
     .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
 
   const expensesTotal = incomeTransactions
