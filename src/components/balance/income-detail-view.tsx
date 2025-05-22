@@ -25,6 +25,8 @@ interface IncomeDetailProps {
 
 export default function IncomeDetailView({ transaction, onClose }: IncomeDetailProps) {
   const [clientName, setClientName] = useState<string | null>(null)
+  const [products, setProducts] = useState<any[]>([])
+
   useEffect(() => {
     const fetchClient = async () => {
       if (transaction.stakeholder_type === 'client' && transaction.stakeholder_id) {
@@ -41,6 +43,23 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
     }
     fetchClient()
   }, [transaction.stakeholder_type, transaction.stakeholder_id])
+
+  useEffect(() => {
+    // Traer productos vendidos para esta transacción
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('transaction_items')
+        .select('product_name, quantity, unit_price')
+        .eq('transaction_id', transaction.transaction_id)
+      if (!error && data && data.length > 0) {
+        setProducts(data)
+      } else {
+        setProducts([])
+      }
+    }
+    fetchProducts()
+  }, [transaction.transaction_id])
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Header */}
@@ -102,6 +121,31 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
             </div>
           </div>
         </div>
+
+        {/* Front-end Listado de productos vendidos */}
+        {products.length > 0 && (
+          <div className="bg-white rounded-lg p-4 shadow-sm mt-4">
+            <div className="flex items-center mb-3">
+              <span className="bg-yellow-100 rounded-full p-2 mr-2">
+                <FileText className="h-5 w-5 text-yellow-600" />
+              </span>
+              <h3 className="font-bold text-gray-800 text-base">Listado de productos</h3>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {products.map((prod, idx) => (
+                <div key={idx} className="flex justify-between items-center py-2">
+                  <div>
+                    <div className="font-medium text-gray-900">{prod.product_name || 'Producto'}</div>
+                    <div className="text-xs text-gray-500">{prod.quantity} und · Precio U. {Number(prod.unit_price).toLocaleString('es-MX', { style: 'currency', currency: 'USD' })}</div>
+                  </div>
+                  <div className="text-right font-bold text-gray-800">
+                    {Number(prod.unit_price * prod.quantity).toLocaleString('es-MX', { style: 'currency', currency: 'USD' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
