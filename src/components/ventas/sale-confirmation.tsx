@@ -52,6 +52,7 @@ export default function SaleConfirmation({
     }
     onClose();
     localStorage.removeItem("productCart");
+    localStorage.removeItem("selectedCustomer");
     router.push("/balance")
   }
 
@@ -75,6 +76,7 @@ export default function SaleConfirmation({
     }
     onClose();
     localStorage.removeItem("productCart");
+    localStorage.removeItem("selectedCustomer");
     router.push("/balance?showSaleModal=true")
   }
 
