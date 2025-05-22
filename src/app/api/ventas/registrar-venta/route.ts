@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
           stakeholder_id: customer?.id || null,
           stakeholder_type: customer ? 'client' : null,
           transaction_type: 'sale',
+          transaction_subtype: 'products-sale',
           total_amount: totalAmount,
           created_at: new Date().toISOString(),
         }
@@ -38,16 +39,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: transactionError.message }, { status: 500 })
     }
 
-    // 2. Insertar los productos vendidos en transaction_items
-    const transactionItemsPayload = items.map((item: any) => ({
-      transaction_id: transaction.transaction_id,
-      product_reference_id: item.productId,
-      product_type: item.productType,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      store_id: storeId,
-      created_at: new Date().toISOString(),
-    }))
+    // 2. Insertar los productos vendidos en transaction_items (con product_name)
+    const transactionItemsPayload = [];
+    for (const item of items) {
+      let productName = "";
+      if (item.productType === "custom") {
+        // Buscar en store_products
+        const { data } = await supabase
+          .from("store_products")
+          .select("name")
+          .eq("store_product_id", item.productId)
+          .single();
+        productName = data?.name || "";
+      } else {
+        // Buscar en products
+        const { data } = await supabase
+          .from("products")
+          .select("name")
+          .eq("product_id", item.productId)
+          .single();
+        productName = data?.name || "";
+      }
+
+      transactionItemsPayload.push({
+        transaction_id: transaction.transaction_id,
+        product_reference_id: item.productId,
+        product_type: item.productType,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        store_id: storeId,
+        created_at: new Date().toISOString(),
+        product_name: productName,
+      });
+    }
 
     const { data: transactionItems, error: transactionItemsError } = await supabase
       .from('transaction_items')
