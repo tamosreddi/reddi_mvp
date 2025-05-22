@@ -6,6 +6,9 @@ import { ArrowLeft, Calendar, CreditCard, Grid, FileText, Edit, Trash2 } from "l
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import DeleteSaleModal from "@/components/shared/delete-sale-modal"
+import { useStore } from "@/lib/contexts/StoreContext"
+import { useState } from "react"
 
 interface ExpenseDetailProps {
   expense: {
@@ -21,6 +24,9 @@ interface ExpenseDetailProps {
 }
 
 export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const { selectedStore } = useStore();
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Header */}
@@ -104,13 +110,43 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
           </div>
           <span className="text-sm">Editar</span>
         </button>
-        <button className="flex flex-col items-center justify-center py-4 text-red-600">
+        <button
+          className="flex flex-col items-center justify-center py-4 text-red-600"
+          onClick={() => setShowDeleteModal(true)}
+        >
           <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-1">
             <Trash2 className="h-5 w-5" />
           </div>
           <span className="text-sm">Eliminar</span>
         </button>
       </div>
+
+      <DeleteSaleModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          if (!selectedStore?.store_id) {
+            alert("No se pudo obtener la tienda actual.");
+            return;
+          }
+          try {
+            const res = await fetch("/api/ventas/revertir-gasto", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ transaction_id: expense.transaction_id, store_id: selectedStore.store_id })
+            });
+            const data = await res.json();
+            if (data.success) {
+              setShowDeleteModal(false);
+              onClose();
+            } else {
+              alert(data.error || "No se pudo eliminar el gasto.");
+            }
+          } catch (err) {
+            alert("Error de red al eliminar el gasto.");
+          }
+        }}
+      />
     </div>
   )
 }
