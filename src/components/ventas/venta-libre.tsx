@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, isToday, isTomorrow } from "date-fns"
 import { es } from "date-fns/locale"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/lib/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
@@ -41,7 +41,7 @@ export default function RegisterSale() {
   const [paymentMethod, setPaymentMethod] = useState("efectivo")
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
-  const { toast } = useToast()
+  const toast = useToast()
   const { user } = useAuth()
   const { selectedStore } = useStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -138,11 +138,7 @@ export default function RegisterSale() {
       localStorage.removeItem("selectedCustomer")
       localStorage.removeItem("registerSaleForm")
 
-      toast({
-        title: "Venta registrada con éxito",
-        description: `Ingreso: $${value}`,
-        variant: "success",
-      })
+      toast.success(`Ingreso: $${value}`)
 
       setValue("")
       setConcept("")
@@ -152,11 +148,7 @@ export default function RegisterSale() {
       router.push("/balance?tab=ingresos")
     } catch (err: any) {
       console.error('Error en handleSubmit:', err)
-      toast({
-        title: "Error",
-        description: err.message || "No se pudo registrar la venta",
-        variant: "destructive",
-      })
+      toast.error(err.message || "No se pudo registrar la venta")
     } finally {
       setIsLoading(false)
     }

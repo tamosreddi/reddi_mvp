@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/lib/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
@@ -35,7 +35,7 @@ export default function RegisterExpense() {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
+  const toast = useToast()
   const { user } = useAuth()
   const { selectedStore } = useStore()
 
@@ -140,21 +140,13 @@ export default function RegisterExpense() {
       }
 
       // Mostrar mensaje de éxito
-      toast({
-        title: "Gasto creado con éxito",
-        description: "Gasto básico registrado",
-        variant: "success",
-      })
+      toast.success("Gasto creado con éxito")
 
       // Navegar a la página de balance
       router.push("/balance?tab=egresos")
     } catch (err: any) {
       console.error('Error in handleSubmit:', err)
-      toast({
-        title: "Error",
-        description: err.message || "No se pudo crear el gasto",
-        variant: "destructive",
-      })
+      toast.error(err.message || "No se pudo crear el gasto")
     } finally {
       setIsLoading(false)
     }

@@ -95,10 +95,25 @@ export default function ProductSale() {
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && cart.length > 0) {
+      console.log("[venta-productos] Guardando carrito en localStorage:", cart)
       localStorage.setItem("productCart", JSON.stringify(cart))
     }
   }, [cart])
+
+  // Cargar carrito desde localStorage al montar
+  useEffect(() => {
+    const savedCart = localStorage.getItem("productCart")
+    console.log("[venta-productos] Cargando carrito desde localStorage:", savedCart)
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart)
+        setCart(parsedCart)
+      } catch (e) {
+        console.error("Error parsing cart from localStorage:", e)
+      }
+    }
+  }, [])
 
   // Filtrar productos basados en búsqueda y categoría
   const filteredProducts = products.filter((product) => {

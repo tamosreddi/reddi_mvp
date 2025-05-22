@@ -16,6 +16,13 @@ interface CartItem {
   unitPrice: number
 }
 
+interface Customer {
+  id: number
+  client_id: string
+  name: string
+  notes?: string
+}
+
 interface PaymentMethodModalProps {
   isOpen: boolean
   onClose: () => void
@@ -23,6 +30,7 @@ interface PaymentMethodModalProps {
   total: number
   cartItems: CartItem[]
   storeId: string
+  customer?: Customer | null
 }
 
 export default function PaymentMethodModal({ 
@@ -31,7 +39,8 @@ export default function PaymentMethodModal({
   onConfirm, 
   total, 
   cartItems,
-  storeId 
+  storeId,
+  customer
 }: PaymentMethodModalProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState("efectivo")
@@ -73,7 +82,8 @@ export default function PaymentMethodModal({
         paymentMethod: paymentMethodMap[selectedMethod] || "cash",
         total,
         date: new Date().toISOString(),
-        items: cartItems
+        items: cartItems,
+        customer: customer ? { id: customer.client_id } : null
       }
 
       console.log("Payload enviado a /api/ventas/registrar-venta:", payload);

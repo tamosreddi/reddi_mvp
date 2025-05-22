@@ -30,6 +30,7 @@ interface CartItem {
 
 interface Customer {
   id: number
+  client_id: string
   name: string
   notes?: string
 }
@@ -100,6 +101,7 @@ export default function CartView() {
   useEffect(() => {
     setIsLoading(true)
     const savedCart = localStorage.getItem("productCart")
+    console.log("[cart-view] Cargando carrito desde localStorage:", savedCart)
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart)
@@ -114,10 +116,15 @@ export default function CartView() {
   // Load selected customer from localStorage
   useEffect(() => {
     const savedCustomer = localStorage.getItem("selectedCustomer")
+    console.log("[cart-view] useEffect: localStorage.getItem('selectedCustomer'):", savedCustomer)
     if (savedCustomer) {
       try {
         const parsedCustomer = JSON.parse(savedCustomer)
+        if (!parsedCustomer.client_id && parsedCustomer.id) {
+          parsedCustomer.client_id = parsedCustomer.id
+        }
         setSelectedCustomer(parsedCustomer)
+        console.log("[cart-view] setSelectedCustomer:", parsedCustomer)
       } catch (e) {
         console.error("Error parsing customer from localStorage:", e)
       }
@@ -126,7 +133,8 @@ export default function CartView() {
 
   // Save cart to localStorage when it changes
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && cartItems.length > 0) {
+      console.log("[cart-view] Guardando carrito en localStorage:", cartItems)
       localStorage.setItem("productCart", JSON.stringify(cartItems))
     }
   }, [cartItems, isLoading])
@@ -187,6 +195,7 @@ export default function CartView() {
   const removeSelectedCustomer = () => {
     setSelectedCustomer(null)
     localStorage.removeItem("selectedCustomer")
+    console.log("[cart-view] removeSelectedCustomer: cliente eliminado del estado y localStorage")
   }
 
   // Open payment modal
@@ -201,12 +210,14 @@ export default function CartView() {
 
   // Confirm sale with payment method
   const confirmSaleWithPaymentMethod = (paymentMethod: string) => {
-    // Here you would typically save the sale with the customer to your database
+    // Aquí normalmente guardarías la venta en la base de datos
     const customerInfo = selectedCustomer ? `para ${selectedCustomer.name}` : ""
     alert(`Venta ${customerInfo} confirmada con éxito! Método de pago: ${paymentMethod}`)
 
-    // Clear selected customer
+    // Limpiar cliente seleccionado
+    setSelectedCustomer(null)
     localStorage.removeItem("selectedCustomer")
+    console.log("[cart-view] confirmSaleWithPaymentMethod: cliente eliminado del estado y localStorage")
 
     setIsPaymentModalOpen(false)
     localStorage.removeItem("productCart")
@@ -223,13 +234,23 @@ export default function CartView() {
     }))
   }
 
+  // Función para regresar al dashboard y limpiar el cliente seleccionado
+  const handleBack = (destination: string) => {
+    if (destination === "/dashboard") {
+      setSelectedCustomer(null)
+      localStorage.removeItem("selectedCustomer")
+      localStorage.removeItem("productCart")
+    }
+    router.push(destination)
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
       <TopProfileMenu
         simpleMode={true}
         title="Canasta"
-        onBackClick={() => router.push("/dashboard/ventas/productos")}
+        onBackClick={() => handleBack("/dashboard/ventas/productos")}
       />
 
       {/* Main Content - Dynamic padding based on bottom section height */}
@@ -425,6 +446,7 @@ export default function CartView() {
         total={cartTotal}
         cartItems={transformCartItems()}
         storeId={selectedStore?.store_id || ""}
+        customer={selectedCustomer}
       />
     </div>
   )
