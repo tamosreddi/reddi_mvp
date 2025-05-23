@@ -25,6 +25,8 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
 import CalendarSelect from "@/components/ui/calendar-select"
 import ConceptInput from "../ui/concept-input"
+import CustomerSelection from "../ui/customer-selection"
+import PaymentMethod from '../ui/payment-method'
 
 interface Customer {
   id: number
@@ -243,88 +245,14 @@ export default function RegisterSale() {
         <ConceptInput value={concept} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConcept(e.target.value)} />
 
         {/* Customer Selection */}
-        {selectedCustomer ? (
-          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-blue-50 p-4">
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <User className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="text-lg font-medium">{selectedCustomer.name}</span>
-                {selectedCustomer.notes && <span className="text-sm text-gray-600">{selectedCustomer.notes}</span>}
-              </div>
-            </div>
-            <button type="button" onClick={removeSelectedCustomer} className="text-red-500" aria-label="Quitar cliente">
-              <Trash2 className="h-5 w-5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={navigateToCustomerSelection}
-            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-4"
-          >
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-gray-400" />
-              <div className="flex flex-col items-start">
-                <span className="text-lg font-medium">Cliente</span>
-                <span className="text-gray-500">Escoge tu cliente</span>
-              </div>
-            </div>
-            <ChevronRight className="text-gray-400" />
-          </button>
-        )}
+        <CustomerSelection
+          selectedCustomer={selectedCustomer}
+          onRemoveCustomer={removeSelectedCustomer}
+          onSelectCustomer={navigateToCustomerSelection}
+        />
 
         {/* Payment Method Selection */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium">Selecciona el método de pago</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("efectivo")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "efectivo" ? "border-green-500" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">💵</div>
-              <span>Efectivo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("tarjeta")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "tarjeta" ? "border-green-500" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">💳</div>
-              <span>Tarjeta</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("transferencia")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "transferencia" ? "border-green-500" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">🏦</div>
-              <span>Transferencia bancaria</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("otro")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "otro" ? "border-green-500" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">⚙️</div>
-              <span>Otro</span>
-            </button>
-          </div>
-        </div>
+        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
 
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>

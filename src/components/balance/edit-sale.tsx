@@ -5,6 +5,9 @@ import TopProfileMenu from '@/components/shared/top-profile-menu'
 import CalendarSelect from '@/components/ui/calendar-select'
 import IsPaidToggle from '@/components/ui/is-paid-toggle'
 import Button from '@/components/ui/Button'
+import ConceptInput from '@/components/ui/concept-input'
+import CustomerSelection from '@/components/ui/customer-selection'
+import PaymentMethod from '@/components/ui/payment-method'
 
 interface EditSaleProps {
   transactionId: string
@@ -56,7 +59,19 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       setDate(tx.transaction_date ? tx.transaction_date.slice(0, 10) : "")
       setStatus(tx.is_paid ? 'paid' : 'credit')
       setConcept(tx.transaction_description || "")
-      setClient(tx.stakeholder_id ? { id: tx.stakeholder_id, type: tx.stakeholder_type } : null)
+      let clientObj = null;
+      if (tx.stakeholder_id && tx.stakeholder_type === 'client') {
+        // Buscar el nombre del cliente
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('name')
+          .eq('client_id', tx.stakeholder_id)
+          .single();
+        clientObj = { id: tx.stakeholder_id, type: tx.stakeholder_type, name: clientData?.name || tx.stakeholder_id };
+      } else if (tx.stakeholder_id) {
+        clientObj = { id: tx.stakeholder_id, type: tx.stakeholder_type };
+      }
+      setClient(clientObj)
       setPaymentMethod(tx.payment_method || "")
       setTotal(Number(tx.total_amount) || 0)
       // 2. Obtener los productos vendidos
@@ -98,7 +113,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       const data = await res.json()
       if (data.success) {
         setSuccess(true)
-        // Aquí podrías redirigir o cerrar el modal
+        router.back()
       } else {
         setError(data.error || 'No se pudo guardar la venta.')
       }
@@ -163,35 +178,19 @@ export default function EditSale({ transactionId }: EditSaleProps) {
           </div>
         </div>
         {/* Concepto */}
-        <div>
-          <label className="block text-sm font-semibold mb-1">Concepto</label>
-          <input type="text" className="w-full rounded-lg border-gray-300" value={concept} onChange={e => setConcept(e.target.value)} />
-        </div>
+        <ConceptInput 
+          value={concept} 
+          onChange={e => setConcept(e.target.value)}
+          placeholder="Edita/agrega el concepto de la venta"
+        />
         {/* Cliente */}
-        <div>
-          <label className="block text-sm font-semibold mb-1">Cliente</label>
-          <input type="text" className="w-full rounded-lg border-gray-300" value={client ? client.id : ''} readOnly placeholder="Escoge tu cliente" />
-        </div>
+        <CustomerSelection
+          selectedCustomer={client ? { name: client.name || client.id } : null}
+          onRemoveCustomer={() => setClient(null)}
+          onSelectCustomer={() => { /* Aquí puedes abrir un modal o navegación para seleccionar cliente si lo deseas */ }}
+        />
         {/* Método de pago */}
-        <div>
-          <label className="block text-sm font-semibold mb-1">Selecciona el método de pago</label>
-          <div className="grid grid-cols-2 gap-2">
-            {['cash', 'dataphone', 'card', 'transfer', 'other'].map(method => (
-              <button
-                key={method}
-                type="button"
-                className={`rounded-lg py-3 font-semibold border ${paymentMethod === method ? 'bg-green-100 border-green-600 text-green-800' : 'bg-white border-gray-300 text-gray-700'}`}
-                onClick={() => setPaymentMethod(method)}
-              >
-                {method === 'cash' && 'Efectivo'}
-                {method === 'dataphone' && 'Datáfono Treinta'}
-                {method === 'card' && 'Tarjeta'}
-                {method === 'transfer' && 'Transferencia bancaria'}
-                {method === 'other' && 'Otro'}
-              </button>
-            ))}
-          </div>
-        </div>
+        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
         {/* Total */}
         <div className="flex justify-between items-center mt-4">
           <span className="text-gray-700 font-semibold">Total</span>
