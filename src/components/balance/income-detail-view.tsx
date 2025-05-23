@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import DeleteSaleModal from "@/components/shared/delete-sale-modal"
 import { useStore } from "@/lib/contexts/StoreContext"
+import { useRouter } from "next/navigation"
 
 interface IncomeDetailProps {
   transaction: {
@@ -30,6 +31,7 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
   const [products, setProducts] = useState<any[]>([])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { selectedStore } = useStore();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -63,6 +65,8 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
     }
     fetchProducts()
   }, [transaction.transaction_id])
+
+  console.log('IncomeDetailView render', transaction.transaction_id)
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -160,7 +164,11 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
           </div>
           <span className="text-sm">Comprobante</span>
         </button>
-        <button className="flex flex-col items-center justify-center py-4 text-gray-800">
+        <button className="flex flex-col items-center justify-center py-4 text-gray-800"
+          onClick={() => {
+            router.push(`/balance/edit-income/${transaction.transaction_id}`);
+          }}
+        >
           <div className="h-12 w-12 rounded-full bg-gray-800 flex items-center justify-center mb-1">
             <Edit className="h-5 w-5 text-white" />
           </div>

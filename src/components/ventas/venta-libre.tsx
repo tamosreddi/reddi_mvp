@@ -24,6 +24,7 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
 import CalendarSelect from "@/components/ui/calendar-select"
+import ConceptInput from "../ui/concept-input"
 
 interface Customer {
   id: number
@@ -239,21 +240,7 @@ export default function RegisterSale() {
         </div>
 
         {/* Concept Input */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <Label htmlFor="concept" className="mb-1 block text-lg font-medium">
-            Concepto
-          </Label>
-          <div className="flex items-center gap-2">
-            <Tag className="h-5 w-5 text-gray-400" />
-            <Input
-              id="concept"
-              value={concept}
-              onChange={(e) => setConcept(e.target.value)}
-              className="border-none shadow-none focus-visible:ring-0"
-              placeholder="Agrega una descripción"
-            />
-          </div>
-        </div>
+        <ConceptInput value={concept} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConcept(e.target.value)} />
 
         {/* Customer Selection */}
         {selectedCustomer ? (
