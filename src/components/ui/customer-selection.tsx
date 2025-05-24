@@ -17,6 +17,7 @@ export default function CustomerSelection({
   onRemoveCustomer,
   onSelectCustomer
 }: CustomerSelectionProps) {
+  console.log('[CustomerSelection] selectedCustomer:', selectedCustomer);
   return (
     <>
       {selectedCustomer ? (

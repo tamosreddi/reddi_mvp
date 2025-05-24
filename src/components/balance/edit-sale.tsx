@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/supabaseClient'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import TopProfileMenu from '@/components/shared/top-profile-menu'
 import CalendarSelect from '@/components/ui/calendar-select'
 import IsPaidToggle from '@/components/ui/is-paid-toggle'
@@ -24,6 +24,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
   const [status, setStatus] = useState<'paid' | 'credit'>('paid')
   const [concept, setConcept] = useState<string>("")
   const [client, setClient] = useState<any>(null)
+  const [clientManuallySelected, setClientManuallySelected] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string>("")
   const [total, setTotal] = useState<number>(0)
   const [saving, setSaving] = useState(false)
@@ -39,7 +40,41 @@ export default function EditSale({ transactionId }: EditSaleProps) {
   }, [dateObj])
 
   const router = useRouter();
+  const pathname = usePathname();
 
+  useEffect(() => {
+    console.log('[EditSale] pathname:', pathname, 'transactionId:', transactionId)
+  }, [pathname, transactionId])
+
+  // 1. Efecto para leer de localStorage (debe ir antes que fetchData)
+  useEffect(() => {
+    function handleFocus() {
+      const selectedCustomer = localStorage.getItem("selectedCustomer");
+      if (selectedCustomer) {
+        try {
+          const parsed = JSON.parse(selectedCustomer);
+          const formattedClient = {
+            id: parsed.id,
+            type: 'client',
+            name: parsed.name
+          };
+          setClient(formattedClient);
+          setClientManuallySelected(true); // Esto debe ocurrir ANTES de que fetchData corra
+          localStorage.removeItem("selectedCustomer");
+          console.log('[EditSale] setClient (from localStorage):', formattedClient);
+        } catch (error) {
+          console.error('Error parsing selected customer:', error);
+        }
+      }
+    }
+    window.addEventListener('focus', handleFocus);
+    handleFocus();
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [transactionId]);
+
+  // 2. Efecto para fetchData
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
@@ -59,19 +94,20 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       setDate(tx.transaction_date ? tx.transaction_date.slice(0, 10) : "")
       setStatus(tx.is_paid ? 'paid' : 'credit')
       setConcept(tx.transaction_description || "")
-      let clientObj = null;
-      if (tx.stakeholder_id && tx.stakeholder_type === 'client') {
-        // Buscar el nombre del cliente
-        const { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('name')
-          .eq('client_id', tx.stakeholder_id)
-          .single();
-        clientObj = { id: tx.stakeholder_id, type: tx.stakeholder_type, name: clientData?.name || tx.stakeholder_id };
-      } else if (tx.stakeholder_id) {
-        clientObj = { id: tx.stakeholder_id, type: tx.stakeholder_type };
+      // Solo actualizar el cliente si el usuario NO ha seleccionado uno manualmente ni hay uno en el estado
+      if (!clientManuallySelected && !client) {
+        let clientObj = null;
+        if (tx.stakeholder_id && tx.stakeholder_type === 'client') {
+          const { data: clientData } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('client_id', tx.stakeholder_id)
+            .single();
+          clientObj = { id: tx.stakeholder_id, type: tx.stakeholder_type, name: clientData?.name || tx.stakeholder_id };
+          setClient(clientObj);
+          console.log('[EditSale] setClient (from fetchData):', clientObj);
+        }
       }
-      setClient(clientObj)
       setPaymentMethod(tx.payment_method || "")
       setTotal(Number(tx.total_amount) || 0)
       // 2. Obtener los productos vendidos
@@ -88,7 +124,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       setLoading(false)
     }
     fetchData()
-  }, [transactionId])
+  }, [transactionId, clientManuallySelected, client])
 
   const handleSave = async () => {
     setSaving(true)
@@ -113,7 +149,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       const data = await res.json()
       if (data.success) {
         setSuccess(true)
-        router.back()
+        router.push(`/balance/income/${transactionId}`)
       } else {
         setError(data.error || 'No se pudo guardar la venta.')
       }
@@ -125,7 +161,6 @@ export default function EditSale({ transactionId }: EditSaleProps) {
 
   // Manejar edición de productos
   const handleEditProducts = () => {
-    // Guardar productos actuales en localStorage para el flujo de edición
     localStorage.setItem('editProductCart', JSON.stringify(products))
     router.push(`/venta_productos?edit=1&transaction_id=${transactionId}`)
   }
@@ -139,13 +174,21 @@ export default function EditSale({ transactionId }: EditSaleProps) {
         const parsed = JSON.parse(edited)
         if (Array.isArray(parsed) && parsed.length > 0) {
           setProducts(parsed)
-          // Recalcular total
           const newTotal = parsed.reduce((sum, p) => sum + Number(p.unit_price) * Number(p.quantity), 0)
           setTotal(newTotal)
         }
       } catch {}
     }
   }, [])
+
+  const handleSelectCustomer = () => {
+    localStorage.setItem("editSaleForm", JSON.stringify({
+      transactionId,
+    }))
+    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=/balance/edit-income/${transactionId}`)
+  }
+
+  console.log('[EditSale] client before render:', client);
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Cargando venta...</div>
@@ -157,7 +200,11 @@ export default function EditSale({ transactionId }: EditSaleProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header con TopProfileMenu */}
-      <TopProfileMenu simpleMode title="Editar venta" onBackClick={() => router.back()} />
+      <TopProfileMenu
+        simpleMode
+        title="Editar venta"
+        onBackClick={() => router.push(`/balance/income/${transactionId}`)}
+      />
       <div className="flex-1 p-4 space-y-4 mt-20">
         {/* Fecha y Estado (Pagada/A crédito) */}
         <div className="grid grid-cols-2 gap-3">
@@ -185,9 +232,9 @@ export default function EditSale({ transactionId }: EditSaleProps) {
         />
         {/* Cliente */}
         <CustomerSelection
-          selectedCustomer={client ? { name: client.name || client.id } : null}
-          onRemoveCustomer={() => setClient(null)}
-          onSelectCustomer={() => { /* Aquí puedes abrir un modal o navegación para seleccionar cliente si lo deseas */ }}
+          selectedCustomer={client ? { name: client.name || client.id, notes: client.notes } : null}
+          onRemoveCustomer={() => { setClient(null); setClientManuallySelected(false); }}
+          onSelectCustomer={handleSelectCustomer}
         />
         {/* Método de pago */}
         <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />

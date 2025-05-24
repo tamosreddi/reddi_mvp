@@ -60,16 +60,31 @@ export default function ViewCustomers() {
 
   // Handle customer selection
   const selectCustomer = (customerId: number) => {
+    console.log('🔍 [Ver Clientes] Iniciando selección de cliente:', { customerId, isSelecting, returnTo });
+    
     if (isSelecting) {
       // Find the selected customer
       const selectedCustomer = customers.find((customer) => customer.client_id === customerId)
+      console.log('🔍 [Ver Clientes] Cliente encontrado:', selectedCustomer);
 
-      // Store the selected customer in localStorage
+      // Store the selected customer in localStorage with the correct structure
       if (selectedCustomer) {
-        localStorage.setItem("selectedCustomer", JSON.stringify(selectedCustomer))
+        const formattedCustomer = {
+          id: selectedCustomer.client_id.toString(),
+          type: 'client',
+          name: selectedCustomer.name
+        }
+        console.log('🔍 [Ver Clientes] Cliente formateado para guardar:', formattedCustomer);
+        localStorage.setItem("selectedCustomer", JSON.stringify(formattedCustomer))
+        
+        // Verificar que se guardó correctamente
+        const savedCustomer = localStorage.getItem("selectedCustomer");
+        console.log('🔍 [Ver Clientes] Cliente guardado en localStorage:', savedCustomer);
       }
 
       // Return to the previous screen
+      console.log('🔍 [Ver Clientes] Redirigiendo a:', returnTo);
+      console.log('[VerClientes] Navegando a:', returnTo)
       if (returnTo) {
         router.push(returnTo)
       } else {
