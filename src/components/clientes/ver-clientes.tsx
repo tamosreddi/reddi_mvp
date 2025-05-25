@@ -70,9 +70,9 @@ export default function ViewCustomers() {
       // Store the selected customer in localStorage with the correct structure
       if (selectedCustomer) {
         const formattedCustomer = {
-          id: selectedCustomer.client_id.toString(),
-          type: 'client',
-          name: selectedCustomer.name
+          client_id: selectedCustomer.client_id,
+          name: selectedCustomer.name,
+          notes: selectedCustomer.notes || ""
         }
         console.log('🔍 [Ver Clientes] Cliente formateado para guardar:', formattedCustomer);
         localStorage.setItem("selectedCustomer", JSON.stringify(formattedCustomer))

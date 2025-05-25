@@ -6,7 +6,8 @@ import CalendarSelect from '@/components/ui/calendar-select'
 import IsPaidToggle from '@/components/ui/is-paid-toggle'
 import Button from '@/components/ui/Button'
 import ConceptInput from '@/components/ui/concept-input'
-import CustomerSelection from '@/components/ui/customer-selection'
+import { Combobox, Option } from '@/components/ui/combobox'
+import { useStore } from '@/lib/contexts/StoreContext'
 import PaymentMethod from '@/components/ui/payment-method'
 
 interface EditSaleProps {
@@ -46,33 +47,33 @@ export default function EditSale({ transactionId }: EditSaleProps) {
     console.log('[EditSale] pathname:', pathname, 'transactionId:', transactionId)
   }, [pathname, transactionId])
 
-  // 1. Efecto para leer de localStorage (debe ir antes que fetchData)
+  // Estado para clientes
+  const { selectedStore } = useStore();
+  const [clientes, setClientes] = useState<Option[]>([]);
+  const [clientesLoading, setClientesLoading] = useState(true);
+
+  // Fetch clientes al montar o cuando cambia la tienda
   useEffect(() => {
-    function handleFocus() {
-      const selectedCustomer = localStorage.getItem("selectedCustomer");
-      if (selectedCustomer) {
-        try {
-          const parsed = JSON.parse(selectedCustomer);
-          const formattedClient = {
-            id: parsed.id,
-            type: 'client',
-            name: parsed.name
-          };
-          setClient(formattedClient);
-          setClientManuallySelected(true); // Esto debe ocurrir ANTES de que fetchData corra
-          localStorage.removeItem("selectedCustomer");
-          console.log('[EditSale] setClient (from localStorage):', formattedClient);
-        } catch (error) {
-          console.error('Error parsing selected customer:', error);
-        }
-      }
+    if (!selectedStore) {
+      setClientes([]);
+      setClientesLoading(false);
+      return;
     }
-    window.addEventListener('focus', handleFocus);
-    handleFocus();
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [transactionId]);
+    setClientesLoading(true);
+    supabase
+      .from('clients')
+      .select('client_id, name, notes')
+      .eq('store_id', selectedStore.store_id)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          setClientes([]);
+        } else {
+          setClientes((data || []).map((c: any) => ({ id: c.client_id, name: c.name, notes: c.notes })));
+        }
+        setClientesLoading(false);
+      });
+  }, [selectedStore]);
 
   // 2. Efecto para fetchData
   useEffect(() => {
@@ -190,6 +191,8 @@ export default function EditSale({ transactionId }: EditSaleProps) {
 
   console.log('[EditSale] client before render:', client);
 
+  const [blockAutoClient, setBlockAutoClient] = useState(false);
+
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Cargando venta...</div>
   }
@@ -231,11 +234,23 @@ export default function EditSale({ transactionId }: EditSaleProps) {
           placeholder="Edita/agrega el concepto de la venta"
         />
         {/* Cliente */}
-        <CustomerSelection
-          selectedCustomer={client ? { name: client.name || client.id, notes: client.notes } : null}
-          onRemoveCustomer={() => { setClient(null); setClientManuallySelected(false); }}
-          onSelectCustomer={handleSelectCustomer}
-        />
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">Cliente</label>
+          <Combobox
+            options={clientes}
+            value={client?.id || null}
+            onChange={(clienteId) => {
+              if (!clienteId) {
+                setClient(null);
+                setClientManuallySelected(false);
+              } else {
+                const selected = clientes.find(c => c.id === clienteId) || null;
+                setClient(selected ? { id: selected.id, type: 'client', name: selected.name, notes: selected.notes } : null);
+                setClientManuallySelected(true);
+              }
+            }}
+          />
+        </div>
         {/* Método de pago */}
         <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
         {/* Total */}

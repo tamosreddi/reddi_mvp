@@ -4,6 +4,7 @@ import React from 'react'
 interface Customer {
   name: string
   notes?: string
+  client_id: number
 }
 
 interface CustomerSelectionProps {
@@ -17,7 +18,7 @@ export default function CustomerSelection({
   onRemoveCustomer,
   onSelectCustomer
 }: CustomerSelectionProps) {
-  console.log('[CustomerSelection] selectedCustomer:', selectedCustomer);
+  console.log('[CustomerSelection] selectedCustomer:', selectedCustomer ? { name: selectedCustomer.name, client_id: selectedCustomer.client_id } : null);
   return (
     <>
       {selectedCustomer ? (
