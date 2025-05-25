@@ -41,7 +41,7 @@ export default function RegisterSale() {
   const [value, setValue] = useState("")
   const [concept, setConcept] = useState("")
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState("efectivo")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
@@ -104,20 +104,13 @@ export default function RegisterSale() {
       if (!user) throw new Error("Debes iniciar sesión para registrar una venta")
       if (!selectedStore) throw new Error("Debes seleccionar una tienda")
 
-      const paymentMethodMap = {
-        efectivo: "cash",
-        tarjeta: "card",
-        transferencia: "transfer",
-        otro: "other"
-      }
-
       const transactionData = {
         user_id: user.id,
         store_id: selectedStore.store_id,
         transaction_type: 'income',
         transaction_subtype: 'free_sale',
         transaction_description: concept,
-        payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
+        payment_method: paymentMethod,
         transaction_date: date.toISOString(),
         stakeholder_id: selectedCustomer?.client_id || null,
         stakeholder_type: selectedCustomer ? 'client' : null,
@@ -145,7 +138,7 @@ export default function RegisterSale() {
 
       setValue("")
       setConcept("")
-      setPaymentMethod("efectivo")
+      setPaymentMethod("cash")
       setDate(new Date())
 
       router.push("/balance?tab=ingresos")
