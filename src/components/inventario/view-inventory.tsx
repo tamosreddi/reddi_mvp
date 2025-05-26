@@ -52,12 +52,18 @@ export default function ViewInventory() {
 
         if (item.product_type === "custom") {
           // Custom product
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("store_products")
             .select("name, category, image")
             .eq("store_product_id", item.product_reference_id)
-            .single()
-          product = data
+            .eq("is_active", true)
+            .maybeSingle();
+          if (error) {
+            // Opcional: console.log("Error al buscar producto personalizado:", error.message);
+            product = null;
+          } else {
+            product = data;
+          }
         } else if (item.product_type === "global") {
           // Global product
           const { data } = await supabase

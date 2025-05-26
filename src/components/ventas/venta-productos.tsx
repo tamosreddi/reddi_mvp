@@ -66,6 +66,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       .from("store_products")
       .select("store_product_id, name, category, image, barcode")
       .in("store_product_id", productIds)
+      .eq("is_active", true)
     if (prodError) {
       console.error("Error fetching products:", prodError)
       return

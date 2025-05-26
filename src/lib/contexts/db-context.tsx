@@ -99,7 +99,8 @@ export const databaseSchema = {
         barcode: "VARCHAR - Código de barras del producto personalizado, si aplica.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto.",
-        image: "TEXT - URL de la imagen del producto personalizado."
+        image: "TEXT - URL de la imagen del producto personalizado.",
+        is_active: "BOOLEAN - Indica si el producto está activo (visible en inventario)."
     },
     inventory_batches: {
         batch_id: "UUID - Identificador único del lote de inventario.",

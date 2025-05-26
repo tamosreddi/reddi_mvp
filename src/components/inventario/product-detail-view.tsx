@@ -14,6 +14,7 @@ import { useToast } from "@/lib/hooks/use-toast"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
+import DeleteProductModal from '@/components/shared/delete-product-modal'
 
 interface ProductDetailViewProps {
   productId: string
@@ -307,16 +308,33 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
     }
   };
 
-  // Handle delete
-  const handleDelete = () => {
-    // In a real app, this would be an API call to delete the product
-    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este producto?")
+  // Estado para mostrar el modal de eliminación
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    if (confirmDelete) {
-      toast.success("Producto eliminado");
-      router.push("/inventario")
+  // Handle delete
+  const handleDelete = async () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteModal(false);
+    setIsLoading(true);
+    if (product.product_type === "custom") {
+      const { error } = await supabase
+        .from("store_products")
+        .update({ is_active: false })
+        .eq("store_product_id", product.store_product_id);
+      if (!error) {
+        toast.success("Producto eliminado");
+        router.push("/inventario");
+      } else {
+        toast.error("No se pudo eliminar el producto.");
+      }
+    } else {
+      toast.error("Solo puedes eliminar productos personalizados.");
     }
-  }
+    setIsLoading(false);
+  };
 
   // Estado para mostrar el tooltip de información de costo
   const [showCostInfo, setShowCostInfo] = useState(false);
@@ -541,6 +559,11 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           Eliminar producto
         </button>
       </div>
+      <DeleteProductModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }
