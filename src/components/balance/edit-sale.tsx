@@ -44,7 +44,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    console.log('[EditSale] pathname:', pathname, 'transactionId:', transactionId)
+    // Eliminado: console.log('[EditSale] pathname:', pathname, 'transactionId:', transactionId)
   }, [pathname, transactionId])
 
   // Estado para clientes
@@ -92,7 +92,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
         return;
       }
       setTransaction(tx)
-      setDate(tx.transaction_date ? tx.transaction_date.slice(0, 10) : "")
+      setDateObj(tx.transaction_date ? new Date(tx.transaction_date) : new Date())
       setStatus(tx.is_paid ? 'paid' : 'credit')
       setConcept(tx.transaction_description || "")
       // Solo actualizar el cliente si el usuario NO ha seleccionado uno manualmente ni hay uno en el estado
@@ -145,19 +145,9 @@ export default function EditSale({ transactionId }: EditSaleProps) {
         }
       }
 
-      // --- FIX: fuerza que sea array ---
-      if (!Array.isArray(productsToSave)) {
-        productsToSave = [productsToSave];
-      }
-
-      // LOG: Verifica qué productos se van a guardar
-      console.log('[EditSale] productsToSave:', productsToSave);
-
-      console.log('productsToSave (final):', productsToSave, Array.isArray(productsToSave));
-
       const bodyToSend = {
         transaction_id: transactionId,
-        transaction_date: date,
+        transaction_date: dateObj.toISOString(),
         is_paid: status === 'paid',
         transaction_description: concept,
         stakeholder_id: client?.id || null,
@@ -167,18 +157,12 @@ export default function EditSale({ transactionId }: EditSaleProps) {
         products: productsToSave,
       };
 
-      // LOG: Verifica el body que se envía al backend
-      console.log('[EditSale] bodyToSend:', bodyToSend);
-
       const res = await fetch('/api/balance/edit-sale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyToSend)
       })
       const data = await res.json()
-
-      // LOG: Respuesta del backend
-      console.log('[EditSale] response:', data);
 
       if (data.success) {
         setSuccess(true)
@@ -221,9 +205,15 @@ export default function EditSale({ transactionId }: EditSaleProps) {
     router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=/balance/edit-income/${transactionId}`)
   }
 
-  console.log('[EditSale] client before render:', client);
-
   const [blockAutoClient, setBlockAutoClient] = useState(false);
+
+  const handleDateChange = (newDate: Date) => {
+    // Mantener la hora original
+    const original = dateObj;
+    const updated = new Date(newDate);
+    updated.setHours(original.getHours(), original.getMinutes(), original.getSeconds(), original.getMilliseconds());
+    setDateObj(updated);
+  };
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Cargando venta...</div>
@@ -243,7 +233,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       <div className="flex-1 p-4 space-y-4 mt-20">
         {/* Fecha y Estado (Pagada/A crédito) */}
         <div className="grid grid-cols-2 gap-3">
-          <CalendarSelect value={dateObj} onChange={setDateObj} />
+          <CalendarSelect value={dateObj} onChange={handleDateChange} />
           <IsPaidToggle value={status === 'paid'} onChange={v => setStatus(v ? 'paid' : 'credit')} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" />
         </div>
         {/* Productos */}
