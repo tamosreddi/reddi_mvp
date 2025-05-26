@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react"
 import { ArrowLeft, CalendarIcon, Trash2, Edit, User, ChevronUp, Plus, Minus, ChevronRight } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import Button from "@/components/ui/Button"
 import { Calendar } from "@/components/ui/calendar"
@@ -37,6 +37,9 @@ interface Customer {
 
 export default function CartView() {
   const router = useRouter()
+  const searchParams = useSearchParams();
+  const isEdit = searchParams.get("edit") === "1";
+  const transactionId = searchParams.get("transaction_id");
   const [date, setDate] = useState<Date>(new Date())
   const [isPaid, setIsPaid] = useState(true)
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -60,6 +63,7 @@ export default function CartView() {
   const mainContentRef = useRef<HTMLDivElement>(null)
   const [paymentMethod, setPaymentMethod] = useState<string>("Efectivo")
   const { selectedStore } = useStore()
+  const cartItemsRef = useRef(cartItems);
 
   // Measure the height of the bottom section using useLayoutEffect for more accurate measurements
   useLayoutEffect(() => {
@@ -134,31 +138,50 @@ export default function CartView() {
   // Save cart to localStorage when it changes
   useEffect(() => {
     if (!isLoading && cartItems.length > 0) {
-      console.log("[cart-view] Guardando carrito en localStorage:", cartItems)
+      console.log("[cart-view] Guardando carrito en localStorage (useEffect):", cartItems)
       localStorage.setItem("productCart", JSON.stringify(cartItems))
     }
   }, [cartItems, isLoading])
+
+  useEffect(() => {
+    cartItemsRef.current = cartItems;
+  }, [cartItems]);
 
   // Calculate cart total
   const cartTotal = cartItems.reduce((total, item) => total + item.price * item.cartQuantity, 0)
 
   // Increment product quantity
   const incrementQuantity = (id: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => (item.id === id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item)),
-    )
+    setCartItems((prevItems) => {
+      const updated = prevItems.map((item) => {
+        if (item.id === id) {
+          const newQuantity = item.cartQuantity + 1;
+          return { ...item, cartQuantity: newQuantity, quantity: newQuantity };
+        }
+        return item;
+      });
+      localStorage.setItem("productCart", JSON.stringify(updated));
+      console.log('[cart-view] incrementQuantity (updated):', updated);
+      console.log('[cart-view] incrementQuantity (localStorage):', localStorage.getItem("productCart"));
+      return updated;
+    });
   }
 
   // Decrement product quantity
   const decrementQuantity = (id: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => {
+    setCartItems((prevItems) => {
+      const updated = prevItems.map((item) => {
         if (item.id === id && item.cartQuantity > 1) {
-          return { ...item, cartQuantity: item.cartQuantity - 1 }
+          const newQuantity = item.cartQuantity - 1;
+          return { ...item, cartQuantity: newQuantity, quantity: newQuantity };
         }
-        return item
-      }),
-    )
+        return item;
+      });
+      localStorage.setItem("productCart", JSON.stringify(updated));
+      console.log('[cart-view] decrementQuantity (updated):', updated);
+      console.log('[cart-view] decrementQuantity (localStorage):', localStorage.getItem("productCart"));
+      return updated;
+    });
   }
 
   // Remove product from cart
@@ -428,13 +451,26 @@ export default function CartView() {
 
         {/* Confirm Button */}
         <Button
-          onClick={openPaymentModal}
+          onClick={isEdit ? () => {
+            console.log('[cart-view] Botón Actualizar productos - cartItemsRef.current:', cartItemsRef.current);
+            console.log('[cart-view] Botón Actualizar productos - productCart antes:', localStorage.getItem("productCart"));
+            localStorage.setItem("productCart", JSON.stringify(cartItemsRef.current));
+            const latestCart = JSON.parse(localStorage.getItem("productCart") || "[]");
+            console.log('[cart-view] Botón Actualizar productos - latestCart:', latestCart);
+            localStorage.setItem("editProductCart", JSON.stringify(latestCart));
+            console.log('[cart-view] Botón Actualizar productos - editProductCart después:', localStorage.getItem("editProductCart"));
+            if (transactionId) {
+              router.push(`/balance/edit-income/${transactionId}`);
+            } else {
+              router.back();
+            }
+          } : openPaymentModal}
           size="lg"
           fullWidth
           variant="primary"
           disabled={cartItems.length === 0}
         >
-          CONFIRMAR VENTA
+          {isEdit ? "Actualizar productos" : "CONFIRMAR VENTA"}
         </Button>
       </div>
 

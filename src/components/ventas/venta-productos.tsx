@@ -28,7 +28,7 @@ interface CartItem extends Product {
   cartQuantity: number
 }
 
-export default function ProductSale() {
+export default function ProductSale({ transactionId }: { transactionId?: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const { selectedStore } = useStore()
@@ -103,17 +103,47 @@ export default function ProductSale() {
 
   // Cargar carrito desde localStorage al montar
   useEffect(() => {
-    const savedCart = localStorage.getItem("productCart")
-    console.log("[venta-productos] Cargando carrito desde localStorage:", savedCart)
-    if (savedCart) {
+    // Si venimos de edición, cargar editProductCart
+    const editCart = localStorage.getItem("editProductCart");
+    console.log("[venta-productos] editProductCart localStorage:", editCart);
+    if (editCart) {
       try {
-        const parsedCart = JSON.parse(savedCart)
-        setCart(parsedCart)
+        const parsedCart = JSON.parse(editCart);
+        console.log("[venta-productos] editProductCart parsed:", parsedCart);
+        // Normalizar productos al formato CartItem
+        const normalizedCart = parsedCart.map((p: any) => ({
+          id: p.product_reference_id || p.id,
+          name: p.product_name || p.name,
+          price: Number(p.unit_price ?? p.price),
+          quantity: Number(p.quantity),
+          category: p.category || "Sin categoría",
+          image: p.image || "/Groserybasket.png",
+          productId: (p.product_reference_id || p.id || "").toString(),
+          productType: p.product_type || "custom",
+          cartQuantity: Number(p.quantity),
+        }));
+        console.log("[venta-productos] editProductCart normalized:", normalizedCart);
+        setCart(normalizedCart);
+        setTimeout(() => {
+          console.log("[venta-productos] cart state after setCart:", normalizedCart);
+        }, 100);
+        localStorage.removeItem("editProductCart");
+        return;
       } catch (e) {
-        console.error("Error parsing cart from localStorage:", e)
+        console.error("Error parsing editProductCart from localStorage:", e);
       }
     }
-  }, [])
+    // Si no, cargar productCart normal
+    const savedCart = localStorage.getItem("productCart");
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        setCart(parsedCart);
+      } catch (e) {
+        console.error("Error parsing cart from localStorage:", e);
+      }
+    }
+  }, []);
 
   // Filtrar productos basados en búsqueda y categoría
   const filteredProducts = products.filter((product) => {
@@ -178,7 +208,11 @@ export default function ProductSale() {
 
   // Navegar a la página de canasta
   const navigateToCart = () => {
-    router.push("/dashboard/ventas/canasta")
+    if (transactionId) {
+      router.push(`/dashboard/ventas/canasta?edit=1&transaction_id=${transactionId}`);
+    } else {
+      router.push(`/dashboard/ventas/canasta`);
+    }
   }
 
   const handleBackToDashboard = () => {

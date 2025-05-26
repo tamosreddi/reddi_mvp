@@ -75,9 +75,38 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       });
   }, [selectedStore]);
 
-  // 2. Efecto para fetchData
+  const [productosInicializados, setProductosInicializados] = useState(false);
+
+  // Inicialización de productos: prioriza editProductCart si existe, si no fetch de la base de datos
   useEffect(() => {
-    async function fetchData() {
+    if (productosInicializados) return;
+    async function initProducts() {
+      if (typeof window !== 'undefined') {
+        const edited = localStorage.getItem('editProductCart');
+        if (edited) {
+          try {
+            const parsed = JSON.parse(edited);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              // Normaliza cartQuantity a quantity y name a product_name
+              const normalized = parsed.map((p: any) => ({
+                ...p,
+                quantity: p.cartQuantity ?? p.quantity,
+                unit_price: p.unit_price ?? p.price,
+                product_name: p.product_name ?? p.name,
+              }));
+              setProducts(normalized);
+              const newTotal = normalized.reduce((sum, p) => sum + Number(p.unit_price) * Number(p.quantity), 0)
+              setTotal(newTotal);
+              setProductosInicializados(true);
+              localStorage.removeItem('editProductCart');
+              return;
+            }
+          } catch (e) {
+            console.error('[EditSale] Error parseando editProductCart:', e);
+          }
+        }
+      }
+      // Si no hay editProductCart, fetch de la base de datos
       setLoading(true)
       setError(null)
       // 1. Obtener la transacción
@@ -89,6 +118,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       if (txError || !tx) {
         setError('No se pudo cargar la venta.');
         setLoading(false);
+        setProductosInicializados(true);
         return;
       }
       setTransaction(tx)
@@ -119,13 +149,15 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       if (itemsError) {
         setError('No se pudieron cargar los productos vendidos.');
         setLoading(false);
+        setProductosInicializados(true);
         return;
       }
       setProducts(items || [])
       setLoading(false)
+      setProductosInicializados(true);
     }
-    fetchData()
-  }, [transactionId, clientManuallySelected, client])
+    initProducts();
+  }, [transactionId, productosInicializados]);
 
   const handleSave = async () => {
     setSaving(true)
@@ -178,25 +210,12 @@ export default function EditSale({ transactionId }: EditSaleProps) {
 
   // Manejar edición de productos
   const handleEditProducts = () => {
-    localStorage.setItem('editProductCart', JSON.stringify(products))
-    router.push(`/venta_productos?edit=1&transaction_id=${transactionId}`)
-  }
+    localStorage.setItem('editProductCart', JSON.stringify(products));
+    router.push(`/dashboard/ventas/productos?edit=1&transaction_id=${transactionId}`);
+  };
 
-  // Al volver de editar productos, cargar los productos editados
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const edited = localStorage.getItem('editProductCart')
-    if (edited) {
-      try {
-        const parsed = JSON.parse(edited)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProducts(parsed)
-          const newTotal = parsed.reduce((sum, p) => sum + Number(p.unit_price) * Number(p.quantity), 0)
-          setTotal(newTotal)
-        }
-      } catch {}
-    }
-  }, [])
+  // Log en el render
+  console.log('[EditSale] Render productos:', products);
 
   const handleSelectCustomer = () => {
     localStorage.setItem("editSaleForm", JSON.stringify({
