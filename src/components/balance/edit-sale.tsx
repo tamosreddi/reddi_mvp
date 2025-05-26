@@ -132,22 +132,54 @@ export default function EditSale({ transactionId }: EditSaleProps) {
     setError(null)
     setSuccess(false)
     try {
+      let productsToSave = products;
+      if (!productsToSave || (Array.isArray(productsToSave) && productsToSave.length === 0)) {
+        // Fetch productos originales de la transacción
+        const { data: items, error: itemsError } = await supabase
+          .from('transaction_items')
+          .select('product_name, quantity, unit_price, product_reference_id, product_type, store_id')
+          .eq('transaction_id', transactionId)
+        if (!itemsError && items && items.length > 0) {
+          productsToSave = items;
+          setProducts(items); // opcional, para mantener el estado sincronizado
+        }
+      }
+
+      // --- FIX: fuerza que sea array ---
+      if (!Array.isArray(productsToSave)) {
+        productsToSave = [productsToSave];
+      }
+
+      // LOG: Verifica qué productos se van a guardar
+      console.log('[EditSale] productsToSave:', productsToSave);
+
+      console.log('productsToSave (final):', productsToSave, Array.isArray(productsToSave));
+
+      const bodyToSend = {
+        transaction_id: transactionId,
+        transaction_date: date,
+        is_paid: status === 'paid',
+        transaction_description: concept,
+        stakeholder_id: client?.id || null,
+        stakeholder_type: client?.type || null,
+        payment_method: paymentMethod,
+        total_amount: total,
+        products: productsToSave,
+      };
+
+      // LOG: Verifica el body que se envía al backend
+      console.log('[EditSale] bodyToSend:', bodyToSend);
+
       const res = await fetch('/api/balance/edit-sale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction_id: transactionId,
-          transaction_date: date,
-          is_paid: status === 'paid',
-          transaction_description: concept,
-          stakeholder_id: client?.id || null,
-          stakeholder_type: client?.type || null,
-          payment_method: paymentMethod,
-          total_amount: total,
-          products,
-        })
+        body: JSON.stringify(bodyToSend)
       })
       const data = await res.json()
+
+      // LOG: Respuesta del backend
+      console.log('[EditSale] response:', data);
+
       if (data.success) {
         setSuccess(true)
         router.push(`/balance/income/${transactionId}`)
