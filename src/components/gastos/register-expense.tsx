@@ -17,6 +17,9 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import CalendarSelect from '@/components/ui/calendar-select'
+import ValueInput from '../ui/value-input'
+import ConceptInput from '../ui/concept-input'
+import PaymentMethod from '../ui/payment-method'
 
 interface Supplier {
   id: number
@@ -184,29 +187,11 @@ export default function RegisterExpense() {
         </div>
 
         {/* Amount Input */}
-        <div>
-          <Label htmlFor="amount" className="text-base font-bold">
-            Valor <span className="text-red-500">*</span>
-          </Label>
-          <div className="mt-1 rounded-xl border border-gray-200 bg-white p-4">
-            <Input
-              id="amount"
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="border-none text-right text-lg shadow-none focus-visible:ring-0"
-              placeholder="0"
-              required
-            />
-          </div>
-
-          {/* Total Value Display */}
-          <div className="flex items-center justify-between rounded-xl bg-gray-100 p-4 mt-2">
-            <span className="text-lg font-medium text-gray-700">Valor Total</span>
-            <span className="text-lg font-medium text-green-600">$ {amount || "0"}</span>
-          </div>
+        <ValueInput value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} required />
+        {/* Total Value Display */}
+        <div className="flex items-center justify-between rounded-xl bg-gray-100 p-4 mt-2">
+          <span className="text-lg font-medium text-gray-700">Valor Total</span>
+          <span className="text-lg font-medium text-green-600">$ {amount || "0"}</span>
         </div>
 
         {/* Supplier */}
@@ -250,65 +235,10 @@ export default function RegisterExpense() {
         </div>
 
         {/* Payment Method Selection */}
-        <div>
-          <Label className="text-base font-bold">
-            Método de pago <span className="text-red-500">*</span>
-          </Label>
-          <div className="grid grid-cols-3 gap-3 mt-1">
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("efectivo")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "efectivo" ? "border-green-500 bg-green-50" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">💵</div>
-              <span>Efectivo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("tarjeta")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "tarjeta" ? "border-green-500 bg-green-50" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">💳</div>
-              <span>Tarjeta</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("transferencia")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "transferencia" ? "border-green-500 bg-green-50" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">🏦</div>
-              <span>Transferencia</span>
-            </button>
-          </div>
-        </div>
+        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
 
         {/* Description Input */}
-        <div>
-          <Label htmlFor="description" className="text-base font-bold">
-            Concepto
-          </Label>
-          <div className="mt-1 rounded-xl border border-gray-200 bg-white p-4">
-            <div className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-gray-400" />
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="border-none shadow-none focus-visible:ring-0"
-                placeholder="Añadir una descripción"
-              />
-            </div>
-          </div>
-        </div>
+        <ConceptInput value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} placeholder="Añadir una descripción" />
 
         {/* Submit Button */}
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-white p-4 border-t border-gray-200">

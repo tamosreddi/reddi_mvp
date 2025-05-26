@@ -13,6 +13,7 @@ import { useStore } from '@/lib/contexts/StoreContext'
 import PaymentMethod from '@/components/ui/payment-method'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
+import ValueInput from '@/components/ui/value-input'
 
 interface EditExpenseProps {
   transactionId: string
@@ -30,7 +31,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
   const [client, setClient] = useState<any>(null)
   const [clientManuallySelected, setClientManuallySelected] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string>("")
-  const [total, setTotal] = useState<number>(0)
+  const [total, setTotal] = useState<string>("")
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [expenseCategory, setExpenseCategory] = useState<string>("")
@@ -66,6 +67,18 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
     "Mantenimiento",
     "Otro",
   ]
+
+  // Mapeo entre backend y frontend para método de pago
+  const paymentMethodMap: Record<string, string> = {
+    cash: "efectivo",
+    card: "tarjeta",
+    transfer: "transferencia"
+  };
+  const paymentMethodBackendMap: Record<string, string> = {
+    efectivo: "cash",
+    tarjeta: "card",
+    transferencia: "transfer"
+  };
 
   // Fetch clientes al montar o cuando cambia la tienda
   useEffect(() => {
@@ -123,8 +136,9 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
           setClient(clientObj);
         }
       }
-      setPaymentMethod(tx.payment_method || "")
-      setTotal(Number(tx.total_amount) || 0)
+      const validMethods = ['cash', 'card', 'other', 'transfer'];
+      setPaymentMethod(validMethods.includes(tx.payment_method) ? tx.payment_method : 'cash');
+      setTotal(tx.total_amount !== undefined && tx.total_amount !== null ? String(tx.total_amount) : "")
       setExpenseCategory(tx.transaction_subtype || "")
       setLoading(false)
     }
@@ -205,6 +219,12 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
           <CalendarSelect value={dateObj} onChange={handleDateChange} />
           <IsPaidToggle value={status === 'paid'} onChange={v => setStatus(v ? 'paid' : 'credit')} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" />
         </div>
+        {/* Valor editable */}
+        <ValueInput
+          value={total}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTotal(e.target.value)}
+          required
+        />
         {/* Categoría del gasto */}
         <div>
           <Label htmlFor="expense-category" className="text-base font-bold">
@@ -229,6 +249,11 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
           onChange={e => setConcept(e.target.value)}
           placeholder="Edita/agrega el concepto del gasto"
         />
+        {/* Método de pago */}
+        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
+
+
+
         {/* Cliente */}
         <div>
           <label className="block text-gray-700 font-semibold mb-1">Cliente</label>
@@ -247,13 +272,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
             }}
           />
         </div>
-        {/* Método de pago */}
-        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
-        {/* Total */}
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-gray-700 font-semibold">Total</span>
-          <span className="text-xl font-bold">${total.toLocaleString('es-MX')}</span>
-        </div>
+
         {/* Botón Guardar Cambios */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg z-40">
           <Button
