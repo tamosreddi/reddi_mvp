@@ -230,7 +230,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
         title="Editar venta"
         onBackClick={() => router.push(`/balance/income/${transactionId}`)}
       />
-      <div className="flex-1 p-4 space-y-4 mt-20">
+      <div className="flex-1 p-4 pb-24 space-y-4 mt-20">
         {/* Fecha y Estado (Pagada/A crédito) */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={dateObj} onChange={handleDateChange} />
@@ -281,15 +281,16 @@ export default function EditSale({ transactionId }: EditSaleProps) {
           <span className="text-xl font-bold">${total.toLocaleString('es-MX')}</span>
         </div>
         {/* Botón Guardar Cambios */}
-        <Button
-          type="button"
-          className="w-full rounded-xl py-4 font-bold text-lg mt-8"
-          onClick={handleSave}
-          disabled={saving}
-          isLoading={saving}
-        >
-          Guardar cambios
-        </Button>
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg z-40">
+          <Button
+            onClick={handleSave}
+            className="w-full rounded-xl bg-gray-800 p-6 text-lg font-medium text-white hover:bg-gray-700"
+            disabled={saving}
+            isLoading={saving}
+          >
+            Guardar cambios
+          </Button>
+        </div>
         {success && <div className="text-green-600 text-center font-semibold mt-2">¡Venta actualizada correctamente!</div>}
       </div>
     </div>
