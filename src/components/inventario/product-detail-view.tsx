@@ -51,78 +51,58 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   console.log("productId recibido:", productId);
   console.log("selectedStore:", selectedStore);
   useEffect(() => {
-    if (!productId || !selectedStore?.store_id) return;
     const fetchProduct = async () => {
       setIsLoading(true);
-      // 1. Buscar el registro de inventario
-      const { data: inventory, error: invError } = await supabase
+      const { data: inventory, error } = await supabase
         .from("store_inventory")
-        .select("*")
+        .select(`
+          inventory_id,
+          store_id,
+          product_reference_id,
+          product_type,
+          quantity,
+          unit_price,
+          name_alias,
+          store_products (
+            store_product_id,
+            name,
+            category,
+            barcode,
+            description
+          )
+        `)
         .eq("inventory_id", productId)
         .single();
-      console.log("Inventario encontrado:", inventory, "Error:", invError);
 
-      if (invError || !inventory) {
-        toast.error("Producto no encontrado");
+      if (error) {
+        toast.error("No se pudo cargar el producto");
         router.push("/inventario");
-        setIsLoading(false);
         return;
       }
 
-      // 2. Buscar detalles secundarios (no bloqueante)
-      let productDetails = null;
-      if (inventory.product_type === "custom") {
-        const { data } = await supabase
-          .from("store_products")
-          .select("name, category, image, barcode, description")
-          .eq("store_product_id", inventory.product_reference_id)
-          .single();
-        productDetails = data;
-        console.log("Detalles store_products:", productDetails);
-      } else if (inventory.product_type === "global") {
-        const { data } = await supabase
-          .from("products")
-          .select("name, category, brand, barcode, description, image")
-          .eq("product_id", inventory.product_reference_id)
-          .single();
-        productDetails = data;
-        console.log("Detalles products:", productDetails);
-      }
+      // Manejo seguro de store_products
+      const storeProduct = Array.isArray(inventory.store_products)
+        ? inventory.store_products[0] || {}
+        : inventory.store_products || {};
 
-      // 3. Buscar el batch más reciente para este producto y tienda
-      let lastCost = 0;
-      const { data: batches } = await supabase
-        .from("inventory_batches")
-        .select("unit_cost, received_date")
-        .eq("product_reference_id", inventory.product_reference_id)
-        .eq("store_id", selectedStore.store_id)
-        .order("received_date", { ascending: false })
-        .limit(1);
-      if (batches && batches.length > 0) {
-        lastCost = Number(batches[0].unit_cost) || 0;
-      }
-
-      // 4. Muestra el producto aunque productDetails sea null
       setProduct({
         id: inventory.inventory_id,
-        store_product_id: inventory.product_type === "custom" ? inventory.product_reference_id : "",
-        name: productDetails?.name || "Sin nombre",
+        store_product_id: inventory.product_reference_id,
+        name: storeProduct.name || "",
         name_alias: inventory.name_alias || "",
+        category: storeProduct.category || "",
+        barcode: storeProduct.barcode || "",
+        description: storeProduct.description || "",
         quantity: inventory.quantity,
-        price: Number(inventory.unit_price),
-        cost: inventory.unit_cost !== undefined && inventory.unit_cost !== null && inventory.unit_cost !== 0
-          ? Number(inventory.unit_cost)
-          : lastCost,
-        category: productDetails?.category || "",
-        image: productDetails?.image || "/Groserybasket.png",
-        barcode: productDetails?.barcode || "",
-        description: productDetails?.description || "",
+        price: inventory.unit_price,
+        cost: 0, // TODO: Implementar costo
         product_type: inventory.product_type,
+        image: "/Groserybasket.png", // Imagen por defecto
       });
       setIsLoading(false);
     };
     fetchProduct();
-  }, [productId, selectedStore]);
+  }, [productId, selectedStore, router, toast]);
 
   // Handle form input changes
   const handleChange = (field: string, value: string | number) => {

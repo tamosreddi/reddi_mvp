@@ -143,7 +143,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
       setLoading(false)
     }
     initExpense();
-  }, [transactionId]);
+  }, [transactionId, client, clientManuallySelected]);
 
   const handleSave = async () => {
     setSaving(true)

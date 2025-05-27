@@ -58,7 +58,7 @@ export default function DeudasView() {
               </span>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes deudas por cobrar</h2>
-            <p className="text-gray-600 mb-8">Créalas en "Nueva venta"</p>
+            <p className="text-gray-600 mb-8">Créalas en &quot;Nueva venta&quot;</p>
           </div>
         </TabsContent>
 
@@ -71,7 +71,7 @@ export default function DeudasView() {
               </span>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes deudas por pagar</h2>
-            <p className="text-gray-600 mb-8">Créalas en "Nuevo gasto"</p>
+            <p className="text-gray-600 mb-8">Créalas en &quot;Nuevo gasto&quot;</p>
           </div>
         </TabsContent>
       </Tabs>

@@ -157,7 +157,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
       setProductosInicializados(true);
     }
     initProducts();
-  }, [transactionId, productosInicializados]);
+  }, [transactionId, productosInicializados, client, clientManuallySelected]);
 
   const handleSave = async () => {
     setSaving(true)
