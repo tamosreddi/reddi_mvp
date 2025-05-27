@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 export default function RegisterPage() {
   const router = useRouter();

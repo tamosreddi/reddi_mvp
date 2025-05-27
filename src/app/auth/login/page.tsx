@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 export default function LoginPage() {
   const router = useRouter();

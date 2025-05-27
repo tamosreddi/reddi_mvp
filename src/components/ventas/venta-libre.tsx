@@ -6,7 +6,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { ArrowLeft, Tag, User, ChevronRight, Trash2, DollarSign } from "lucide-react"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"

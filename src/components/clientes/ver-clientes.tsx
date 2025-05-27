@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Search, User, Plus } from "lucide-react"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"

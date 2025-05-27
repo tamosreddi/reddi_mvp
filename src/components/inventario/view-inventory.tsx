@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react"
 import { FileText, Grid } from "lucide-react"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import TopProfileMenu from "@/components/shared/top-profile-menu"

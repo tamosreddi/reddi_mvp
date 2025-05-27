@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { Plus, Minus } from "lucide-react"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import SaleTypeModal from "@/components/shared/sale-type-modal"
