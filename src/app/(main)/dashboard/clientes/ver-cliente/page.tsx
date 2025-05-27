@@ -1,5 +1,10 @@
-import ViewCustomers from "@/components/clientes/ver-clientes";
+import { Suspense } from "react";
+import VerClientes from "@/components/clientes/ver-clientes";
 
 export default function VerClientePage() {
-  return <ViewCustomers />;
+  return (
+    <Suspense>
+      <VerClientes />
+    </Suspense>
+  );
 }

@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import CreateSupplierForm from "@/components/proveedores/crear-proveedor-form";
 
 export default function CrearProveedorPage() {
-  return <CreateSupplierForm />;
+  return (
+    <Suspense>
+      <CreateSupplierForm />
+    </Suspense>
+  );
 }

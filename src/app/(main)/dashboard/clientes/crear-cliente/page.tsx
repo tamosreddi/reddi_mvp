@@ -1,5 +1,10 @@
-import CreateCustomerForm from "@/components/clientes/crear-cliente-form";
+import { Suspense } from "react";
+import CrearClienteForm from "@/components/clientes/crear-cliente-form";
 
 export default function CrearClientePage() {
-  return <CreateCustomerForm />;
+  return (
+    <Suspense>
+      <CrearClienteForm />
+    </Suspense>
+  );
 }
