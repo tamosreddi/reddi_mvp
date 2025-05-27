@@ -72,19 +72,22 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       return
     }
     // 3. Mapear al formato Product
-    const productsMapped = inventory.map((inv) => {
-      const prod = productsData.find((p) => p.store_product_id === inv.product_reference_id)
-      return {
-        id: inv.product_reference_id,
-        name: prod?.name || "Sin nombre",
-        price: Number(inv.unit_price) || 0,
-        quantity: Number(inv.quantity) || 0,
-        category: prod?.category || "Sin categoría",
-        image: prod?.image || "/Groserybasket.png",
-        productId: inv.product_reference_id.toString(),
-        productType: "custom"
-      }
-    })
+    const productsMapped = inventory
+      .map((inv) => {
+        const prod = productsData.find((p) => p.store_product_id === inv.product_reference_id)
+        if (!prod) return null; // Si no existe el producto (inactivo o borrado), no lo muestres
+        return {
+          id: inv.product_reference_id,
+          name: prod.name || "Sin nombre",
+          price: Number(inv.unit_price) || 0,
+          quantity: Number(inv.quantity) || 0,
+          category: prod.category || "Sin categoría",
+          image: prod.image || "/Groserybasket.png",
+          productId: inv.product_reference_id.toString(),
+          productType: "custom"
+        }
+      })
+      .filter((p): p is Product => Boolean(p)); // Type guard para Product
     setProducts(productsMapped)
     setCategories(Array.from(new Set(productsMapped.map((p) => p.category))))
   }
