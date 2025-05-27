@@ -15,6 +15,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import DeleteProductModal from '@/components/shared/delete-product-modal'
+import Image from 'next/image'
 
 interface ProductDetailViewProps {
   productId: string
@@ -341,9 +342,11 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
         {/* Product Image */}
         <div className="flex justify-center">
           <div className="relative h-48 w-48 overflow-hidden rounded-lg">
-            <img
+            <Image
               src={product.image || "/Groserybasket.png"}
               alt={product.name}
+              width={192}
+              height={192}
               className="h-full w-full object-cover grayscale"
             />
             <button

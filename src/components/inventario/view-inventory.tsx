@@ -12,6 +12,7 @@ import CreateProductForm from "@/components/inventario/create-product-form"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import SelectProductModal from "@/components/shared/select_product_modal"
+import Image from 'next/image'
 
 export default function ViewInventory() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -242,7 +243,7 @@ export default function ViewInventory() {
                 onClick={() => navigateToProductDetail(String(item.id))}
               >
                 <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
-                  <img src={item.image || "/Groserybasket.png"} alt={item.name} className="h-full w-full object-cover" />
+                  <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">

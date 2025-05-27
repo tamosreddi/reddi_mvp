@@ -14,6 +14,7 @@ import { es } from "date-fns/locale"
 import PaymentMethodModal from "@/components/shared/payment-method-modal"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
+import Image from 'next/image'
 
 // Definición de tipos
 interface CartItem {
@@ -337,9 +338,11 @@ export default function CartView() {
               <div key={item.id} className="bg-white rounded-xl p-3 shadow-sm flex">
                 {/* Imagen con trash */}
                 <div className="relative h-14 w-14 rounded-lg bg-gray-100 mr-3 flex-shrink-0 overflow-hidden">
-                  <img
+                  <Image
                     src={item.image || "/Groserybasket.png"}
                     alt={item.name}
+                    width={56}
+                    height={56}
                     className="h-full w-full object-cover grayscale"
                   />
                   <button

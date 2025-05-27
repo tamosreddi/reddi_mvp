@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { cn } from "@/lib/utils"
+import Image from 'next/image'
 
 export default function EditProfileForm() {
   const router = useRouter()
@@ -153,7 +154,7 @@ export default function EditProfileForm() {
             <div className="flex rounded-xl border border-gray-300 overflow-hidden">
               <div className="flex items-center justify-center px-3 bg-white border-r border-gray-300">
                 <div className="w-8 h-6 overflow-hidden">
-                  <img src="/us-flag-waving.png" alt="US flag" className="w-full h-full object-cover" />
+                  <Image src="/us-flag-waving.png" alt="US flag" width={32} height={24} className="w-full h-full object-cover" />
                 </div>
               </div>
               <Input

@@ -16,6 +16,7 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import CategoryCreateProductModal from "@/components/shared/category_create_product_modal"
 import { NewSelector } from "@/components/ui/new-selector"
+import Image from 'next/image'
 
 interface CreateProductFormProps {
   initialReferrer?: string
@@ -157,9 +158,11 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             className="flex h-48 w-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-400 bg-blue-50 transition-colors hover:bg-blue-100"
           >
             {previewUrl ? (
-              <img
+              <Image
                 src={previewUrl || "/Groserybasket.png"}
                 alt="Vista previa"
+                width={192}
+                height={192}
                 className="h-full w-full rounded-lg object-cover grayscale"
               />
             ) : (

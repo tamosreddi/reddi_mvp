@@ -11,6 +11,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import SelectProductModal from "@/components/shared/select_product_modal"
+import Image from 'next/image'
 
 // Definición de tipos
 interface Product {
@@ -337,9 +338,11 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
               >
                 {/* Product Image - Improved sizing and styling */}
                 <div className={cn("h-16 sm:h-20 bg-gray-200 flex items-center justify-center")}>
-                  <img
+                  <Image
                     src={product.image || "/Groserybasket.png"}
                     alt={product.name}
+                    width={64}
+                    height={64}
                     className={
                       `w-full h-full max-h-full max-w-full grayscale ` +
                       (
