@@ -128,6 +128,18 @@ export const databaseSchema = {
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro del cliente.",
         notes: "TEXT - Notas adicionales sobre el cliente, si se quiere registrar.",
         is_active: "BOOLEAN - Estado del cliente (activo/inactivo)."
+    },
+    suppliers: {
+        supplier_id: "UUID - Identificador único del proveedor.",
+        store_id: "UUID - Referencia a la tienda propietaria del proveedor.",
+        name: "VARCHAR - Nombre del proveedor.",
+        email: "VARCHAR - Correo electrónico del proveedor, si se quiere registrar.",
+        phone: "VARCHAR - Número de teléfono del proveedor, si se quiere registrar.",
+        address: "TEXT - Dirección del proveedor, si se quiere registrar.",
+        created_at: "TIMESTAMPTZ - Fecha de creación del proveedor.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro del proveedor.",
+        notes: "TEXT - Notas adicionales sobre el proveedor, si se quiere registrar.",
+        is_active: "BOOLEAN - Estado del proveedor (activo/inactivo)."
     }
 };
 
@@ -142,5 +154,6 @@ const tablesContext = {
     transactions: "Contiene eventos financieros como ventas, gastos o compras. Es la tabla principal para registrar el flujo económico y enlazar con productos o proveedores.",
     transaction_items: "Desglosa los productos involucrados en cada transacción. Cada fila representa un producto específico vendido o comprado.",
     distributors: "Registra información de distribuidores que abastecen productos a las tiendas. Se puede relacionar con productos y transacciones de compra.",
-    clients: "Contiene la información de clientes frecuentes de la tienda. Se usa para registrar ventas personalizadas o historial por cliente."
+    clients: "Contiene la información de clientes frecuentes de la tienda. Se usa para registrar ventas personalizadas o historial por cliente.",
+    suppliers: "Contiene la información de proveedores frecuentes de la tienda. Se usa para registrar compras, historial y selección de proveedores."
   };

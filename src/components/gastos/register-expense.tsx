@@ -9,7 +9,7 @@ import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useToast } from "@/lib/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
@@ -20,9 +20,10 @@ import CalendarSelect from '@/components/ui/calendar-select'
 import ValueInput from '../ui/value-input'
 import ConceptInput from '../ui/concept-input'
 import PaymentMethod from '../ui/payment-method'
+import SupplierSelection from '../ui/supplier-selection'
 
 interface Supplier {
-  id: number
+  supplier_id: number
   name: string
   notes?: string
 }
@@ -41,15 +42,19 @@ export default function RegisterExpense() {
   const toast = useToast()
   const { user } = useAuth()
   const { selectedStore } = useStore()
+  const pathname = usePathname();
 
   // Cargar proveedor seleccionado desde localStorage
   useEffect(() => {
     const savedSupplier = localStorage.getItem("selectedSupplier")
     if (savedSupplier) {
       try {
-        const parsedSupplier = JSON.parse(savedSupplier)
-        setSelectedSupplier(parsedSupplier)
-        setSupplier(parsedSupplier.name) // Actualizar el campo de texto del proveedor
+        const parsed = JSON.parse(savedSupplier)
+        if (parsed && parsed.supplier_id) {
+          parsed.supplier_id = Number(parsed.supplier_id)
+        }
+        setSelectedSupplier(parsed)
+        setSupplier(parsed.name) // Actualizar el campo de texto del proveedor
       } catch (e) {
         console.error("Error parsing supplier from localStorage:", e)
       }
@@ -75,9 +80,8 @@ export default function RegisterExpense() {
 
   // Navegar a la selección de proveedores
   const navigateToSupplierSelection = () => {
-    // Guardar la ruta actual para volver después de la selección
-    const currentPath = "/gasto"
-    router.push(`/proveedores?select=true&returnTo=${encodeURIComponent(currentPath)}`)
+    // Usa la ruta actual para volver después de la selección
+    router.push(`/dashboard/proveedores/ver-proveedor?select=true&returnTo=${encodeURIComponent(pathname)}`)
   }
 
   // Eliminar proveedor seleccionado
@@ -86,6 +90,50 @@ export default function RegisterExpense() {
     setSupplier("")
     localStorage.removeItem("selectedSupplier")
   }
+
+  const handleSelectSupplier = () => {
+    localStorage.setItem("registerExpenseForm", JSON.stringify({
+      date,
+      isPaid,
+      expenseCategory,
+      amount,
+      supplier,
+      description,
+      paymentMethod,
+      selectedSupplier,
+    }));
+    navigateToSupplierSelection();
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem("registerExpenseForm");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.date) setDate(new Date(parsed.date));
+        if (parsed.isPaid !== undefined) setIsPaid(parsed.isPaid);
+        if (parsed.expenseCategory) setExpenseCategory(parsed.expenseCategory);
+        if (parsed.amount) setAmount(parsed.amount);
+        if (parsed.supplier) setSupplier(parsed.supplier);
+        if (parsed.description) setDescription(parsed.description);
+        if (parsed.paymentMethod) setPaymentMethod(parsed.paymentMethod);
+        if (parsed.selectedSupplier) setSelectedSupplier(parsed.selectedSupplier);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("registerExpenseForm", JSON.stringify({
+      date,
+      isPaid,
+      expenseCategory,
+      amount,
+      supplier,
+      description,
+      paymentMethod,
+      selectedSupplier,
+    }));
+  }, [date, isPaid, expenseCategory, amount, supplier, description, paymentMethod, selectedSupplier]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,7 +171,7 @@ export default function RegisterExpense() {
         is_paid: isPaid,
         transaction_subtype: expenseCategory,
         transaction_date: date?.toISOString() || "",
-        stakeholder_id: selectedSupplier?.id || null,
+        stakeholder_id: selectedSupplier?.supplier_id || null,
         stakeholder_type: 'supplier',
         total_amount: Number.parseFloat(amount) || 0,
       }
@@ -147,6 +195,10 @@ export default function RegisterExpense() {
 
       // Navegar a la página de balance
       router.push("/balance?tab=egresos")
+
+      // Después de crear el gasto exitosamente o al salir al dashboard:
+      localStorage.removeItem("registerExpenseForm");
+      localStorage.removeItem("selectedSupplier");
     } catch (err: any) {
       console.error('Error in handleSubmit:', err)
       toast.error(err.message || "No se pudo crear el gasto")
@@ -157,7 +209,15 @@ export default function RegisterExpense() {
 
   return (
     <div className="pb-32">
-      <TopProfileMenu simpleMode={true} title="Nuevo gasto" onBackClick={() => router.back()} />
+      <TopProfileMenu
+        simpleMode={true}
+        title="Nuevo gasto"
+        onBackClick={() => {
+          localStorage.removeItem("registerExpenseForm");
+          localStorage.removeItem("selectedSupplier");
+          router.push("/dashboard");
+        }}
+      />
 
       {/* Form content - with padding to account for fixed header */}
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
@@ -196,42 +256,11 @@ export default function RegisterExpense() {
 
         {/* Supplier */}
         <div>
-          <Label htmlFor="supplier" className="text-base font-bold">
-            Proveedor
-          </Label>
-          {selectedSupplier ? (
-            <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-blue-50 p-4 mt-1">
-              <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-lg font-medium">{selectedSupplier.name}</span>
-                  {selectedSupplier.notes && <span className="text-sm text-gray-600">{selectedSupplier.notes}</span>}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={removeSelectedSupplier}
-                className="text-red-500"
-                aria-label="Quitar proveedor"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={navigateToSupplierSelection}
-              className="mt-1 flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-500">Escoge tu proveedor</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
-          )}
+          <SupplierSelection
+            selectedSupplier={selectedSupplier}
+            onRemoveSupplier={removeSelectedSupplier}
+            onSelectSupplier={handleSelectSupplier}
+          />
         </div>
 
         {/* Payment Method Selection */}
