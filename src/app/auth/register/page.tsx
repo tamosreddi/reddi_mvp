@@ -61,12 +61,13 @@ export default function RegisterPage() {
       >
         <div className="flex flex-col items-center mb-6">
           <Image
-            src="/reddilogo.png"
+            src="/reddiapplogo.png"
             alt="Logo Reddi"
-            width={120}
-            height={120}
+            width={140}
+            height={140}
             priority
             unoptimized
+            className="object-contain drop-shadow-md mb-2"
           />
           <h2 className="text-3xl font-bold text-center mt-2">Crear una cuenta</h2>
           <p className="text-center text-gray-600 mb-4">Ingresa tus datos para crear tu cuenta</p>
