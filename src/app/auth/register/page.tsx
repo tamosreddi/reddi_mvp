@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/button';
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Las contraseñas no coinciden');
       setIsLoadingForm(false);
       return;
     }
@@ -58,6 +59,16 @@ export default function RegisterPage() {
         description="Ingresa tus datos para crear tu cuenta"
         onSubmit={handleSubmit}
       >
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/reddi_logo.png"
+            alt="Logo Reddi"
+            width={120}
+            height={120}
+            priority
+            className="object-contain drop-shadow-md"
+          />
+        </div>
         <Input
           label="Email"
           type="email"

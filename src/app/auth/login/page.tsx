@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/button';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function LoginPage() {
 
       // 2. Espera a que el usuario esté disponible
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw userError || new Error('No user found');
+      if (userError || !user) throw userError || new Error('No se encontró el usuario');
 
       // 3. Consultar si el usuario ya tiene tienda
       const { data: stores, error: storeError } = await supabase
@@ -47,7 +48,7 @@ export default function LoginPage() {
         router.push('/onboarding');
       }
     } catch (err: any) {
-      setError(err?.message || 'Invalid email or password');
+      setError(err?.message || 'Email o contraseña inválidos');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -61,6 +62,16 @@ export default function LoginPage() {
         description="Ingresa tus credenciales para acceder a tu cuenta"
         onSubmit={handleSubmit}
       >
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/reddi_logo.png"
+            alt="Logo Reddi"
+            width={120}
+            height={120}
+            priority
+            className="object-contain drop-shadow-md"
+          />
+        </div>
         <Input
           label="Email"
           type="email"
