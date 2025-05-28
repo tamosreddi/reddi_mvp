@@ -3,24 +3,27 @@
 import type React from "react"
 
 import { useState, useMemo, useEffect } from "react"
-import { ArrowLeft, CalendarIcon, Tag, User, Trash2 } from "lucide-react"
-import Button from "@/components/ui/Button"
+import { Tag, User, Trash2 } from "lucide-react"
+import Button from "@/components/ui/button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { useToast } from "@/hooks/use-toast"
+import { useRouter, usePathname } from "next/navigation"
+import { useToast } from "@/lib/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
+import IsPaidToggle from "@/components/ui/is-paid-toggle"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
+import CalendarSelect from '@/components/ui/calendar-select'
+import ValueInput from '../ui/value-input'
+import ConceptInput from '../ui/concept-input'
+import PaymentMethod from '../ui/payment-method'
+import SupplierSelection from '../ui/supplier-selection'
 
 interface Supplier {
-  id: number
+  supplier_id: number
   name: string
   notes?: string
 }
@@ -36,18 +39,22 @@ export default function RegisterExpense() {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
+  const toast = useToast()
   const { user } = useAuth()
   const { selectedStore } = useStore()
+  const pathname = usePathname();
 
   // Cargar proveedor seleccionado desde localStorage
   useEffect(() => {
     const savedSupplier = localStorage.getItem("selectedSupplier")
     if (savedSupplier) {
       try {
-        const parsedSupplier = JSON.parse(savedSupplier)
-        setSelectedSupplier(parsedSupplier)
-        setSupplier(parsedSupplier.name) // Actualizar el campo de texto del proveedor
+        const parsed = JSON.parse(savedSupplier)
+        if (parsed && parsed.supplier_id) {
+          parsed.supplier_id = Number(parsed.supplier_id)
+        }
+        setSelectedSupplier(parsed)
+        setSupplier(parsed.name) // Actualizar el campo de texto del proveedor
       } catch (e) {
         console.error("Error parsing supplier from localStorage:", e)
       }
@@ -73,9 +80,8 @@ export default function RegisterExpense() {
 
   // Navegar a la selección de proveedores
   const navigateToSupplierSelection = () => {
-    // Guardar la ruta actual para volver después de la selección
-    const currentPath = "/gasto"
-    router.push(`/proveedores?select=true&returnTo=${encodeURIComponent(currentPath)}`)
+    // Usa la ruta actual para volver después de la selección
+    router.push(`/dashboard/proveedores/ver-proveedor?select=true&returnTo=${encodeURIComponent(pathname)}`)
   }
 
   // Eliminar proveedor seleccionado
@@ -84,6 +90,50 @@ export default function RegisterExpense() {
     setSupplier("")
     localStorage.removeItem("selectedSupplier")
   }
+
+  const handleSelectSupplier = () => {
+    localStorage.setItem("registerExpenseForm", JSON.stringify({
+      date,
+      isPaid,
+      expenseCategory,
+      amount,
+      supplier,
+      description,
+      paymentMethod,
+      selectedSupplier,
+    }));
+    navigateToSupplierSelection();
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem("registerExpenseForm");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.date) setDate(new Date(parsed.date));
+        if (parsed.isPaid !== undefined) setIsPaid(parsed.isPaid);
+        if (parsed.expenseCategory) setExpenseCategory(parsed.expenseCategory);
+        if (parsed.amount) setAmount(parsed.amount);
+        if (parsed.supplier) setSupplier(parsed.supplier);
+        if (parsed.description) setDescription(parsed.description);
+        if (parsed.paymentMethod) setPaymentMethod(parsed.paymentMethod);
+        if (parsed.selectedSupplier) setSelectedSupplier(parsed.selectedSupplier);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("registerExpenseForm", JSON.stringify({
+      date,
+      isPaid,
+      expenseCategory,
+      amount,
+      supplier,
+      description,
+      paymentMethod,
+      selectedSupplier,
+    }));
+  }, [date, isPaid, expenseCategory, amount, supplier, description, paymentMethod, selectedSupplier]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,15 +166,14 @@ export default function RegisterExpense() {
         user_id: user.id,
         store_id: selectedStore.store_id,
         transaction_type: 'expense',
-        unit_amount: 1,
-        quantity: 1,
         transaction_description: description,
         payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
         is_paid: isPaid,
         transaction_subtype: expenseCategory,
-        transaction_date: date.toISOString(),
-        stakeholder_id: selectedSupplier?.id || null,
-        created_by: user.id,
+        transaction_date: date?.toISOString() || "",
+        stakeholder_id: selectedSupplier?.supplier_id || null,
+        stakeholder_type: 'supplier',
+        total_amount: Number.parseFloat(amount) || 0,
       }
 
       console.log('Sending transaction data:', transactionData)
@@ -142,21 +191,17 @@ export default function RegisterExpense() {
       }
 
       // Mostrar mensaje de éxito
-      toast({
-        title: "Gasto creado con éxito",
-        description: "Gasto básico registrado",
-        variant: "success",
-      })
+      toast.success("Gasto creado con éxito")
 
       // Navegar a la página de balance
       router.push("/balance?tab=egresos")
+
+      // Después de crear el gasto exitosamente o al salir al dashboard:
+      localStorage.removeItem("registerExpenseForm");
+      localStorage.removeItem("selectedSupplier");
     } catch (err: any) {
       console.error('Error in handleSubmit:', err)
-      toast({
-        title: "Error",
-        description: err.message || "No se pudo crear el gasto",
-        variant: "destructive",
-      })
+      toast.error(err.message || "No se pudo crear el gasto")
     } finally {
       setIsLoading(false)
     }
@@ -164,74 +209,27 @@ export default function RegisterExpense() {
 
   return (
     <div className="pb-32">
-      {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button
-            onClick={() => router.back()}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Nuevo gasto</h1>
-          <div className="w-12"></div> {/* Spacer for centering */}
-        </div>
-      </div>
+      <TopProfileMenu
+        simpleMode={true}
+        title="Nuevo gasto"
+        onBackClick={() => {
+          localStorage.removeItem("registerExpenseForm");
+          localStorage.removeItem("selectedSupplier");
+          router.push("/dashboard");
+        }}
+      />
 
       {/* Form content - with padding to account for fixed header */}
       <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
         {/* Date and Payment Status on the same line */}
         <div className="grid grid-cols-2 gap-3">
-          {/* Date selector */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                id="date"
-                type="button"
-                className="flex h-12 w-full items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm"
-              >
-                <CalendarIcon className="h-4 w-4 text-gray-500" />
-                <span className="truncate">{format(date, "'Hoy,' dd 'de' MMM", { locale: es })}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                selected={date}
-                onChange={setDate}
-                dateFormat="dd 'de' MMMM yyyy"
-                placeholderText="Selecciona una fecha"
-              />
-            </PopoverContent>
-          </Popover>
-
-          {/* Paid or Debt Toggle */}
-          <div className="flex h-12 overflow-hidden rounded-full border border-gray-200">
-            <button
-              type="button"
-              className={cn(
-                "flex-1 text-center text-sm font-medium transition-colors",
-                isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(true)}
-            >
-              Pagado
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex-1 text-center text-sm font-medium transition-colors",
-                !isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(false)}
-            >
-              Deuda
-            </button>
-          </div>
+          <CalendarSelect value={date} onChange={setDate} />
+          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagado", credit: "Deuda" }} className="h-12" />
         </div>
 
         {/* Expense Category */}
         <div>
-          <Label htmlFor="expense-category" className="text-lg font-medium">
+          <Label htmlFor="expense-category" className="text-base font-bold">
             Categoría del gasto <span className="text-red-500">*</span>
           </Label>
           <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
@@ -249,140 +247,35 @@ export default function RegisterExpense() {
         </div>
 
         {/* Amount Input */}
-        <div>
-          <Label htmlFor="amount" className="text-lg font-medium">
-            Valor <span className="text-red-500">*</span>
-          </Label>
-          <div className="mt-1 rounded-xl border border-gray-200 bg-white p-4">
-            <Input
-              id="amount"
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="border-none text-right text-lg shadow-none focus-visible:ring-0"
-              placeholder="0"
-              required
-            />
-          </div>
-
-          {/* Total Value Display */}
-          <div className="flex items-center justify-between rounded-xl bg-gray-100 p-4 mt-2">
-            <span className="text-lg font-medium text-gray-700">Valor Total</span>
-            <span className="text-lg font-medium text-green-600">$ {amount || "0"}</span>
-          </div>
+        <ValueInput value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} required />
+        {/* Total Value Display */}
+        <div className="flex items-center justify-between rounded-xl bg-gray-100 p-4 mt-2">
+          <span className="text-lg font-medium text-gray-700">Valor Total</span>
+          <span className="text-lg font-medium text-green-600">$ {amount || "0"}</span>
         </div>
 
         {/* Supplier */}
         <div>
-          <Label htmlFor="supplier" className="text-lg font-medium">
-            Proveedor
-          </Label>
-          {selectedSupplier ? (
-            <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-blue-50 p-4 mt-1">
-              <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-lg font-medium">{selectedSupplier.name}</span>
-                  {selectedSupplier.notes && <span className="text-sm text-gray-600">{selectedSupplier.notes}</span>}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={removeSelectedSupplier}
-                className="text-red-500"
-                aria-label="Quitar proveedor"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={navigateToSupplierSelection}
-              className="mt-1 flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-500">Escoge tu proveedor</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
-          )}
+          <SupplierSelection
+            selectedSupplier={selectedSupplier}
+            onRemoveSupplier={removeSelectedSupplier}
+            onSelectSupplier={handleSelectSupplier}
+          />
         </div>
 
         {/* Payment Method Selection */}
-        <div>
-          <Label className="text-lg font-medium">
-            Método de pago <span className="text-red-500">*</span>
-          </Label>
-          <div className="grid grid-cols-3 gap-3 mt-1">
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("efectivo")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "efectivo" ? "border-green-500 bg-green-50" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">💵</div>
-              <span>Efectivo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("tarjeta")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "tarjeta" ? "border-green-500 bg-green-50" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">💳</div>
-              <span>Tarjeta</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("transferencia")}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4",
-                paymentMethod === "transferencia" ? "border-green-500 bg-green-50" : "border-gray-200",
-              )}
-            >
-              <div className="mb-2 text-2xl">🏦</div>
-              <span>Transferencia</span>
-            </button>
-          </div>
-        </div>
+        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
 
         {/* Description Input */}
-        <div>
-          <Label htmlFor="description" className="text-lg font-medium">
-            Concepto
-          </Label>
-          <div className="mt-1 rounded-xl border border-gray-200 bg-white p-4">
-            <div className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-gray-400" />
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="border-none shadow-none focus-visible:ring-0"
-                placeholder="Añadir una descripción"
-              />
-            </div>
-          </div>
-        </div>
+        <ConceptInput value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} placeholder="Añadir una descripción" />
 
         {/* Submit Button */}
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-white p-4 border-t border-gray-200">
           <Button
             type="submit"
-            className={cn(
-              "w-full rounded-xl p-6 text-lg font-medium transition-colors",
-              isFormValid ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400",
-            )}
+            size="lg"
+            fullWidth
+            variant="primary"
             disabled={!isFormValid || isLoading}
             isLoading={isLoading}
           >

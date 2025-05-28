@@ -1,70 +1,112 @@
+//Main view de página de inventario
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FileText, Grid } from "lucide-react"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import CreateProductForm from "@/components/inventario/create-product-form"
-
-// Sample inventory data
-const sampleInventory = [
-  {
-    id: 1,
-    name: "Refresco Cola 600ml",
-    quantity: 24,
-    price: 18.5,
-    cost: 12.0,
-    category: "Bebidas",
-    image: "/refreshing-drink.png",
-  },
-  {
-    id: 2,
-    name: "Pan Blanco",
-    quantity: 10,
-    price: 35.0,
-    cost: 20.0,
-    category: "Panadería",
-    image: "/cooking-pan.png",
-  },
-  {
-    id: 3,
-    name: "Leche 1L",
-    quantity: 15,
-    price: 24.0,
-    cost: 18.0,
-    category: "Lácteos",
-    image: "/glass-of-milk.png",
-  },
-  {
-    id: 4,
-    name: "Jabón de Baño",
-    quantity: 20,
-    price: 15.5,
-    cost: 10.0,
-    category: "Higiene",
-    image: "/jabon.png",
-  },
-  {
-    id: 5,
-    name: "Papel Higiénico (4 rollos)",
-    quantity: 12,
-    price: 45.0,
-    cost: 30.0,
-    category: "Higiene",
-    image: "/crumpled-paper.png",
-  },
-]
+import { useStore } from "@/lib/contexts/StoreContext"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import SelectProductModal from "@/components/shared/select_product_modal"
+import Image from 'next/image'
 
 export default function ViewInventory() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [inventory, setInventory] = useState(sampleInventory)
+  const [inventory, setInventory] = useState<any[]>([])
   const router = useRouter()
   const pathname = usePathname()
+  const { selectedStore } = useStore()
+  const [loading, setLoading] = useState(true)
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
+  // New state to control whether to show the select product modal
+  const [showSelectProductModal, setShowSelectProductModal] = useState(false)
+  const [totalCost, setTotalCost] = useState(0)
+
+  // Fetch inventory from Supabase
+  useEffect(() => {
+    const fetchInventory = async () => {
+      if (!selectedStore?.store_id) return;
+      setLoading(true)
+      // 1. Get all inventory items for this store
+      const { data: inventoryRows, error: invError } = await supabase
+        .from("store_inventory")
+        .select("*")
+        .eq("store_id", selectedStore.store_id)
+      if (invError) {
+        setInventory([])
+        setLoading(false)
+        return
+      }
+      // 2. For each inventory item, get product details
+      const products: any[] = []
+      let totalCost = 0
+
+      for (const item of inventoryRows) {
+        let product = null
+        let lastCost = 0
+
+        if (item.product_type === "custom") {
+          // Custom product
+          const { data, error } = await supabase
+            .from("store_products")
+            .select("name, category, image")
+            .eq("store_product_id", item.product_reference_id)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (error) {
+            // Opcional: console.log("Error al buscar producto personalizado:", error.message);
+            product = null;
+          } else {
+            product = data;
+          }
+        } else if (item.product_type === "global") {
+          // Global product
+          const { data } = await supabase
+            .from("products")
+            .select("name, category, brand")
+            .eq("product_id", item.product_reference_id)
+            .single()
+          product = data
+        }
+
+        // Buscar el batch más reciente para este producto y tienda
+        const { data: batches } = await supabase
+          .from("inventory_batches")
+          .select("unit_cost, received_date")
+          .eq("product_reference_id", item.product_reference_id)
+          .eq("store_id", selectedStore.store_id)
+          .order("received_date", { ascending: false })
+          .limit(1)
+        if (batches && batches.length > 0) {
+          lastCost = Number(batches[0].unit_cost) || 0
+        }
+
+        if (product) {
+          products.push({
+            id: String(item.inventory_id),
+            name: product.name,
+            name_alias: item.name_alias,
+            category: product.category,
+            image: 'image' in product && product.image ? product.image : "/Groserybasket.png",
+            quantity: item.quantity,
+            price: Number(item.unit_price),
+            cost: lastCost,
+          })
+          totalCost += lastCost * item.quantity
+        }
+      }
+      setInventory(products)
+      setTotalCost(totalCost)
+      setLoading(false)
+    }
+    fetchInventory()
+  }, [selectedStore])
 
   // Get unique categories
   const categories = Array.from(new Set(inventory.map((item) => item.category)))
@@ -78,9 +120,6 @@ export default function ViewInventory() {
 
   // Calculate total references (unique products)
   const totalReferences = inventory.length
-
-  // Calculate total cost of inventory
-  const totalCost = inventory.reduce((sum, item) => sum + item.cost * item.quantity, 0)
 
   // Handle report generation
   const handleGenerateReport = () => {
@@ -100,7 +139,7 @@ export default function ViewInventory() {
   }
 
   // Navigate to product detail view
-  const navigateToProductDetail = (productId: number) => {
+  const navigateToProductDetail = (productId: string) => {
     router.push(`/inventario/${productId}`)
   }
 
@@ -137,11 +176,11 @@ export default function ViewInventory() {
       <TopProfileMenu onSearchClick={handleSearchClick} />
 
       {/* Main Content - Add padding at the bottom to prevent products from being hidden */}
-      <div className="flex-1 p-4 space-y-4 pb-32">
+      <div className="flex-1 p-4 space-y-4 pb-40">
         {/* Reports Button */}
         <Button
           variant="outline"
-          className="w-full rounded-xl border-gray-300 bg-white p-6 text-base"
+          className="w-full rounded-xl border-gray-300 bg-white px-6 text-sm"
           onClick={handleGenerateReport}
         >
           <FileText className="mr-2 h-5 w-5" />
@@ -152,14 +191,14 @@ export default function ViewInventory() {
         <div className="grid grid-cols-2 gap-4">
           {/* Total References */}
           <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
-            <h2 className="text-sm font-semibold text-gray-700">Total de referencias</h2>
-            <p className="text-2xl font-bold text-left mt-4">{totalReferences}</p>
+            <h2 className="text-sm font-semibold text-gray-700">Productos Totales</h2>
+            <p className="text-xl font-bold text-left mt-4">{totalReferences}</p>
           </div>
 
           {/* Total Cost */}
           <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
             <h2 className="text-sm font-semibold text-gray-700">Costo total</h2>
-            <p className="text-2xl font-bold text-left mt-4">
+            <p className="text-xl font-bold text-left mt-4">
               $
               {new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalCost)}
             </p>
@@ -171,7 +210,7 @@ export default function ViewInventory() {
           <Button
             variant="outline"
             className={cn(
-              "rounded-full px-4 py-2 whitespace-nowrap",
+              "rounded-full px-4 py-1 text-sm whitespace-nowrap",
               !selectedCategory ? "bg-yellow-400 border-yellow-400 text-gray-900" : "bg-white",
             )}
             onClick={() => setSelectedCategory(null)}
@@ -184,7 +223,7 @@ export default function ViewInventory() {
               key={category}
               variant="outline"
               className={cn(
-                "rounded-full px-4 py-2 whitespace-nowrap",
+                "rounded-full px-4 py-1 text-sm whitespace-nowrap",
                 selectedCategory === category ? "bg-yellow-400 border-yellow-400 text-gray-900" : "bg-white",
               )}
               onClick={() => setSelectedCategory(category)}
@@ -201,14 +240,16 @@ export default function ViewInventory() {
               <button
                 key={item.id}
                 className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left hover:bg-gray-50"
-                onClick={() => navigateToProductDetail(item.id)}
+                onClick={() => navigateToProductDetail(String(item.id))}
               >
                 <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
-                  <img src={item.image || "/Groserybasket.png"} alt={item.name} className="h-full w-full object-cover" />
+                  <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{item.name}</h3>
-                  <p className="text-lg font-semibold">${item.price.toFixed(2)}</p>
+                  <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
+                    {item.name_alias ? item.name_alias : item.name}
+                  </h3>
+                  <p className="text-sm font-semibold">${item.price.toFixed(2)}</p>
                   <p className="text-sm text-gray-600">{item.quantity} disponibles</p>
                 </div>
               </button>
@@ -222,23 +263,27 @@ export default function ViewInventory() {
       </div>
 
       {/* Action Buttons - Fixed at the bottom, above the navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-45 space-y-3 p-4 bg-gray-50 border-t border-gray-200 shadow-md">
+      <div className="fixed bottom-0 left-0 right-0 z-45 p-4 pb-20 bg-gray-50 border-t border-gray-200 shadow-md">
         <Button
-          onClick={handleShowCreateProductForm}
-          className="w-full rounded-xl bg-gray-800 p-6 text-lg font-medium text-white hover:bg-gray-700"
+          onClick={() => setShowSelectProductModal(true)}
+          className="w-full rounded-xl bg-gray-800 p-5 text-lg font-medium text-white hover:bg-gray-700"
         >
           Crear producto
         </Button>
-
-        <Button
-          onClick={handleCreateCategory}
-          variant="outline"
-          className="w-full rounded-xl border-gray-300 bg-white p-6 text-lg font-medium text-gray-800"
-        >
-          <Grid className="mr-2 h-5 w-5" />
-          Categorías
-        </Button>
       </div>
+      <SelectProductModal
+        isOpen={showSelectProductModal}
+        onClose={() => setShowSelectProductModal(false)}
+        onSelect={(type) => {
+          setShowSelectProductModal(false)
+          if (type === 'custom') {
+            router.push('/inventario/crear')
+          } else {
+            console.log('Tipo de producto seleccionado:', type)
+            // Aquí puedes manejar la lógica para inventario
+          }
+        }}
+      />
     </div>
   )
 }

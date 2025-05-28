@@ -7,6 +7,11 @@ import { ArrowLeft, Search, Barcode, ShoppingCart, ChevronRight, Plus, Minus } f
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import CreateProductForm from "@/components/inventario/create-product-form"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import { useStore } from "@/lib/contexts/StoreContext"
+import SelectProductModal from "@/components/shared/select_product_modal"
+import Image from 'next/image'
 
 // Definición de tipos
 interface Product {
@@ -16,98 +21,134 @@ interface Product {
   quantity: number
   category: string
   image: string
+  productId: string
+  productType: string
 }
 
 interface CartItem extends Product {
   cartQuantity: number
 }
 
-export default function ProductSale() {
+export default function ProductSale({ transactionId }: { transactionId?: string }) {
   const router = useRouter()
   const pathname = usePathname()
+  const { selectedStore } = useStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<string[]>([])
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
+  // New state to control whether to show the select product modal
+  const [showSelectProductModal, setShowSelectProductModal] = useState(false)
 
-  // Cargar productos de muestra y carrito del localStorage si existe
-  useEffect(() => {
-    // En una aplicación real, esto vendría de una API o base de datos
-    const sampleProducts: Product[] = [
-      {
-        id: 1,
-        name: "Dispo",
-        price: 550,
-        quantity: -1,
-        category: "Bebidas",
-        image: "/Groserybasket.png",
-      },
-      {
-        id: 2,
-        name: "Ejemplo",
-        price: 10,
-        quantity: 2,
-        category: "Panadería",
-        image: "/cooking-pan.png",
-      },
-      {
-        id: 3,
-        name: "Producto 2",
-        price: 50,
-        quantity: 5,
-        category: "Lácteos",
-        image: "/glass-of-milk.png",
-      },
-      {
-        id: 4,
-        name: "Producto con nombre mucho mas largo",
-        price: 585,
-        quantity: 0,
-        category: "Higiene",
-        image: "/jabon.png",
-      },
-      {
-        id: 5,
-        name: "Producto3",
-        price: 22,
-        quantity: -6,
-        category: "Higiene",
-        image: "/crumpled-paper.png",
-      },
-      {
-        id: 6,
-        name: "Producto Agotado",
-        price: 22,
-        quantity: 0,
-        category: "Varios",
-        image: "/generic-product-display.png",
-      },
-    ]
-
-    setProducts(sampleProducts)
-
-    // Extraer categorías únicas
-    const uniqueCategories = Array.from(new Set(sampleProducts.map((product) => product.category)))
-    setCategories(uniqueCategories)
-
-    // Cargar carrito del localStorage si existe
-    const savedCart = localStorage.getItem("productCart")
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart))
-      } catch (e) {
-        console.error("Error parsing cart from localStorage:", e)
-      }
+  // Nueva función para refrescar inventario
+  const fetchInventory = async () => {
+    if (!selectedStore) return;
+    // 1. Obtener inventario de la tienda (solo productos custom por ahora)
+    const { data: inventory, error } = await supabase
+      .from("store_inventory")
+      .select("product_reference_id, quantity, name_alias, unit_price")
+      .eq("store_id", selectedStore.store_id)
+      .eq("product_type", "custom")
+    if (error) {
+      console.error("Error fetching inventory:", error)
+      return
     }
-  }, [])
+    if (!inventory || inventory.length === 0) {
+      setProducts([])
+      setCategories([])
+      return
+    }
+    // 2. Obtener los datos de los productos custom
+    const productIds = inventory.map((item) => item.product_reference_id)
+    const { data: productsData, error: prodError } = await supabase
+      .from("store_products")
+      .select("store_product_id, name, category, image, barcode")
+      .in("store_product_id", productIds)
+      .eq("is_active", true)
+    if (prodError) {
+      console.error("Error fetching products:", prodError)
+      return
+    }
+    // 3. Mapear al formato Product
+    const productsMapped = inventory
+      .map((inv) => {
+        const prod = productsData.find((p) => p.store_product_id === inv.product_reference_id)
+        if (!prod) return null; // Si no existe el producto (inactivo o borrado), no lo muestres
+        return {
+          id: inv.product_reference_id,
+          name: prod.name || "Sin nombre",
+          price: Number(inv.unit_price) || 0,
+          quantity: Number(inv.quantity) || 0,
+          category: prod.category || "Sin categoría",
+          image: prod.image || "/Groserybasket.png",
+          productId: inv.product_reference_id.toString(),
+          productType: "custom"
+        }
+      })
+      .filter((p): p is Product => Boolean(p)); // Type guard para Product
+    setProducts(productsMapped)
+    setCategories(Array.from(new Set(productsMapped.map((p) => p.category))))
+  }
+
+  useEffect(() => {
+    fetchInventory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStore])
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
-    localStorage.setItem("productCart", JSON.stringify(cart))
+    if (typeof window !== "undefined" && cart.length > 0) {
+      console.log("[venta-productos] Guardando carrito en localStorage:", cart)
+      localStorage.setItem("productCart", JSON.stringify(cart))
+    }
   }, [cart])
+
+  // Cargar carrito desde localStorage al montar
+  useEffect(() => {
+    // Si venimos de edición, cargar editProductCart
+    const editCart = localStorage.getItem("editProductCart");
+    console.log("[venta-productos] editProductCart localStorage:", editCart);
+    if (editCart) {
+      try {
+        const parsedCart = JSON.parse(editCart);
+        console.log("[venta-productos] editProductCart parsed:", parsedCart);
+        // Normalizar productos al formato CartItem
+        const normalizedCart = parsedCart.map((p: any) => ({
+          id: p.product_reference_id || p.id,
+          name: p.product_name || p.name,
+          price: Number(p.unit_price ?? p.price),
+          quantity: Number(p.quantity),
+          category: p.category || "Sin categoría",
+          image: p.image || "/Groserybasket.png",
+          productId: (p.product_reference_id || p.id || "").toString(),
+          productType: p.product_type || "custom",
+          cartQuantity: Number(p.quantity),
+        }));
+        console.log("[venta-productos] editProductCart normalized:", normalizedCart);
+        setCart(normalizedCart);
+        setTimeout(() => {
+          console.log("[venta-productos] cart state after setCart:", normalizedCart);
+        }, 100);
+        localStorage.removeItem("editProductCart");
+        return;
+      } catch (e) {
+        console.error("Error parsing editProductCart from localStorage:", e);
+      }
+    }
+    // Si no, cargar productCart normal
+    const savedCart = localStorage.getItem("productCart");
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        setCart(parsedCart);
+      } catch (e) {
+        console.error("Error parsing cart from localStorage:", e);
+      }
+    }
+  }, []);
 
   // Filtrar productos basados en búsqueda y categoría
   const filteredProducts = products.filter((product) => {
@@ -130,7 +171,12 @@ export default function ProductSale() {
         )
       } else {
         // Si no existe, añadirlo con cantidad 1
-        return [...prevCart, { ...product, cartQuantity: 1 }]
+        return [...prevCart, { 
+          ...product, 
+          cartQuantity: 1,
+          productId: product.id.toString(),
+          productType: "custom"
+        }]
       }
     })
   }
@@ -167,8 +213,19 @@ export default function ProductSale() {
 
   // Navegar a la página de canasta
   const navigateToCart = () => {
-    router.push("/venta/canasta")
+    if (transactionId) {
+      router.push(`/dashboard/ventas/canasta?edit=1&transaction_id=${transactionId}`);
+    } else {
+      router.push(`/dashboard/ventas/canasta`);
+    }
   }
+
+  const handleBackToDashboard = () => {
+    localStorage.removeItem("productCart");
+    localStorage.removeItem("selectedCustomer");
+    // Redirige al dashboard
+    router.push("/dashboard");
+  };
 
   // If showing create product form, render it
   if (showCreateProductForm) {
@@ -177,9 +234,8 @@ export default function ProductSale() {
         initialReferrer={pathname}
         onCancel={handleCreateProductFormClose}
         onSuccess={() => {
-          // Handle successful product creation
           setShowCreateProductForm(false)
-          // Optionally refresh product list or show success message
+          fetchInventory()
         }}
       />
     )
@@ -187,22 +243,21 @@ export default function ProductSale() {
 
   // Otherwise, render the product sale view
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-16">
+    <div className="flex flex-col min-h-screen bg-gray-100 pb-16 pt-16">
       {/* Header */}
-      <div className="bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button
-            onClick={() => router.back()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
+      <TopProfileMenu 
+        simpleMode={true}
+        title="Nueva venta"
+        onBackClick={handleBackToDashboard}
+        rightContent={
+          <button 
+            className="flex h-10 w-10 items-center justify-center" 
+            aria-label="Escanear código de barras"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Nueva venta</h1>
-          <button className="flex h-10 w-10 items-center justify-center" aria-label="Escanear código de barras">
             <Barcode className="h-6 w-6" />
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Search Bar */}
       <div className="p-4 max-w-4xl mx-auto w-full">
@@ -255,7 +310,7 @@ export default function ProductSale() {
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
           {/* New Product Button */}
           <button
-            onClick={handleShowCreateProductForm}
+            onClick={() => setShowSelectProductModal(true)}
             className="flex flex-col items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded-lg aspect-square hover:bg-gray-50 transition-colors group"
           >
             <div className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center mb-1 group-hover:bg-yellow-100 transition-colors">
@@ -278,16 +333,24 @@ export default function ProductSale() {
                   isOutOfStock
                     ? "opacity-70"
                     : "cursor-pointer hover:shadow-md transition-all hover:translate-y-[-2px]",
+                  "p-1 sm:p-2"
                 )}
               >
                 {/* Product Image - Improved sizing and styling */}
-                <div
-                  className={cn("h-20 sm:h-32 bg-gray-200 relative", !isOutOfStock && "cursor-pointer overflow-hidden")}
-                >
-                  <img
+                <div className={cn("h-16 sm:h-20 bg-gray-200 flex items-center justify-center")}>
+                  <Image
                     src={product.image || "/Groserybasket.png"}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform hover:scale-105 grayscale"
+                    width={64}
+                    height={64}
+                    className={
+                      `w-full h-full max-h-full max-w-full grayscale ` +
+                      (
+                        !product.image || product.image === "/Groserybasket.png"
+                          ? "object-contain p-1"
+                          : "object-cover"
+                      )
+                    }
                   />
 
                   {/* Add button overlay for desktop */}
@@ -309,23 +372,25 @@ export default function ProductSale() {
                 )}
 
                 {/* Product Info - Improved layout and spacing */}
-                <div className="p-2 flex-1 flex flex-col justify-between">
+                <div className="p-1 sm:p-2 flex-1 flex flex-col justify-between">
                   {/* Price */}
-                  <p className="text-base font-bold text-gray-900">$ {product.price.toLocaleString()}</p>
+                  <p className="text-xs sm:text-base font-bold text-gray-900 leading-tight">$ {product.price.toLocaleString()}</p>
 
                   {/* Product Name - Ensure it wraps properly */}
-                  <h3 className="font-medium text-sm leading-tight line-clamp-2 min-h-[2.5rem] text-gray-800">
+                  <h3 className="font-normal sm:font-medium text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] text-gray-800">
                     {product.name}
                   </h3>
 
                   {/* Availability */}
                   <p
                     className={cn(
-                      "text-xs mt-1",
-                      product.quantity < 0 ? "text-red-500" : product.quantity === 0 ? "text-red-500" : "text-gray-500",
+                      "text-[10px] sm:text-xs mt-1",
+                      product.quantity <= 0 ? "text-red-500" : "text-gray-500"
                     )}
                   >
-                    {product.quantity} disponibles
+                    <span className="sm:hidden">DISP</span>
+                    <span className="hidden sm:inline">disponibles</span>
+                    : {product.quantity}
                   </p>
 
                   {/* Add/Remove Buttons */}
@@ -407,6 +472,21 @@ export default function ProductSale() {
           </div>
         </div>
       )}
+
+      {/* Select Product Modal */}
+      <SelectProductModal
+        isOpen={showSelectProductModal}
+        onClose={() => setShowSelectProductModal(false)}
+        onSelect={(type) => {
+          setShowSelectProductModal(false)
+          if (type === 'custom') {
+            setShowCreateProductForm(true)
+          } else {
+            console.log('Tipo de producto seleccionado:', type)
+            // Aquí puedes manejar la lógica para inventario
+          }
+        }}
+      />
     </div>
   )
 }

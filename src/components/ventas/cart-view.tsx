@@ -1,15 +1,20 @@
+// Página de la canasta de compras, en Venta de Productos --> Canasta
+
 "use client"
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react"
 import { ArrowLeft, CalendarIcon, Trash2, Edit, User, ChevronUp, Plus, Minus, ChevronRight } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import PaymentMethodModal from "@/components/ventas/sale-confirmation"
+import PaymentMethodModal from "@/components/shared/payment-method-modal"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { useStore } from "@/lib/contexts/StoreContext"
+import Image from 'next/image'
 
 // Definición de tipos
 interface CartItem {
@@ -20,19 +25,37 @@ interface CartItem {
   cartQuantity: number
   category: string
   image?: string
+  productId: string
+  productType: string
 }
 
 interface Customer {
   id: number
+  client_id: string
   name: string
   notes?: string
 }
 
 export default function CartView() {
   const router = useRouter()
+  const searchParams = useSearchParams();
+  const isEdit = searchParams.get("edit") === "1";
+  const transactionId = searchParams.get("transaction_id");
   const [date, setDate] = useState<Date>(new Date())
   const [isPaid, setIsPaid] = useState(true)
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("productCart")
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return []
+        }
+      }
+    }
+    return []
+  })
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [bottomSectionHeight, setBottomSectionHeight] = useState(0)
@@ -40,6 +63,8 @@ export default function CartView() {
   const bottomSectionRef = useRef<HTMLDivElement>(null)
   const mainContentRef = useRef<HTMLDivElement>(null)
   const [paymentMethod, setPaymentMethod] = useState<string>("Efectivo")
+  const { selectedStore } = useStore()
+  const cartItemsRef = useRef(cartItems);
 
   // Measure the height of the bottom section using useLayoutEffect for more accurate measurements
   useLayoutEffect(() => {
@@ -81,6 +106,7 @@ export default function CartView() {
   useEffect(() => {
     setIsLoading(true)
     const savedCart = localStorage.getItem("productCart")
+    console.log("[cart-view] Cargando carrito desde localStorage:", savedCart)
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart)
@@ -95,10 +121,15 @@ export default function CartView() {
   // Load selected customer from localStorage
   useEffect(() => {
     const savedCustomer = localStorage.getItem("selectedCustomer")
+    console.log("[cart-view] useEffect: localStorage.getItem('selectedCustomer'):", savedCustomer)
     if (savedCustomer) {
       try {
         const parsedCustomer = JSON.parse(savedCustomer)
+        if (!parsedCustomer.client_id && parsedCustomer.id) {
+          parsedCustomer.client_id = parsedCustomer.id
+        }
         setSelectedCustomer(parsedCustomer)
+        console.log("[cart-view] setSelectedCustomer:", parsedCustomer)
       } catch (e) {
         console.error("Error parsing customer from localStorage:", e)
       }
@@ -107,31 +138,51 @@ export default function CartView() {
 
   // Save cart to localStorage when it changes
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && cartItems.length > 0) {
+      console.log("[cart-view] Guardando carrito en localStorage (useEffect):", cartItems)
       localStorage.setItem("productCart", JSON.stringify(cartItems))
     }
   }, [cartItems, isLoading])
+
+  useEffect(() => {
+    cartItemsRef.current = cartItems;
+  }, [cartItems]);
 
   // Calculate cart total
   const cartTotal = cartItems.reduce((total, item) => total + item.price * item.cartQuantity, 0)
 
   // Increment product quantity
   const incrementQuantity = (id: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => (item.id === id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item)),
-    )
+    setCartItems((prevItems) => {
+      const updated = prevItems.map((item) => {
+        if (item.id === id) {
+          const newQuantity = item.cartQuantity + 1;
+          return { ...item, cartQuantity: newQuantity, quantity: newQuantity };
+        }
+        return item;
+      });
+      localStorage.setItem("productCart", JSON.stringify(updated));
+      console.log('[cart-view] incrementQuantity (updated):', updated);
+      console.log('[cart-view] incrementQuantity (localStorage):', localStorage.getItem("productCart"));
+      return updated;
+    });
   }
 
   // Decrement product quantity
   const decrementQuantity = (id: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => {
+    setCartItems((prevItems) => {
+      const updated = prevItems.map((item) => {
         if (item.id === id && item.cartQuantity > 1) {
-          return { ...item, cartQuantity: item.cartQuantity - 1 }
+          const newQuantity = item.cartQuantity - 1;
+          return { ...item, cartQuantity: newQuantity, quantity: newQuantity };
         }
-        return item
-      }),
-    )
+        return item;
+      });
+      localStorage.setItem("productCart", JSON.stringify(updated));
+      console.log('[cart-view] decrementQuantity (updated):', updated);
+      console.log('[cart-view] decrementQuantity (localStorage):', localStorage.getItem("productCart"));
+      return updated;
+    });
   }
 
   // Remove product from cart
@@ -168,6 +219,7 @@ export default function CartView() {
   const removeSelectedCustomer = () => {
     setSelectedCustomer(null)
     localStorage.removeItem("selectedCustomer")
+    console.log("[cart-view] removeSelectedCustomer: cliente eliminado del estado y localStorage")
   }
 
   // Open payment modal
@@ -182,29 +234,55 @@ export default function CartView() {
 
   // Confirm sale with payment method
   const confirmSaleWithPaymentMethod = (paymentMethod: string) => {
-    // Here you would typically save the sale with the customer to your database
+    // Aquí normalmente guardarías la venta en la base de datos
     const customerInfo = selectedCustomer ? `para ${selectedCustomer.name}` : ""
     alert(`Venta ${customerInfo} confirmada con éxito! Método de pago: ${paymentMethod}`)
 
-    // Clear selected customer
+    // Limpiar cliente seleccionado
+    setSelectedCustomer(null)
     localStorage.removeItem("selectedCustomer")
+    console.log("[cart-view] confirmSaleWithPaymentMethod: cliente eliminado del estado y localStorage")
 
     setIsPaymentModalOpen(false)
+    localStorage.removeItem("productCart")
     router.push("/")
+  }
+
+  // Transform cart items to match the API payload format
+  const transformCartItems = () => {
+    return cartItems.map(item => ({
+      productId: item.productId,
+      productType: item.productType,
+      quantity: item.cartQuantity,
+      unitPrice: item.price
+    }))
+  }
+
+  // Función para regresar al dashboard y limpiar el cliente seleccionado
+  const handleBack = (destination: string) => {
+    if (destination === "/dashboard") {
+      setSelectedCustomer(null)
+      localStorage.removeItem("selectedCustomer")
+      localStorage.removeItem("productCart")
+    }
+    router.push(destination)
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-yellow-400 p-4 h-16 flex items-center">
-        <button onClick={() => router.push("/venta/productos")} className="mr-4" aria-label="Volver">
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <h1 className="text-xl font-bold">Canasta</h1>
-      </div>
+      <TopProfileMenu
+        simpleMode={true}
+        title="Canasta"
+        onBackClick={() => handleBack("/dashboard/ventas/productos")}
+      />
 
       {/* Main Content - Dynamic padding based on bottom section height */}
-      <div ref={mainContentRef} className="flex-1 p-4 space-y-4" style={{ paddingBottom: `${bottomSectionHeight}px` }}>
+      <div
+        ref={mainContentRef}
+        className="flex-1 p-4 space-y-4 pt-20"
+        style={{ paddingBottom: `${bottomSectionHeight}px` }}
+      >
         {/* Date and Payment Status */}
         <div className="grid grid-cols-2 gap-3">
           <Popover>
@@ -221,8 +299,7 @@ export default function CartView() {
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                locale={es}
+                onSelect={(newDate: Date | undefined) => newDate && setDate(newDate)}
                 className="border rounded-md"
               />
             </PopoverContent>
@@ -247,7 +324,7 @@ export default function CartView() {
               )}
               onClick={() => setIsPaid(false)}
             >
-              A crédito
+              Deuda
             </button>
           </div>
         </div>
@@ -258,59 +335,63 @@ export default function CartView() {
             <div className="text-center py-8">Cargando productos...</div>
           ) : cartItems.length > 0 ? (
             cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-start mb-3">
-                  <div className="h-16 w-16 rounded-lg bg-gray-100 mr-3 overflow-hidden">
-                    <img
-                      src={item.image || "/Groserybasket.png"}
-                      alt={item.name}
-                      className="h-full w-full object-cover grayscale"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+              <div key={item.id} className="bg-white rounded-xl p-3 shadow-sm flex">
+                {/* Imagen con trash */}
+                <div className="relative h-14 w-14 rounded-lg bg-gray-100 mr-3 flex-shrink-0 overflow-hidden">
+                  <Image
+                    src={item.image || "/Groserybasket.png"}
+                    alt={item.name}
+                    width={56}
+                    height={56}
+                    className="h-full w-full object-cover grayscale"
+                  />
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 rounded-lg transition-colors"
+                    aria-label="Eliminar producto"
+                    style={{ zIndex: 2 }}
+                  >
+                    <span className="bg-black/80 rounded-full p-1.5 shadow-lg">
+                      <Trash2 className="h-5 w-5 text-white" />
+                    </span>
+                  </button>
+                </div>
+                {/* Info producto */}
+                <div className="flex-1 flex flex-col justify-between">
+                  {/* Nombre */}
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1">{item.name}</h3>
+                  {/* Cantidad y precio unitario alineados, total debajo */}
+                  <div className="flex items-center gap-3 justify-between">
+                    {/* Cantidad */}
+                    <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-500"
-                        aria-label="Eliminar producto"
+                        onClick={() => decrementQuantity(item.id)}
+                        className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                        disabled={item.cartQuantity <= 1}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="font-medium text-sm">{item.cartQuantity}</span>
+                      <button
+                        onClick={() => incrementQuantity(item.id)}
+                        className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                      >
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="text-sm text-gray-500">Categoría: {item.category}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center mt-2">
-                  <div className="flex items-center space-x-2">
+                    {/* Precio unitario alineado a la derecha */}
                     <button
-                      onClick={() => decrementQuantity(item.id)}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"
-                      disabled={item.cartQuantity <= 1}
+                      onClick={() => handlePriceEdit(item.id)}
+                      className="flex items-center text-gray-900 text-sm font-bold ml-auto"
                     >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="font-medium">{item.cartQuantity}</span>
-                    <button
-                      onClick={() => incrementQuantity(item.id)}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center">
-                    <button onClick={() => handlePriceEdit(item.id)} className="flex items-center text-gray-700 mr-2">
                       <Edit className="h-4 w-4 mr-1" />
+                      <span>${item.price.toFixed(2)}</span>
                     </button>
-                    <span className="font-bold text-lg">${(item.price * item.cartQuantity).toFixed(2)}</span>
                   </div>
-                </div>
-
-                <div className="mt-2 text-sm text-gray-500 flex justify-between">
-                  <span>Precio unitario: ${item.price.toFixed(2)}</span>
-                  <span>{item.quantity} disponibles</span>
+                  {/* Precio total debajo, alineado a la derecha */}
+                  <div className="flex justify-end">
+                    <span className="text-xs text-gray-500 mt-0.5">= ${(item.price * item.cartQuantity).toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             ))
@@ -333,42 +414,37 @@ export default function CartView() {
       {/* Fixed bottom section - with ref to measure height */}
       <div
         ref={bottomSectionRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 space-y-4 z-40 shadow-lg"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 space-y-2 z-40 shadow-lg"
       >
         {/* Customer Selection */}
         {selectedCustomer ? (
-          <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between bg-blue-50 px-2 py-1 rounded-lg border border-blue-200">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                <User className="h-5 w-5 text-blue-600" />
+              <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                <User className="h-4 w-4 text-blue-600" />
               </div>
-              <div>
-                <h3 className="font-medium text-gray-900">{selectedCustomer.name}</h3>
-                {selectedCustomer.notes && (
-                  <p className="text-xs text-gray-600 line-clamp-1">{selectedCustomer.notes}</p>
-                )}
-              </div>
+              <h3 className="font-medium text-gray-900 text-sm">{selectedCustomer.name}</h3>
             </div>
-            <button onClick={removeSelectedCustomer} className="text-red-500 p-1" aria-label="Quitar cliente">
-              <Trash2 className="h-5 w-5" />
+            <button onClick={removeSelectedCustomer} className="text-red-500 p-0.5" aria-label="Quitar cliente">
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ) : (
           <button
-            onClick={navigateToCustomerSelection}
-            className="flex items-center justify-between w-full p-3 rounded-lg border border-gray-200 bg-white"
+            onClick={() => router.push('/dashboard/clientes/ver-cliente?select=true&returnTo=/dashboard/ventas/canasta')}
+            className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium shadow-sm"
           >
             <div className="flex items-center">
-              <User className="h-5 w-5 mr-2 text-gray-500" />
-              <span className="text-sm font-medium">Agregar un cliente a la venta</span>
+              <User className="h-4 w-4 mr-2 text-gray-500" />
+              <span className="text-xs font-medium">Agregar un cliente</span>
               <span className="text-xs text-gray-400 ml-1">(opcional)</span>
             </div>
-            <ChevronRight className="h-5 w-5 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-gray-400" />
           </button>
         )}
 
         {/* Total */}
-        <div className="flex justify-between items-center pt-2">
+        <div className="flex justify-between items-center pt-1 pb-1">
           <h3 className="text-xl text-gray-600">Total</h3>
           <div className="flex items-center">
             <span className="text-2xl font-bold">$ {cartTotal.toFixed(2)}</span>
@@ -378,11 +454,26 @@ export default function CartView() {
 
         {/* Confirm Button */}
         <Button
-          onClick={openPaymentModal}
-          className="w-full bg-gray-900 text-white p-6 text-lg font-medium uppercase tracking-wide rounded-xl"
+          onClick={isEdit ? () => {
+            console.log('[cart-view] Botón Actualizar productos - cartItemsRef.current:', cartItemsRef.current);
+            console.log('[cart-view] Botón Actualizar productos - productCart antes:', localStorage.getItem("productCart"));
+            localStorage.setItem("productCart", JSON.stringify(cartItemsRef.current));
+            const latestCart = JSON.parse(localStorage.getItem("productCart") || "[]");
+            console.log('[cart-view] Botón Actualizar productos - latestCart:', latestCart);
+            localStorage.setItem("editProductCart", JSON.stringify(latestCart));
+            console.log('[cart-view] Botón Actualizar productos - editProductCart después:', localStorage.getItem("editProductCart"));
+            if (transactionId) {
+              router.push(`/balance/edit-income/${transactionId}`);
+            } else {
+              router.back();
+            }
+          } : openPaymentModal}
+          size="lg"
+          fullWidth
+          variant="primary"
           disabled={cartItems.length === 0}
         >
-          CONFIRMAR VENTA
+          {isEdit ? "Actualizar productos" : "CONFIRMAR VENTA"}
         </Button>
       </div>
 
@@ -392,7 +483,9 @@ export default function CartView() {
         onClose={closePaymentModal}
         onConfirm={confirmSaleWithPaymentMethod}
         total={cartTotal}
-        paymentMethod={paymentMethod}
+        cartItems={transformCartItems()}
+        storeId={selectedStore?.store_id || ""}
+        customer={selectedCustomer}
       />
     </div>
   )

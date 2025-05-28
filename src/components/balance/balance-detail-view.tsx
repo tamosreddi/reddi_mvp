@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, Info, Package, ArrowUpRight, ArrowDownRight } from
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
 
 interface BalanceDetailViewProps {
   date: Date
@@ -47,15 +48,11 @@ export default function BalanceDetailView({
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Detalle del balance</h1>
-          <div className="w-10"></div> {/* Spacer for balanced spacing */}
-        </div>
-      </div>
+      <TopProfileMenu
+        simpleMode
+        title="Detalle del balance"
+        onBackClick={onClose}
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-auto">

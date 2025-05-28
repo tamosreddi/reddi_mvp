@@ -8,11 +8,9 @@ import { format, subDays, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { Calendar, ChevronRight, Download, ArrowUpRight, ArrowDownRight, Plus, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BalanceHeader from "@/components/balance/balance-header"
-import IncomeDetailView from "@/components/balance/income-detail-view"
-import ExpenseDetailView from "@/components/balance/expense-detail-view"
 import BalanceDetailView from "@/components/balance/balance-detail-view"
 import SaleTypeModal from "@/components/shared/sale-type-modal"
 import { supabase } from "@/lib/supabase/supabaseClient"
@@ -25,10 +23,80 @@ type Transaction = {
   payment_method: string
   transaction_date: string
   unit_amount: number
+  total_amount: number
   // ...otros campos relevantes
 }
 
+function truncateText(text: string | null | undefined, maxLength: number) {
+  if (!text) return "";
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + '...';
+}
+
 function IncomeList({
+  transactions,
+  productsByTransaction,
+  onTransactionClick,
+  formatNumber,
+}: {
+  transactions: Transaction[]
+  productsByTransaction: Record<string, string[]>
+  onTransactionClick: (t: Transaction) => void
+  formatNumber: (n: number) => string
+}) {
+  const MAX_TITLE = 32;
+  if (!transactions.length) {
+    return <div className="p-8 text-center text-gray-500">No hay ingresos registrados para esta fecha.</div>
+  }
+  return (
+    <div className="space-y-4 p-4">
+      {transactions.map((transaction: Transaction) => {
+        let title = "Ingreso";
+        if (transaction.transaction_description) {
+          title = truncateText(transaction.transaction_description, MAX_TITLE);
+        } else if (productsByTransaction[transaction.transaction_id]) {
+          const names = productsByTransaction[transaction.transaction_id];
+          if (names.length === 1) {
+            title = truncateText(names[0], MAX_TITLE);
+          } else if (names.length > 1) {
+            title = truncateText(names.join(", "), MAX_TITLE);
+          }
+        }
+        return (
+          <button
+            key={transaction.transaction_id}
+            className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
+            onClick={() => onTransactionClick(transaction)}
+          >
+            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
+              <span className="text-green-600 text-xl">💵</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-900">{title}</h3>
+              <p className="text-sm text-gray-600">
+                {transaction.payment_method === 'cash'
+                  ? 'Efectivo'
+                  : transaction.payment_method === 'card'
+                  ? 'Tarjeta'
+                  : transaction.payment_method === 'transfer'
+                  ? 'Transferencia'
+                  : 'Otro'}
+                {" · "}
+                {transaction.transaction_date ? format(new Date(transaction.transaction_date), "dd 'de' MMM - HH:mm", { locale: es }) : "Sin fecha"}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold">$ {formatNumber(transaction.total_amount)}</p>
+              <p className="text-sm text-green-600">Pagado</p>
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ExpenseList({
   transactions,
   onTransactionClick,
   formatNumber,
@@ -38,7 +106,7 @@ function IncomeList({
   formatNumber: (n: number) => string
 }) {
   if (!transactions.length) {
-    return <div className="p-8 text-center text-gray-500">No hay ingresos registrados para esta fecha.</div>
+    return <div className="p-8 text-center text-gray-500">No hay gastos registrados para esta fecha.</div>
   }
   return (
     <div className="space-y-4 p-4">
@@ -48,11 +116,11 @@ function IncomeList({
           className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
           onClick={() => onTransactionClick(transaction)}
         >
-          <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-            <span className="text-green-600 text-xl">💵</span>
+          <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
+            <span className="text-red-600 text-xl">💸</span>
           </div>
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900">{transaction.transaction_description || 'Ingreso'}</h3>
+            <h3 className="font-medium text-gray-900">{transaction.transaction_description || 'Gasto'}</h3>
             <p className="text-sm text-gray-600">
               {transaction.payment_method === 'cash'
                 ? 'Efectivo'
@@ -66,8 +134,8 @@ function IncomeList({
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xl font-bold">$ {formatNumber(transaction.unit_amount)}</p>
-            <p className="text-sm text-green-600">Pagado</p>
+            <p className="text-xl font-bold">$ {formatNumber(transaction.total_amount)}</p>
+            <p className="text-sm text-red-600">Pagado</p>
           </div>
         </button>
       ))}
@@ -86,13 +154,13 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [activeTab, setActiveTab] = useState(initialTab)
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null)
   const [showBalanceDetail, setShowBalanceDetail] = useState(false)
   const [isSaleTypeModalOpen, setIsSaleTypeModalOpen] = useState(false)
   const { selectedStore } = useStore()
   const { user } = useAuth()
   const [incomeTransactions, setIncomeTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [productsByTransaction, setProductsByTransaction] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (!selectedStore || !user) return
@@ -105,7 +173,6 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .eq("transaction_type", "income")
         .eq("store_id", selectedStore.store_id)
         .eq("user_id", user.id)
         .gte("transaction_date", start.toISOString())
@@ -117,21 +184,54 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
     fetchIncomes()
   }, [selectedStore, user, selectedDate])
 
+  useEffect(() => {
+    // Cuando incomeTransactions cambian, obtener los productos de todas las transacciones
+    const fetchProducts = async () => {
+      const transactionIds = incomeTransactions.map((t) => t.transaction_id);
+      if (transactionIds.length === 0) {
+        setProductsByTransaction({});
+        return;
+      }
+      try {
+        const res = await fetch("/api/balance/obtener-productos-por-transacciones", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transactionIds })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setProductsByTransaction(data.productsByTransaction);
+        } else {
+          setProductsByTransaction({});
+        }
+      } catch {
+        setProductsByTransaction({});
+      }
+    };
+    fetchProducts();
+  }, [incomeTransactions]);
+
   // Filter transactions based on selected date and active tab
   const filteredTransactions = incomeTransactions.filter(
-    (transaction) =>
-      isSameDay(new Date(transaction.transaction_date), selectedDate) &&
-      activeTab === "ingresos"
+    (t) =>
+      (
+        t.transaction_type === "income" ||
+        (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+      ) &&
+      isSameDay(new Date(t.transaction_date), selectedDate)
   )
 
   // Calculate totals for the selected date
   const incomesTotal = incomeTransactions
-    .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate))
-    .reduce((sum, t) => sum + t.unit_amount, 0)
+    .filter((t) => (
+      t.transaction_type === "income" ||
+      (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+    ) && isSameDay(new Date(t.transaction_date), selectedDate))
+    .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
 
   const expensesTotal = incomeTransactions
     .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
-    .reduce((sum, t) => sum + t.unit_amount, 0)
+    .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
 
   const balanceTotal = incomesTotal - expensesTotal
 
@@ -213,33 +313,16 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
     return dates
   }
 
-  // Handle transaction selection
-  const handleTransactionClick = (transaction: any) => {
-    setSelectedTransaction(transaction)
-  }
-
-  // Close transaction detail view
-  const closeTransactionDetail = () => {
-    setSelectedTransaction(null)
-  }
-
   // Show balance detail view
   const handleShowBalanceDetail = () => {
-    setShowBalanceDetail(true)
+    // Navega a la nueva página de resumen de balance, usando la fecha seleccionada
+    const dateParam = format(selectedDate, "yyyy-MM-dd")
+    router.push(`/balance/see-balance-summary/${dateParam}`)
   }
 
   // Close balance detail view
   const closeBalanceDetail = () => {
     setShowBalanceDetail(false)
-  }
-
-  // If a transaction is selected, show the appropriate detail view
-  if (selectedTransaction) {
-    if (selectedTransaction.transaction_type === "income") {
-      return <IncomeDetailView transaction={selectedTransaction} onClose={closeTransactionDetail} />
-    } else {
-      return <ExpenseDetailView expense={selectedTransaction} onClose={closeTransactionDetail} />
-    }
   }
 
   // If balance detail is shown, render the balance detail view
@@ -287,8 +370,8 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
         <div className="bg-white rounded-lg p-4 shadow-sm">
           {/* Balance Header */}
           <div className="flex justify-between items-center pb-3 border-b">
-            <h2 className="text-base text-gray-700">Balance</h2>
-            <span className={cn("text-base font-bold", balanceTotal >= 0 ? "text-green-600" : "text-red-600")}>
+            <h2 className="text-sm text-gray-700">Balance</h2>
+            <span className={cn("text-sm font-bold", balanceTotal >= 0 ? "text-green-600" : "text-red-600")}>
               {balanceTotal >= 0 ? "$" : "-$"} {formatNumber(Math.abs(balanceTotal))}
             </span>
           </div>
@@ -298,14 +381,18 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
             <div className="flex-1 border-r pr-4">
               <div className="flex items-center mb-1">
                 <ArrowUpRight className="h-4 w-4 text-green-600 mr-1" />
-                <span className="text-sm text-gray-700">Ingresos</span>
+                <span className="flex items-center text-xs text-gray-700">
+                  Ingresos
+                </span>
               </div>
               <span className="text-green-600 font-bold text-lg">$ {formatNumber(incomesTotal)}</span>
             </div>
             <div className="flex-1 pl-4">
               <div className="flex items-center mb-1">
                 <ArrowDownRight className="h-4 w-4 text-red-600 mr-1" />
-                <span className="text-sm text-gray-700">Egresos</span>
+                <span className="flex items-center text-xs text-gray-700">
+                  Egresos
+                </span>
               </div>
               <span className="text-red-600 font-bold text-lg">-$ {formatNumber(expensesTotal)}</span>
             </div>
@@ -353,40 +440,32 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
             <div className="p-8 text-center text-gray-500">Cargando ingresos...</div>
           ) : (
             <IncomeList
-              transactions={incomeTransactions}
-              onTransactionClick={setSelectedTransaction}
+              transactions={incomeTransactions.filter(
+                (t) =>
+                  (
+                    t.transaction_type === "income" ||
+                    (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+                  ) &&
+                  isSameDay(new Date(t.transaction_date), selectedDate)
+              )}
+              productsByTransaction={productsByTransaction}
+              onTransactionClick={(transaction) => router.push(`/balance/income/${transaction.transaction_id}`)}
               formatNumber={formatNumber}
             />
           )}
         </TabsContent>
 
         <TabsContent value="egresos" className="mt-0">
-          {filteredTransactions.length > 0 ? (
-            <div className="space-y-4 p-4">
-              {filteredTransactions.map((transaction) => (
-                <button
-                  key={transaction.id}
-                  className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
-                  onClick={() => handleTransactionClick(transaction)}
-                >
-                  <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
-                    <span className="text-red-600 text-xl">💸</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{transaction.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {transaction.paymentMethod} · {transaction.transaction_date ? format(new Date(transaction.transaction_date), "dd 'de' MMM - HH:mm", { locale: es }) : "Sin fecha"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold">$ {formatNumber(transaction.amount)}</p>
-                    <p className="text-sm text-red-600">{transaction.status}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+          {loading ? (
+            <div className="p-8 text-center text-gray-500">Cargando egresos...</div>
           ) : (
-            <div className="p-8 text-center text-gray-500">No hay gastos registrados para esta fecha.</div>
+            <ExpenseList
+              transactions={incomeTransactions.filter(
+                (t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate)
+              )}
+              onTransactionClick={(transaction) => router.push(`/balance/expense/${transaction.transaction_id}`)}
+              formatNumber={formatNumber}
+            />
           )}
         </TabsContent>
       </Tabs>

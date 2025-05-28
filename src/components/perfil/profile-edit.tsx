@@ -6,10 +6,13 @@ import { useEffect, useState } from "react"
 import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Input from "@/components/ui/Input"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { cn } from "@/lib/utils"
+import Image from 'next/image'
 
 export default function EditProfileForm() {
   const router = useRouter()
@@ -25,6 +28,7 @@ export default function EditProfileForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [isFormValid, setIsFormValid] = useState<boolean | undefined>(undefined)
 
   // Cargar datos actuales del usuario
   useEffect(() => {
@@ -102,19 +106,18 @@ export default function EditProfileForm() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-yellow-400 p-4 flex items-center h-16 relative">
-        <button onClick={() => router.back()} className="mr-4 absolute left-4" aria-label="Volver">
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <h1 className="text-xl font-semibold w-full text-center">Editar perfil</h1>
-      </div>
+      <TopProfileMenu
+        simpleMode
+        title="Editar perfil"
+        onBackClick={() => router.push('/perfil')}
+      />
 
       {/* Form Content */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 pt-24">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name Field - Required */}
           <div>
-            <label htmlFor="name" className="block text-lg font-medium text-gray-800 mb-2">
+            <label htmlFor="name" className="block text-base font-bold text-gray-800 mb-2">
               Nombre <span className="text-red-500">*</span>
             </label>
             <Input
@@ -123,14 +126,14 @@ export default function EditProfileForm() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              className="w-full p-4 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
               required
             />
           </div>
 
           {/* Last Name Field */}
           <div>
-            <label htmlFor="lastName" className="block text-lg font-medium text-gray-800 mb-2">
+            <label htmlFor="lastName" className="block text-base font-bold text-gray-800 mb-2">
               Apellido
             </label>
             <Input
@@ -139,19 +142,19 @@ export default function EditProfileForm() {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              className="w-full p-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              className="w-full p-4 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
             />
           </div>
 
           {/* Phone Number Field - Not Required */}
           <div>
-            <label htmlFor="phone" className="block text-lg font-medium text-gray-800 mb-2">
+            <label htmlFor="phone" className="block text-base font-bold text-gray-800 mb-2">
               Número de celular <span className="text-red-500">*</span>
             </label>
             <div className="flex rounded-xl border border-gray-300 overflow-hidden">
               <div className="flex items-center justify-center px-3 bg-white border-r border-gray-300">
                 <div className="w-8 h-6 overflow-hidden">
-                  <img src="/us-flag-waving.png" alt="US flag" className="w-full h-full object-cover" />
+                  <Image src="/us-flag-waving.png" alt="US flag" width={32} height={24} className="w-full h-full object-cover" />
                 </div>
               </div>
               <Input
@@ -168,7 +171,7 @@ export default function EditProfileForm() {
 
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-lg font-medium text-gray-800 mb-2">
+            <label htmlFor="email" className="block text-base font-bold text-gray-800 mb-2">
               Correo
             </label>
             <Input
@@ -177,14 +180,14 @@ export default function EditProfileForm() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full p-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              className="w-full p-4 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
               disabled
             />
           </div>
           
           {/* Store Name Field */}
           <div>
-            <label htmlFor="storeName" className="block text-lg font-medium text-gray-800 mb-2">
+            <label htmlFor="storeName" className="block text-base font-bold text-gray-800 mb-2">
               Nombre de la tienda
             </label>
             <Input
@@ -193,7 +196,7 @@ export default function EditProfileForm() {
               name="storeName"
               value={formData.storeName}
               onChange={handleChange}
-              className="w-full p-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              className="w-full p-4 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
             />
           </div>
 
@@ -205,9 +208,14 @@ export default function EditProfileForm() {
           <div className="pt-6">
             <Button
               type="submit"
-              className="w-full bg-blue-100 text-blue-800 font-semibold py-4 rounded-xl hover:bg-blue-200 transition-colors text-lg"
+              className={cn(
+                "w-full rounded-xl p-6 text-lg font-medium transition-colors",
+                isFormValid !== undefined ?
+                  (isFormValid ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400")
+                  : (!loading ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-gray-300 text-gray-600 hover:bg-gray-400")
+              )}
+              disabled={loading || (typeof isFormValid !== 'undefined' ? !isFormValid : false)}
               isLoading={loading}
-              disabled={loading}
             >
               Guardar
             </Button>

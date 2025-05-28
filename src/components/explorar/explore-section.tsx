@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import Image from 'next/image'
 
 export default function ExploreSection() {
   const router = useRouter()
@@ -44,9 +45,11 @@ export default function ExploreSection() {
               className="flex flex-col items-center"
             >
               <div className="h-24 w-24 mb-3 bg-white rounded-2xl p-3 shadow-md flex items-center justify-center">
-                <img
+                <Image
                   src={option.icon || "/placeholder.svg"}
                   alt={option.name}
+                  width={96}
+                  height={96}
                   className="w-full h-full object-contain"
                 />
               </div>

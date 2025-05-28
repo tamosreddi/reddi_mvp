@@ -1,3 +1,5 @@
+// Este es el MODAL de Ventas para seleccionar el tipo de venta
+
 "use client"
 
 import { X } from "lucide-react"

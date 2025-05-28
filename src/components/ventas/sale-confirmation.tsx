@@ -6,6 +6,8 @@ import { useState } from "react"
 import { Check, X, Plus, Receipt, Pencil } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Input from "@/components/ui/Input"
+import { toast } from "sonner"
+import { useAuth } from "@/lib/contexts/AuthContext"
 
 interface SaleConfirmationProps {
   isOpen: boolean;
@@ -13,6 +15,7 @@ interface SaleConfirmationProps {
   onConfirm: (paymentMethod: string) => void;
   total: number;
   paymentMethod: string;
+  transactionId: string;
 }
 
 export default function SaleConfirmation({
@@ -21,19 +24,59 @@ export default function SaleConfirmation({
   onConfirm,
   total,
   paymentMethod,
+  transactionId,
 }: SaleConfirmationProps) {
   const router = useRouter()
   const [saleName, setSaleName] = useState("")
+  const { session } = useAuth()
 
   if (!isOpen) return null;
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    if (saleName && transactionId) {
+      try {
+        console.log("Enviando a /api/ventas/actualizar-descripcion/", { transactionId, saleName, token: session?.access_token });
+        const res = await fetch("/api/ventas/actualizar-descripcion/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+          },
+          body: JSON.stringify({ transactionId, description: saleName })
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+      } catch (err: any) {
+        toast.error(err.message || "No se pudo guardar la descripción de la venta")
+      }
+    }
     onClose();
+    localStorage.removeItem("productCart");
+    localStorage.removeItem("selectedCustomer");
     router.push("/balance")
   }
 
-  const handleNewSale = () => {
+  const handleNewSale = async () => {
+    if (saleName && transactionId) {
+      try {
+        console.log("Enviando a /api/ventas/actualizar-descripcion/", { transactionId, saleName, token: session?.access_token });
+        const res = await fetch("/api/ventas/actualizar-descripcion/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+          },
+          body: JSON.stringify({ transactionId, description: saleName })
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+      } catch (err: any) {
+        toast.error(err.message || "No se pudo guardar la descripción de la venta")
+      }
+    }
     onClose();
+    localStorage.removeItem("productCart");
+    localStorage.removeItem("selectedCustomer");
     router.push("/balance?showSaleModal=true")
   }
 
@@ -54,7 +97,7 @@ export default function SaleConfirmation({
         <h1 className="text-2xl font-bold mb-4">¡Creaste una venta!</h1>
 
         {/* Subtitle - Improved spacing and reduced font size */}
-        <p className="text-lg mb-10">Se registró en tu balance por un valor de {total} US$.</p>
+        {/* <p className="text-lg mb-10">Se registró en tu balance por un valor de {total} US$.</p> */}
 
         {/* Sale name input - Improved styling */}
         <div className="w-full max-w-md mb-16">

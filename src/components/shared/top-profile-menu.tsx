@@ -22,6 +22,7 @@ interface TopProfileMenuProps {
   simpleMode?: boolean
   title?: string
   onBackClick?: () => void
+  rightContent?: React.ReactNode
 }
 
 export default function TopProfileMenu({
@@ -32,6 +33,7 @@ export default function TopProfileMenu({
   simpleMode = false,
   title = "",
   onBackClick,
+  rightContent,
 }: TopProfileMenuProps) {
   const { selectedStore } = useStore()
   const router = useRouter()
@@ -50,12 +52,17 @@ export default function TopProfileMenu({
   // If in simple mode, render a simple header with back button
   if (simpleMode) {
     return (
-      <header className={cn("bg-yellow-400 p-4", className)}>
-        <div className="flex items-center">
-          <button onClick={onBackClick} className="mr-4" aria-label="Volver">
+      <header className={cn("fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4", className)}>
+        <div className="flex items-center justify-between h-10">
+          <button 
+            onClick={onBackClick} 
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
+            aria-label="Volver"
+          >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-semibold">{title}</h1>
+          <h1 className="text-lg font-bold">{title}</h1>
+          {rightContent ? rightContent : <div className="w-12"></div>}
         </div>
       </header>
     )
@@ -75,7 +82,7 @@ export default function TopProfileMenu({
                 <button className="flex items-center focus:outline-none">
                   <div className="text-left">
                     <div className="flex items-center">
-                      <h1 className="text-base font-semibold text-gray-900">
+                      <h1 className="text-base font-medium text-gray-900 truncate max-w-[250px]">
                         {selectedStore ? selectedStore.store_name : "Cargando..."}
                       </h1>
                       <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", isOpen && "rotate-180")} />

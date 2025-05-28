@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import { supabase } from '@/lib/supabase/supabaseClient';
 
 const categories = [

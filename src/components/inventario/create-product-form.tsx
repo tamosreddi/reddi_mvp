@@ -6,12 +6,17 @@ import type React from "react"
 
 import { useState } from "react"
 import { ArrowLeft, Barcode, Info, Upload } from "lucide-react"
-import Button from "@/components/ui/Button"
+import Button from "@/components/ui/button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter, useSearchParams } from "next/navigation"
+import TopProfileMenu from "@/components/shared/top-profile-menu"
+import { useStore } from "@/lib/contexts/StoreContext"
+import { supabase } from "@/lib/supabase/supabaseClient"
+import CategoryCreateProductModal from "@/components/shared/category_create_product_modal"
+import { NewSelector } from "@/components/ui/new-selector"
+import Image from 'next/image'
 
 interface CreateProductFormProps {
   initialReferrer?: string
@@ -31,11 +36,23 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { selectedStore } = useStore()
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+
+  const defaultCategories = [
+    "Bebidas",
+    "Panadería",
+    "Lácteos",
+    "Higiene",
+    "Snacks",
+    "Abarrotes",
+    "Granos",
+    "Otro"
+  ];
+  const [categories, setCategories] = useState(defaultCategories);
 
   // Obtain referrer from props or search params as fallback
   const referrer = initialReferrer || searchParams.get("referrer") || "/inventario"
-
-  const categories = ["Bebidas", "Panadería", "Lácteos", "Higiene", "Snacks", "Abarrotes", "Otro"]
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -46,17 +63,70 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Aquí normalmente guardarías el producto en tu base de datos
-    alert("Producto registrado con éxito!")
+    // Para guardar en STORE_PRODUCTS
 
-    // Use the onSuccess callback if provided, otherwise navigate
-    if (onSuccess) {
-      onSuccess()
-    } else {
-      // Navegar de vuelta a la página de referencia después de guardar
-      router.push(referrer)
+    try {
+      const response = await supabase.from("store_products").insert([
+        {
+          name,
+          category,
+          description,
+          barcode,
+          store_id: selectedStore?.store_id,
+        }
+      ]).select()
+
+      if (response.error) throw response.error;
+      if (image && Array.isArray(response.data) && response.data.length > 0) {
+        const formData = new FormData()
+        formData.append("file", image, image.name)
+        const uploadResponse = await supabase.storage.from("images").upload(`products/${response.data[0].id}/${image.name}`, formData)
+        if (uploadResponse) {
+          const publicUrl = supabase.storage.from("images").getPublicUrl(`products/${response.data[0].id}/${image.name}`)
+          await supabase.from("store_products").update({ image: publicUrl.data.publicUrl }).eq("id", response.data[0].id)
+        }
+      }
+      // Insertar en STORE_INVENTORY si el producto fue creado
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const store_product_id = response.data[0].store_product_id;
+        const invRes = await supabase.from("store_inventory").insert([
+          {
+            store_id: selectedStore?.store_id,
+            product_reference_id: store_product_id,
+            product_type: "custom",
+            quantity,
+            unit_price: price,
+          }
+        ])
+        if (invRes.error) throw invRes.error;
+
+        // Insertar en INVENTORY_BATCHES
+        const batchRes = await supabase.from("inventory_batches").insert([
+          {
+            store_id: selectedStore?.store_id,
+            product_reference_id: store_product_id,
+            product_type: "custom",
+            quantity_received: quantity,
+            quantity_remaining: quantity,
+            unit_cost: cost || null,
+            received_date: new Date().toISOString(),
+            expiration_date: null,
+          }
+        ])
+        if (batchRes.error) throw batchRes.error;
+      }
+      // Redirigir tras éxito
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push(referrer)
+      }
+    } catch (error: any) {
+      console.error("Error al guardar el producto:", error?.message || error)
+      alert("Hubo un error al guardar el producto. " + (error?.message ? `\n\n${error.message}` : "Por favor, inténtelo más tarde."))
     }
   }
 
@@ -73,18 +143,14 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   return (
     <div className="pb-6">
       {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-10 bg-yellow-400 p-4">
-        <div className="flex items-center justify-between h-10">
-          <button onClick={handleBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">Crear producto</h1>
-          <div className="w-12"></div> {/* Spacer for centering */}
-        </div>
-      </div>
+      <TopProfileMenu
+        simpleMode
+        title="Crear producto"
+        onBackClick={handleBack}
+      />
 
       {/* Form content - with padding to account for fixed header */}
-      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4 pb-20">
+      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4 pb-28">
         {/* Image Upload */}
         <div className="flex justify-center">
           <label
@@ -92,9 +158,11 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             className="flex h-48 w-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-400 bg-blue-50 transition-colors hover:bg-blue-100"
           >
             {previewUrl ? (
-              <img
+              <Image
                 src={previewUrl || "/Groserybasket.png"}
                 alt="Vista previa"
+                width={192}
+                height={192}
                 className="h-full w-full rounded-lg object-cover grayscale"
               />
             ) : (
@@ -105,29 +173,6 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             )}
             <input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
           </label>
-        </div>
-
-        {/* Barcode */}
-        <div>
-          <Label htmlFor="barcode" className="text-lg font-medium">
-            Código de barras
-          </Label>
-          <div className="mt-1 flex gap-2">
-            <Input
-              id="barcode"
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              className="rounded-xl border-gray-200"
-              placeholder="Escribe el código o escanéalo"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="flex h-14 w-14 items-center justify-center rounded-xl border-gray-200"
-            >
-              <Barcode className="h-6 w-6" />
-            </Button>
-          </div>
         </div>
 
         {/* Product Name */}
@@ -145,22 +190,6 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           />
         </div>
 
-        {/* Available Quantity */}
-        <div>
-          <Label htmlFor="quantity" className="text-lg font-medium">
-            Cantidad disponible
-          </Label>
-          <Input
-            id="quantity"
-            type="number"
-            min="0"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            className="mt-1 rounded-xl border-gray-200"
-            placeholder="0"
-          />
-        </div>
-
         {/* Price */}
         <div>
           <Label htmlFor="price" className="text-lg font-medium">
@@ -172,12 +201,12 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             </div>
             <Input
               id="price"
-              type="number"
+              type="text"
               min="0"
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="rounded-xl border-gray-200 pl-7"
+              className="rounded-xl border-gray-200 pl-7 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
               required
             />
@@ -198,15 +227,31 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             </div>
             <Input
               id="cost"
-              type="number"
+              type="text"
               min="0"
               step="0.01"
               value={cost}
               onChange={(e) => setCost(e.target.value)}
-              className="rounded-xl border-gray-200 pl-7"
+              className="rounded-xl border-gray-200 pl-7 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
           </div>
+        </div>
+
+        {/* Available Quantity */}
+        <div>
+          <Label htmlFor="quantity" className="text-lg font-medium">
+            Cantidad disponible
+          </Label>
+          <Input
+            id="quantity"
+            type="number"
+            min="0"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            className="mt-1 rounded-xl border-gray-200"
+            placeholder="0"
+          />
         </div>
 
         {/* Category */}
@@ -214,19 +259,30 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           <Label htmlFor="category" className="text-lg font-medium">
             Categoría
           </Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger id="category" className="mt-1 rounded-xl border-gray-200">
-              <SelectValue placeholder="Selecciona una opción" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <NewSelector
+            options={categories}
+            value={category}
+            onChange={(val) => {
+              if (val === "Otro") {
+                setIsCategoryModalOpen(true)
+              } else {
+                setCategory(val)
+              }
+            }}
+            placeholder="Selecciona una categoría"
+          />
         </div>
+        <CategoryCreateProductModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onConfirm={(newCat) => {
+            if (newCat) {
+              setCategories((prev) => [...prev.filter((c) => c !== "Otro"), newCat, "Otro"]);
+              setCategory(newCat);
+            }
+            setIsCategoryModalOpen(false);
+          }}
+        />
 
         {/* Description */}
         <div>
@@ -242,11 +298,34 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           />
         </div>
 
+        {/* Barcode */}
+        <div>
+          <Label htmlFor="barcode" className="text-lg font-medium">
+            Código de barras (Opcional)
+          </Label>
+          <div className="mt-1 flex gap-2">
+            <Input
+              id="barcode"
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              className="rounded-xl border-gray-200"
+              placeholder="Escribe el código o escanéalo"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="flex h-14 w-14 items-center justify-center rounded-xl border-gray-200"
+            >
+              <Barcode className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
+
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>
 
         {/* Submit Button */}
-        <div className="sticky bottom-4 left-0 right-0 mt-6">
+        <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
           <Button
             type="submit"
             className="w-full rounded-xl bg-gray-800 p-6 text-lg font-medium text-white hover:bg-gray-700"

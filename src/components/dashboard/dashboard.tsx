@@ -28,11 +28,36 @@ export default function Dashboard() {
             onClick={handleSaleButtonClick}
             className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full mr-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="12" width="4" height="7" rx="1" fill="#2563EB" />
-                <rect x="10" y="7" width="4" height="12" rx="1" fill="#2563EB" />
-                <rect x="17" y="3" width="4" height="16" rx="1" fill="#2563EB" />
+            <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full mr-4 shadow-md">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <defs>
+                  <linearGradient id="bars" x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#2563EB" />
+                    <stop offset="1" stopColor="#60A5FA" />
+                  </linearGradient>
+                  <linearGradient id="arrow" x1="16" y1="24" x2="24" y2="8" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#2563EB" />
+                    <stop offset="1" stopColor="#22D3EE" />
+                  </linearGradient>
+                </defs>
+                {/* Barras */}
+                <rect x="5" y="16" width="4" height="10" rx="1.5" fill="url(#bars)" />
+                <rect x="13" y="12" width="4" height="14" rx="1.5" fill="url(#bars)" />
+                <rect x="21" y="8" width="4" height="18" rx="1.5" fill="url(#bars)" />
+                {/* Flecha ascendente */}
+                <path
+                  d="M10 18 L18 10 L18 14 L22 14 L22 6"
+                  stroke="url(#arrow)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                  filter="url(#shadow)"
+                />
+                {/* Sombra suave para la flecha */}
+                <filter id="shadow" x="0" y="0" width="32" height="32">
+                  <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#2563EB" floodOpacity="0.15"/>
+                </filter>
               </svg>
             </div>
             <span className="text-gray-800 font-medium">Registrar Venta</span>
@@ -90,6 +115,7 @@ export default function Dashboard() {
       </section>
 
       {/* Promotional Banner */}
+      {/*
       <section className="px-4 py-4 mt-2">
         <div className="bg-blue-700 text-white p-6 rounded-lg relative overflow-hidden">
           <h3 className="text-xl font-bold mb-2">¡No pierdas más dinero!</h3>
@@ -103,6 +129,7 @@ export default function Dashboard() {
           <span className="absolute right-4 bottom-4 text-3xl">💰</span>
         </div>
       </section>
+      */}
 
       {/* Sale Type Modal */}
       <SaleTypeModal isOpen={isSaleTypeModalOpen} onClose={() => setIsSaleTypeModalOpen(false)} />
