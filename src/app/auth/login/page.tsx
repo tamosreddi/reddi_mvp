@@ -57,14 +57,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <FormWrapper
-        title="Welcome back"
-        description="Enter your credentials to access your account"
+        title="Bienvenido de nuevo"
+        description="Ingresa tus credenciales para acceder a tu cuenta"
         onSubmit={handleSubmit}
       >
         <Input
           label="Email"
           type="email"
-          placeholder="Enter your email"
+          placeholder="Ingresa tu email"
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
@@ -74,7 +74,7 @@ export default function LoginPage() {
         <Input
           label="Password"
           type="password"
-          placeholder="Enter your password"
+          placeholder="Ingresa tu contraseña"
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
@@ -87,7 +87,7 @@ export default function LoginPage() {
           fullWidth
           isLoading={isLoading}
         >
-          Sign in
+          Iniciar sesión
         </Button>
         <p className="text-center text-sm text-gray-600">
           ¿No tienes una cuenta?{' '}
@@ -95,7 +95,7 @@ export default function LoginPage() {
             href="/auth/register"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
-            Sign up
+            Registrarse
           </Link>
         </p>
       </FormWrapper>
