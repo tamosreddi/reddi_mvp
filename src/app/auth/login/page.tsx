@@ -58,19 +58,22 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <FormWrapper
-        title="Bienvenido de nuevo"
-        description="Ingresa tus credenciales para acceder a tu cuenta"
+        title=""
+        description=""
         onSubmit={handleSubmit}
       >
-        <div className="flex justify-center mb-6">
+        <div className="flex flex-col items-center mb-6">
           <Image
-            src="/reddi_logo.png"
+            src="/reddiapplogo.png"
             alt="Logo Reddi"
-            width={120}
-            height={120}
+            width={140}
+            height={140}
             priority
-            className="object-contain drop-shadow-md"
+            unoptimized
+            className="object-contain drop-shadow-md mb-2"
           />
+          <h2 className="text-3xl font-bold text-center mt-2">Bienvenido de nuevo</h2>
+          <p className="text-center text-gray-600 mb-4">Ingresa tus credenciales para acceder a tu cuenta</p>
         </div>
         <Input
           label="Email"
