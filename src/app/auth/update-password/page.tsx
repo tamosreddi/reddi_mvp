@@ -70,7 +70,7 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-8 px-4">
       <FormWrapper
         title=""
         description=""
