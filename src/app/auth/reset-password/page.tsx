@@ -23,9 +23,12 @@ export default function ResetPasswordPage() {
     setSuccess(false);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://reddi-main.vercel.app/auth/update-password',
-      });
+      const redirectTo =
+        typeof window !== 'undefined' && window.location.hostname === 'localhost'
+          ? 'http://localhost:3000/auth/update-password'
+          : 'https://reddi-main.vercel.app/auth/update-password';
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
       if (error) throw error;
 
@@ -39,7 +42,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-8 px-4">
+    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-2 sm:py-8 px-4">
       <FormWrapper
         title=""
         description=""

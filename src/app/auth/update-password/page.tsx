@@ -23,8 +23,11 @@ export default function UpdatePasswordPage() {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Sesión actual:', session);
       if (!session) {
-        router.push('/auth/login');
+        setError('Tu sesión de recuperación no es válida o ha expirado. Solicita un nuevo enlace.');
+        // Opcional: redirige después de mostrar el error
+        // setTimeout(() => router.push('/auth/login'), 3000);
       }
     };
     checkSession();
@@ -50,6 +53,12 @@ export default function UpdatePasswordPage() {
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Tu sesión de recuperación no es válida o ha expirado. Solicita un nuevo enlace.');
+        setIsLoading(false);
+        return;
+      }
       const { error } = await supabase.auth.updateUser({
         password: formData.password
       });
@@ -70,7 +79,7 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-8 px-4">
+    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-2 sm:py-8 px-4">
       <FormWrapper
         title=""
         description=""
