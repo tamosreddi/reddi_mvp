@@ -22,6 +22,7 @@ interface StoreContextType {
   selectedStore: Store | null;
   setSelectedStore: (store: Store) => void;
   loading: boolean;
+  refetchStores: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -32,42 +33,45 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch stores for the authenticated user
-  useEffect(() => {
-    async function fetchStores() {
-      if (!user) {
-        setStores([]);
-        setSelectedStore(null);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("stores")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        setStores([]);
-        setSelectedStore(null);
-      } else {
-        setStores(data || []);
-        setSelectedStore((prev) => {
-          // Si ya hay una tienda seleccionada y sigue existiendo, mantenla
-          if (prev && data?.find((s) => s.store_id === prev.store_id)) return prev;
-          // Si no, selecciona la primera
-          return data && data.length > 0 ? data[0] : null;
-        });
-      }
+  // Refactoriza fetchStores para poder llamarla desde fuera
+  const fetchStores = async () => {
+    if (!user) {
+      setStores([]);
+      setSelectedStore(null);
       setLoading(false);
+      return;
     }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("stores")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      setStores([]);
+      setSelectedStore(null);
+    } else {
+      setStores(data || []);
+      setSelectedStore((prev) => {
+        if (prev && data?.find((s) => s.store_id === prev.store_id)) return prev;
+        return data && data.length > 0 ? data[0] : null;
+      });
+    }
+    setLoading(false);
+  };
+
+  // Llama fetchStores en el useEffect inicial
+  useEffect(() => {
     fetchStores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Expón refetchStores en el contexto
+  const refetchStores = fetchStores;
+
   return (
-    <StoreContext.Provider value={{ stores, selectedStore, setSelectedStore, loading }}>
+    <StoreContext.Provider value={{ stores, selectedStore, setSelectedStore, loading, refetchStores }}>
       {children}
     </StoreContext.Provider>
   );

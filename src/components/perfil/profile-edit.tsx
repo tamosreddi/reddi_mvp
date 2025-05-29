@@ -1,3 +1,5 @@
+// pagina de perfil del usuario para editar sus datos, al clickar su nombre
+
 "use client"
 
 import type React from "react"
@@ -17,7 +19,7 @@ import Image from 'next/image'
 export default function EditProfileForm() {
   const router = useRouter()
   const { user } = useAuth()
-  const { selectedStore } = useStore()
+  const { selectedStore, refetchStores } = useStore()
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
@@ -74,27 +76,24 @@ export default function EditProfileForm() {
     setError("")
     setSuccess(false)
     try {
-      // 1. Actualiza los datos del usuario
-      const { error: updateError } = await supabase
-        .from("user")
-        .update({
+      // Llama a la nueva API route para actualizar perfil y tienda
+      const response = await fetch("/api/perfil/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
           name: formData.name,
-          last_name: formData.lastName,
-          phone: formData.phone || null,
-        })
-        .eq("user_id", user?.id)
-      if (updateError) throw updateError
-
-      // 2. Actualiza el nombre de la tienda ACTIVA (selectedStore)
-      if (selectedStore && formData.storeName) {
-        const { error: storeUpdateError } = await supabase
-          .from("stores")
-          .update({ store_name: formData.storeName })
-          .eq("store_id", selectedStore.store_id)
-        if (storeUpdateError) throw storeUpdateError
-      }
-
+          lastName: formData.lastName,
+          phone: formData.phone,
+          storeId: selectedStore?.store_id,
+          storeName: formData.storeName,
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || "Error al guardar cambios")
       setSuccess(true)
+      await refetchStores();
+      router.refresh();
       setTimeout(() => router.push("/perfil"), 1000)
     } catch (err: any) {
       setError(err?.message || "Error al guardar cambios")

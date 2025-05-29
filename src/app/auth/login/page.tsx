@@ -103,6 +103,14 @@ export default function LoginPage() {
         >
           Iniciar sesión
         </Button>
+        <p className="text-center text-sm text-gray-500 mb-2">
+          <Link
+            href="/auth/reset-password"
+            className="font-medium text-gray-500 hover:text-blue-500"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
         <p className="text-center text-sm text-gray-600">
           ¿No tienes una cuenta?{' '}
           <Link

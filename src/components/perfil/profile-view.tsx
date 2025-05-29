@@ -1,3 +1,5 @@
+//sección de perfil del usuario
+
 "use client"
 
 import { useEffect, useState } from "react"
