@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/button';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function LoginPage() {
 
       // 2. Espera a que el usuario esté disponible
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw userError || new Error('No user found');
+      if (userError || !user) throw userError || new Error('No se encontró el usuario');
 
       // 3. Consultar si el usuario ya tiene tienda
       const { data: stores, error: storeError } = await supabase
@@ -47,7 +48,7 @@ export default function LoginPage() {
         router.push('/onboarding');
       }
     } catch (err: any) {
-      setError(err?.message || 'Invalid email or password');
+      setError(err?.message || 'Email o contraseña inválidos');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -57,14 +58,27 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <FormWrapper
-        title="Welcome back"
-        description="Enter your credentials to access your account"
+        title=""
+        description=""
         onSubmit={handleSubmit}
       >
+        <div className="flex flex-col items-center mb-6">
+          <Image
+            src="/reddiapplogo.png"
+            alt="Logo Reddi"
+            width={140}
+            height={140}
+            priority
+            unoptimized
+            className="object-contain drop-shadow-md mb-2"
+          />
+          <h2 className="text-3xl font-bold text-center mt-2">Bienvenido de nuevo</h2>
+          <p className="text-center text-gray-600 mb-4">Ingresa tus credenciales para acceder a tu cuenta</p>
+        </div>
         <Input
           label="Email"
           type="email"
-          placeholder="Enter your email"
+          placeholder="Ingresa tu email"
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
@@ -74,7 +88,7 @@ export default function LoginPage() {
         <Input
           label="Password"
           type="password"
-          placeholder="Enter your password"
+          placeholder="Ingresa tu contraseña"
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
@@ -87,15 +101,23 @@ export default function LoginPage() {
           fullWidth
           isLoading={isLoading}
         >
-          Sign in
+          Iniciar sesión
         </Button>
+        <p className="text-center text-sm text-gray-500 mb-2">
+          <Link
+            href="/auth/reset-password"
+            className="font-medium text-gray-500 hover:text-blue-500"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
         <p className="text-center text-sm text-gray-600">
-          Don&#39;t have an account?{' '}
+          ¿No tienes una cuenta?{' '}
           <Link
             href="/auth/register"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
-            Sign up
+            Registrarse
           </Link>
         </p>
       </FormWrapper>
