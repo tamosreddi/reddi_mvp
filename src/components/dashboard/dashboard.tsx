@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import SaleTypeModal from "@/components/shared/sale-type-modal"
+import { VoiceAssistant } from "@/components/voiceassistant"
 
 export default function Dashboard() {
   const [isSaleTypeModalOpen, setIsSaleTypeModalOpen] = useState(false)
@@ -133,6 +134,9 @@ export default function Dashboard() {
 
       {/* Sale Type Modal */}
       <SaleTypeModal isOpen={isSaleTypeModalOpen} onClose={() => setIsSaleTypeModalOpen(false)} />
+
+      {/* Voice Assistant */}
+      <VoiceAssistant />
     </div>
   )
 }
