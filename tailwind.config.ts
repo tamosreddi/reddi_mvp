@@ -18,8 +18,11 @@ const config: Config = {
   				'InterVariable',
   				'Inter',
   				'ui-sans-serif',
-  				'system-ui'
-  			]
+  				'system-ui',
+				'MerriweatherVariable',
+				'Merriweather',
+  			],
+  			merriweather: ['var(--font-merriweather)'],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -66,7 +69,10 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			'reddi-top': '#F6F6F7',
+			'reddi-bottom': '#0F2A43',
+			'reddi-background': '#FFFFFF',
   		}
   	}
   },

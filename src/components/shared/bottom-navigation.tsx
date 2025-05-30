@@ -48,7 +48,7 @@ export default function BottomNavigation() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-gray-800 px-2 py-2 w-full">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-reddi-bottom px-2 py-2 w-full"> {/* bg-gray-800 es el color de fondo de la página */}
       <div className="flex items-center justify-around">
         {navItems.map((item) => (
           <button

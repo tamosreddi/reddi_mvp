@@ -15,13 +15,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-20">
+    <div className="flex flex-col min-h-screen bg-reddi-background pb-20">
       {/* Top Profile Menu */}
       <TopProfileMenu />
 
       {/* Quick Access Section */}
       <section className="px-4 py-4">
-        <h2 className="text-base font-medium text-gray-700 mb-4">Accesos rápidos</h2>
+        <h2 className="text-base font-extra-light text-gray-700 mb-4">Accesos rápidos</h2>
 
         {/* Registrar Venta Button */}
         <div className="mb-4">
@@ -135,8 +135,6 @@ export default function Dashboard() {
       {/* Sale Type Modal */}
       <SaleTypeModal isOpen={isSaleTypeModalOpen} onClose={() => setIsSaleTypeModalOpen(false)} />
 
-      {/* Voice Assistant */}
-      <VoiceAssistant />
     </div>
   )
 }
