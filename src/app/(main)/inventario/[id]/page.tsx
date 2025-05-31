@@ -1,5 +1,11 @@
-import ProductDetailView from "@/components/inventario/product-detail-view"
+import ProductDetailView from "@/components/inventario/product-detail-view";
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  return <ProductDetailView productId={params.id} />
+// Define el tipo como Promise
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function ProductDetailPage({ params }: PageProps) {
+  const { id } = await params; // Resuelve la Promise
+  return <ProductDetailView productId={id} />;
 }

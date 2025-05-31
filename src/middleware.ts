@@ -1,35 +1,48 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  console.log('MIDDLEWARE SESSION:', session);
-
-  // Si NO hay sesión y NO está en /auth, redirige a login
-  if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
-    const redirectUrl = req.nextUrl.clone();
+  // Si NO hay usuario y NO está en /auth, redirige a login
+  if (!user && !request.nextUrl.pathname.startsWith('/auth')) {
+    const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/auth/login';
-    redirectUrl.searchParams.set(`redirectedFrom`, req.nextUrl.pathname);
+    redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Si HAY sesión y está en /auth/login o /auth/register, redirige a dashboard
+  // Si HAY usuario y está en /auth/login o /auth/register, redirige a dashboard
   if (
-    session &&
-    (req.nextUrl.pathname === '/auth/login' ||
-      req.nextUrl.pathname === '/auth/register')
+    user &&
+    (request.nextUrl.pathname === '/auth/login' ||
+      request.nextUrl.pathname === '/auth/register')
   ) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return res;
+  return response;
 }
 
 export const config = {

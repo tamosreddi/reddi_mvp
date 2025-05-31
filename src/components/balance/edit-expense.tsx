@@ -93,7 +93,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
       .select('client_id, name, notes')
       .eq('store_id', selectedStore.store_id)
       .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           setClientes([]);
         } else {
