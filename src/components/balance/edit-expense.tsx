@@ -231,7 +231,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
             Categoría del gasto <span className="text-red-500">*</span>
           </Label>
           <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
-            <SelectTrigger id="expense-category" className="mt-1 rounded-xl border-gray-200 bg-white p-4">
+            <SelectTrigger id="expense-category" className="mt-1 rounded-xl border-gray-200 bg-white py-5 px-4">
               <SelectValue placeholder="Selecciona una opción" />
             </SelectTrigger>
             <SelectContent>

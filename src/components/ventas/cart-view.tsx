@@ -15,6 +15,7 @@ import PaymentMethodModal from "@/components/shared/payment-method-modal"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
 import Image from 'next/image'
+import IsPaidToggle from "@/components/ui/is-paid-toggle"
 
 // Definición de tipos
 interface CartItem {
@@ -305,28 +306,12 @@ export default function CartView() {
             </PopoverContent>
           </Popover>
 
-          <div className="flex rounded-lg border border-gray-200 bg-white h-10">
-            <button
-              type="button"
-              className={cn(
-                "flex-1 rounded-l-lg py-1.5 px-2 text-center text-sm font-medium transition-colors",
-                isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(true)}
-            >
-              Pagada
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex-1 rounded-r-lg py-1.5 px-2 text-center text-sm font-medium transition-colors",
-                !isPaid ? "bg-green-500 text-white" : "bg-white text-gray-700",
-              )}
-              onClick={() => setIsPaid(false)}
-            >
-              Deuda
-            </button>
-          </div>
+          <IsPaidToggle
+            value={isPaid}
+            onChange={setIsPaid}
+            labels={{ paid: "Pagada", credit: "Deuda" }}
+            className="h-10"
+          />
         </div>
 
         {/* Cart Items */}
