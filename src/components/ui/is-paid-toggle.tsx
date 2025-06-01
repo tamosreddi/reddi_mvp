@@ -23,7 +23,7 @@ export default function IsPaidToggle({
         type="button"
         className={cn(
           "flex-1 text-center text-sm font-medium transition-colors",
-          value ? "bg-green-500 text-white" : "bg-white text-gray-700"
+          value ? "bg-is-paid-toggle text-white" : "bg-white text-gray-700"
         )}
         onClick={() => onChange(true)}
       >
@@ -33,7 +33,7 @@ export default function IsPaidToggle({
         type="button"
         className={cn(
           "flex-1 text-center text-sm font-medium transition-colors",
-          !value ? "bg-green-500 text-white" : "bg-white text-gray-700"
+          !value ? "bg-is-paid-toggle text-white" : "bg-white text-gray-700"
         )}
         onClick={() => onChange(false)}
       >

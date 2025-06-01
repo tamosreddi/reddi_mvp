@@ -329,7 +329,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   }
 
   return (
-    <div className="pb-6">
+    <div className="pb-6 bg-reddi-background">
       {/* Header */}
       <TopProfileMenu
         simpleMode

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import SaleTypeModal from "@/components/shared/sale-type-modal"
 import { VoiceAssistant } from "@/components/voiceassistant"
+import Image from "next/image"
 
 export default function Dashboard() {
   const [isSaleTypeModalOpen, setIsSaleTypeModalOpen] = useState(false)
@@ -21,47 +22,18 @@ export default function Dashboard() {
 
       {/* Quick Access Section */}
       <section className="px-4 py-4">
-        <h2 className="text-base font-extra-light text-gray-700 mb-4">Accesos rápidos</h2>
+        {/*<h2 className="text-base font-extra-light text-gray-700 mb-4">Accesos rápidos</h2>*/}
 
         {/* Registrar Venta Button */}
         <div className="mb-4">
           <button
             onClick={handleSaleButtonClick}
-            className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white"
+            className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white shadow-lg shadow-gray-200"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full mr-4 shadow-md">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <defs>
-                  <linearGradient id="bars" x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#2563EB" />
-                    <stop offset="1" stopColor="#60A5FA" />
-                  </linearGradient>
-                  <linearGradient id="arrow" x1="16" y1="24" x2="24" y2="8" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#2563EB" />
-                    <stop offset="1" stopColor="#22D3EE" />
-                  </linearGradient>
-                </defs>
-                {/* Barras */}
-                <rect x="5" y="16" width="4" height="10" rx="1.5" fill="url(#bars)" />
-                <rect x="13" y="12" width="4" height="14" rx="1.5" fill="url(#bars)" />
-                <rect x="21" y="8" width="4" height="18" rx="1.5" fill="url(#bars)" />
-                {/* Flecha ascendente */}
-                <path
-                  d="M10 18 L18 10 L18 14 L22 14 L22 6"
-                  stroke="url(#arrow)"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  filter="url(#shadow)"
-                />
-                {/* Sombra suave para la flecha */}
-                <filter id="shadow" x="0" y="0" width="32" height="32">
-                  <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#2563EB" floodOpacity="0.15"/>
-                </filter>
-              </svg>
+              <Image src="/yellow-cohete.png" alt="Cohete" width={48} height={48} className="object-contain" />
             </div>
-            <span className="text-gray-800 font-medium">Registrar Venta</span>
+            <span className="text-gray-800 font-extra-light">Registrar Venta</span>
           </button>
         </div>
 
@@ -69,20 +41,12 @@ export default function Dashboard() {
         <div className="mb-4">
           <button
             onClick={() => router.push("/dashboard/gastos")}
-            className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white"
+            className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white shadow-lg shadow-gray-200"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-red-50 rounded-full mr-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M12 6V18M18 12H6"
-                  stroke="#EF4444"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Image src="/fuel-expense.png" alt="Gasto" width={48} height={48} className="object-contain" />
             </div>
-            <span className="text-gray-800 font-medium">Registrar Gasto</span>
+            <span className="text-gray-800 font-extra-light">Registrar Gasto</span>
           </button>
         </div>
 
@@ -90,27 +54,12 @@ export default function Dashboard() {
         <div className="mb-4">
           <button
             onClick={() => router.push("/inventario")}
-            className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white"
+            className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white shadow-lg shadow-gray-200"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-green-50 rounded-full mr-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M21 16V7.97998C20.9996 7.71499 20.9071 7.45776 20.7365 7.25339C20.566 7.04902 20.3284 6.90866 20.07 6.85998L13.07 5.10998C12.7224 5.03734 12.3625 5.00085 12 4.99998C11.6375 5.00085 11.2776 5.03734 10.93 5.10998L3.93 6.85998C3.67163 6.90866 3.43399 7.04902 3.26345 7.25339C3.0929 7.45776 3.00035 7.71499 3 7.97998V16C3 16.2652 3.10536 16.5196 3.29289 16.7071C3.48043 16.8946 3.73478 17 4 17H20C20.2652 17 20.5196 16.8946 20.7071 16.7071C20.8946 16.5196 21 16.2652 21 16Z"
-                  stroke="#10B981"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 9L3.5 7M12 9L20.5 7M12 9V20"
-                  stroke="#10B981"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Image src="/inventario-icon.png" alt="Inventario" width={48} height={48} className="object-contain" />
             </div>
-            <span className="text-gray-800 font-medium">Ver Inventario</span>
+            <span className="text-gray-800 font-extra-light">Ver Inventario</span>
           </button>
         </div>
       </section>

@@ -141,7 +141,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
   }
 
   return (
-    <div className="pb-6">
+    <div className="pb-6 bg-reddi-background">
       {/* Header */}
       <TopProfileMenu
         simpleMode

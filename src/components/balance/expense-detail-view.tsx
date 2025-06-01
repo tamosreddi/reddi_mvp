@@ -30,7 +30,7 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
   const router = useRouter();
 
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-reddi-background z-50 flex flex-col">
       {/* Header */}
       <TopProfileMenu
         simpleMode

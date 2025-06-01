@@ -56,8 +56,8 @@ export default function BottomNavigation() {
             onClick={() => router.push(item.path)}
             className={cn("flex flex-col items-center relative", item.active && "text-yellow-400")}
           >
-            <item.icon className={cn("h-6 w-6", item.active ? "text-yellow-400" : "text-gray-300")} />
-            <span className={cn("mt-1 text-xs", item.active ? "text-yellow-400" : "text-gray-400")}>{item.name}</span>
+            <item.icon className={cn("h-6 w-6", item.active ? "text-reddi-bottom-text-active" : "text-reddi-bottom-text")} />
+            <span className={cn("mt-1 text-xs", item.active ? "text-reddi-bottom-text-active" : "text-reddi-bottom-text")}>{item.name}</span>
           </button>
         ))}
       </div>
