@@ -52,10 +52,10 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
     // Eliminado: console.log('[EditExpense] pathname:', pathname, 'transactionId:', transactionId)
   }, [pathname, transactionId])
 
-  // Estado para clientes
+  // Estado para proveedores
   const { selectedStore } = useStore();
-  const [clientes, setClientes] = useState<Option[]>([]);
-  const [clientesLoading, setClientesLoading] = useState(true);
+  const [proveedores, setProveedores] = useState<Option[]>([]);
+  const [proveedoresLoading, setProveedoresLoading] = useState(true);
 
   // Lista de categorías igual que en register-expense
   const expenseCategories = [
@@ -80,26 +80,26 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
     transferencia: "transfer"
   };
 
-  // Fetch clientes al montar o cuando cambia la tienda
+  // Fetch proveedores al montar o cuando cambia la tienda
   useEffect(() => {
     if (!selectedStore) {
-      setClientes([]);
-      setClientesLoading(false);
+      setProveedores([]);
+      setProveedoresLoading(false);
       return;
     }
-    setClientesLoading(true);
+    setProveedoresLoading(true);
     supabase
-      .from('clients')
-      .select('client_id, name, notes')
+      .from('suppliers')
+      .select('supplier_id, name, notes')
       .eq('store_id', selectedStore.store_id)
       .order('created_at', { ascending: false })
       .then(({ data, error }: any) => {
         if (error) {
-          setClientes([]);
+          setProveedores([]);
         } else {
-          setClientes((data || []).map((c: any) => ({ id: c.client_id, name: c.name, notes: c.notes })));
+          setProveedores((data || []).map((p: any) => ({ id: p.supplier_id, name: p.name, notes: p.notes })));
         }
-        setClientesLoading(false);
+        setProveedoresLoading(false);
       });
   }, [selectedStore]);
 
@@ -123,17 +123,17 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
       setDateObj(tx.transaction_date ? new Date(tx.transaction_date) : new Date())
       setStatus(tx.is_paid ? 'paid' : 'credit')
       setConcept(tx.transaction_description || "")
-      // Solo actualizar el cliente si el usuario NO ha seleccionado uno manualmente ni hay uno en el estado
+      // Solo actualizar el proveedor si el usuario NO ha seleccionado uno manualmente ni hay uno en el estado
       if (!clientManuallySelected && !client) {
-        let clientObj = null;
-        if (tx.stakeholder_id && tx.stakeholder_type === 'client') {
-          const { data: clientData } = await supabase
-            .from('clients')
+        let proveedorObj = null;
+        if (tx.stakeholder_id && tx.stakeholder_type === 'supplier') {
+          const { data: proveedorData } = await supabase
+            .from('suppliers')
             .select('name')
-            .eq('client_id', tx.stakeholder_id)
+            .eq('supplier_id', tx.stakeholder_id)
             .single();
-          clientObj = { id: tx.stakeholder_id, type: tx.stakeholder_type, name: clientData?.name || tx.stakeholder_id };
-          setClient(clientObj);
+          proveedorObj = { id: tx.stakeholder_id, type: tx.stakeholder_type, name: proveedorData?.name || tx.stakeholder_id };
+          setClient(proveedorObj);
         }
       }
       const validMethods = ['cash', 'card', 'other', 'transfer'];
@@ -213,7 +213,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
         title="Editar gasto"
         onBackClick={() => router.push(`/balance/expense/${transactionId}`)}
       />
-      <div className="flex-1 p-4 pb-24 space-y-4 mt-20">
+      <div className="flex-1 p-4 pb-24 space-y-4 mt-14">
         {/* Fecha y Estado (Pagada/A crédito) */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={dateObj} onChange={handleDateChange} />
@@ -225,9 +225,10 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTotal(e.target.value)}
           required
         />
+
         {/* Categoría del gasto */}
         <div>
-          <Label htmlFor="expense-category" className="text-base font-bold">
+          <Label htmlFor="expense-category" className="text-lg font-medium">
             Categoría del gasto <span className="text-red-500">*</span>
           </Label>
           <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
@@ -243,35 +244,41 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
             </SelectContent>
           </Select>
         </div>
+
+         {/* Proveedor */}
+          <div>
+          <Label htmlFor="expense-supplier" className="text-lg font-medium">
+            Proveedor <span className="text-red-500">*</span>
+          </Label>
+          <Combobox
+            options={proveedores}
+            value={client?.id || null}
+            onChange={(proveedorId) => {
+              if (!proveedorId) {
+                setClient(null);
+                setClientManuallySelected(false);
+              } else {
+                const selected = proveedores.find(p => p.id === proveedorId) || null;
+                setClient(selected ? { id: selected.id, type: 'supplier', name: selected.name, notes: selected.notes } : null);
+                setClientManuallySelected(true);
+              }
+            }}
+          />
+        </div>
+
         {/* Concepto */}
         <ConceptInput 
           value={concept} 
           onChange={e => setConcept(e.target.value)}
           placeholder="Edita/agrega el concepto del gasto"
         />
+
+
         {/* Método de pago */}
         <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
 
 
 
-        {/* Cliente */}
-        <div>
-          <label className="block text-gray-700 font-semibold mb-1">Cliente</label>
-          <Combobox
-            options={clientes}
-            value={client?.id || null}
-            onChange={(clienteId) => {
-              if (!clienteId) {
-                setClient(null);
-                setClientManuallySelected(false);
-              } else {
-                const selected = clientes.find(c => c.id === clienteId) || null;
-                setClient(selected ? { id: selected.id, type: 'client', name: selected.name, notes: selected.notes } : null);
-                setClientManuallySelected(true);
-              }
-            }}
-          />
-        </div>
 
         {/* Botón Guardar Cambios */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg z-40">

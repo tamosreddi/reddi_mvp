@@ -53,9 +53,7 @@ export default function ViewCustomers() {
 
   // Navigate to create customer form
   const navigateToCreateCustomer = () => {
-    // Guarda la ruta actual para volver después de crear el cliente
-    const currentPath = "/dashboard/clientes/ver-cliente"
-    router.push(`/dashboard/clientes/crear-cliente?returnTo=${encodeURIComponent(currentPath)}`)
+    router.push(`/dashboard/clientes/crear-cliente?select=true&returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   // Handle customer selection
@@ -103,7 +101,9 @@ export default function ViewCustomers() {
         simpleMode={true}
         title={isSelecting ? "Seleccionar Cliente" : "Clientes"}
         onBackClick={() => {
-          if (returnTo) {
+          if (isSelecting && returnTo) {
+            router.replace(returnTo)
+          } else if (returnTo) {
             router.push(returnTo)
           } else {
             router.back()
@@ -112,7 +112,7 @@ export default function ViewCustomers() {
       />
 
       {/* Main Content - Add padding at the bottom to prevent content from being hidden behind the fixed button */}
-      <div className="flex-1 p-4 pb-24 space-y-4 mt-20">
+      <div className="flex-1 p-4 pb-24 space-y-4 mt-14">
         {/* Title */}
         {/* <h1 className="text-xl font-bold text-center">{isSelecting ? "Seleccionar Cliente" : "Clientes"}</h1> */}
 

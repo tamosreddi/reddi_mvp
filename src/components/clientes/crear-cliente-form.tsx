@@ -22,8 +22,8 @@ export default function CreateCustomerForm() {
   const searchParams = useSearchParams()
   const { selectedStore } = useStore()
 
-  // Get the return path from query parameters
-  const returnTo = searchParams.get("returnTo") || "/clientes"
+  const select = searchParams.get("select") === "true"
+  const returnTo = searchParams.get("returnTo") || "/dashboard/clientes/ver-cliente"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,7 +44,13 @@ export default function CreateCustomerForm() {
         })
         .select()
       if (error) throw error
-      // Navegar de vuelta a la pantalla anterior solo si fue exitoso
+      if (select && data && data[0]) {
+        localStorage.setItem("selectedCustomer", JSON.stringify({
+          client_id: data[0].client_id,
+          name: data[0].name,
+          notes: data[0].notes || ""
+        }))
+      }
       router.push(returnTo)
     } catch (err: any) {
       setError(err.message || "No se pudo registrar el cliente")
@@ -54,8 +60,7 @@ export default function CreateCustomerForm() {
   }
 
   const handleBack = () => {
-    // Regresa a la página anterior inmediatamente
-    router.back()
+    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   return (
@@ -67,7 +72,7 @@ export default function CreateCustomerForm() {
       />
 
       {/* Form content - with padding to account for fixed header */}
-      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
+      <form onSubmit={handleSubmit} className="mt-14 space-y-4 p-4">
         {/* Customer Name */}
         <div>
           <Label htmlFor="name" className="text-lg font-medium">

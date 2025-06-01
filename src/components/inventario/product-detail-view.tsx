@@ -380,28 +380,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           </div>
         </div>
 
-        {/* Barcode */}
-        <div>
-          <Label htmlFor="barcode" className="text-base font-bold">
-            Código de barras
-          </Label>
-          <div className="mt-1 flex gap-2">
-            <Input
-              id="barcode"
-              value={product.barcode}
-              onChange={(e) => handleChange("barcode", e.target.value)}
-              className="rounded-xl border-gray-200"
-              placeholder="Escribe el código o escanéalo"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border-gray-200"
-            >
-              <Barcode className="h-7 w-7" />
-            </Button>
-          </div>
-        </div>
+
 
         {/* Product Name */}
         <div>
@@ -522,6 +501,29 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Barcode */}
+        <div>
+          <Label htmlFor="barcode" className="text-base font-bold">
+            Código de barras
+          </Label>
+          <div className="mt-1 flex gap-2">
+            <Input
+              id="barcode"
+              value={product.barcode}
+              onChange={(e) => handleChange("barcode", e.target.value)}
+              className="rounded-xl border-gray-200"
+              placeholder="Escribe el código o escanéalo"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border-gray-200"
+            >
+              <Barcode className="h-7 w-7" />
+            </Button>
+          </div>
         </div>
 
         {/* Description */}
