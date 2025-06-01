@@ -54,56 +54,78 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
-      const { data: inventory, error } = await supabase
+
+      const { data: inventory, error: invError } = await supabase
         .from("store_inventory")
-        .select(`
-          inventory_id,
-          store_id,
-          product_reference_id,
-          product_type,
-          quantity,
-          unit_price,
-          name_alias,
-          store_products (
-            store_product_id,
-            name,
-            category,
-            barcode,
-            description
-          )
-        `)
+        .select("*")
         .eq("inventory_id", productId)
         .single();
 
-      if (error) {
+      if (invError || !inventory) {
+        setIsLoading(false);
         toast.error("No se pudo cargar el producto");
         router.push("/inventario");
         return;
       }
 
-      // Manejo seguro de store_products
-      const storeProduct = Array.isArray(inventory.store_products)
-        ? inventory.store_products[0] || {}
-        : inventory.store_products || {};
-
-      setProduct({
+      let productData = {
         id: inventory.inventory_id,
-        store_product_id: inventory.product_reference_id,
-        name: storeProduct.name || "",
+        store_product_id: "",
+        name: "",
         name_alias: inventory.name_alias || "",
-        category: storeProduct.category || "",
-        barcode: storeProduct.barcode || "",
-        description: storeProduct.description || "",
+        category: "",
+        barcode: "",
+        description: "",
         quantity: inventory.quantity,
         price: inventory.unit_price,
-        cost: 0, // TODO: Implementar costo
+        cost: 0, // Puedes calcularlo después si tienes batches
         product_type: inventory.product_type,
         image: "/Groserybasket.png", // Imagen por defecto
-      });
+      };
+
+      // 2. Dependiendo del tipo, consulta la tabla correspondiente
+      if (inventory.product_type === "global") {
+        const { data: globalProduct } = await supabase
+          .from("products")
+          .select("name, category, barcode, description")
+          .eq("product_id", inventory.product_reference_id)
+          .single();
+
+        if (globalProduct) {
+          productData = {
+            ...productData,
+            name: globalProduct.name || "",
+            category: globalProduct.category || "",
+            barcode: globalProduct.barcode || "",
+            description: globalProduct.description || "",
+          };
+        }
+      } else if (inventory.product_type === "custom") {
+        const { data: customProduct } = await supabase
+          .from("store_products")
+          .select("store_product_id, name, category, barcode, description, image")
+          .eq("store_product_id", inventory.product_reference_id)
+          .single();
+
+        if (customProduct) {
+          productData = {
+            ...productData,
+            store_product_id: customProduct.store_product_id,
+            name: customProduct.name || "",
+            category: customProduct.category || "",
+            barcode: customProduct.barcode || "",
+            description: customProduct.description || "",
+            image: customProduct.image || "/Groserybasket.png",
+          };
+        }
+      }
+
+      setProduct(productData);
       setIsLoading(false);
     };
+
     fetchProduct();
-  }, [productId, selectedStore, router, toast]);
+  }, [productId, selectedStore?.store_id]);
 
   // Handle form input changes
   const handleChange = (field: string, value: string | number) => {
