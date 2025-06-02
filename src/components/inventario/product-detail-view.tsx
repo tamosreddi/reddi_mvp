@@ -54,76 +54,24 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
-
-      const { data: inventory, error: invError } = await supabase
-        .from("store_inventory")
-        .select("*")
-        .eq("inventory_id", productId)
-        .single();
-
-      if (invError || !inventory) {
+      try {
+        const res = await fetch(`/api/inventario/detail-view?productId=${productId}&storeId=${selectedStore?.store_id}`);
+        const result = await res.json();
+        if (!res.ok || !result.product) {
+          setIsLoading(false);
+          toast.error("No se pudo cargar el producto");
+          router.push("/inventario");
+          return;
+        }
+        setProduct(result.product);
+      } catch (e) {
         setIsLoading(false);
         toast.error("No se pudo cargar el producto");
         router.push("/inventario");
         return;
       }
-
-      let productData = {
-        id: inventory.inventory_id,
-        store_product_id: "",
-        name: "",
-        name_alias: inventory.name_alias || "",
-        category: "",
-        barcode: "",
-        description: "",
-        quantity: inventory.quantity,
-        price: inventory.unit_price,
-        cost: 0, // Puedes calcularlo después si tienes batches
-        product_type: inventory.product_type,
-        image: "/Groserybasket.png", // Imagen por defecto
-      };
-
-      // 2. Dependiendo del tipo, consulta la tabla correspondiente
-      if (inventory.product_type === "global") {
-        const { data: globalProduct } = await supabase
-          .from("products")
-          .select("name, category, barcode, description")
-          .eq("product_id", inventory.product_reference_id)
-          .single();
-
-        if (globalProduct) {
-          productData = {
-            ...productData,
-            name: globalProduct.name || "",
-            category: globalProduct.category || "",
-            barcode: globalProduct.barcode || "",
-            description: globalProduct.description || "",
-          };
-        }
-      } else if (inventory.product_type === "custom") {
-        const { data: customProduct } = await supabase
-          .from("store_products")
-          .select("store_product_id, name, category, barcode, description, image")
-          .eq("store_product_id", inventory.product_reference_id)
-          .single();
-
-        if (customProduct) {
-          productData = {
-            ...productData,
-            store_product_id: customProduct.store_product_id,
-            name: customProduct.name || "",
-            category: customProduct.category || "",
-            barcode: customProduct.barcode || "",
-            description: customProduct.description || "",
-            image: customProduct.image || "/Groserybasket.png",
-          };
-        }
-      }
-
-      setProduct(productData);
       setIsLoading(false);
     };
-
     fetchProduct();
   }, [productId, selectedStore?.store_id]);
 
@@ -140,173 +88,22 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   // Handle save
   const handleSave = async () => {
     setIsLoading(true);
-    let error = null;
-
-    // 1. Obtener todos los batches activos (quantity_remaining > 0) para este producto y tienda
-    const { data: batches, error: batchFetchError } = await supabase
-      .from("inventory_batches")
-      .select("batch_id, quantity_remaining, unit_cost, received_date")
-      .eq("product_reference_id", product.product_type === "custom" ? product.store_product_id : product.id)
-      .eq("store_id", selectedStore?.store_id)
-      .gt("quantity_remaining", 0)
-      .order("received_date", { ascending: true }); // FIFO
-
-    if (batchFetchError) {
+    try {
+      const res = await fetch('/api/inventario/detail-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product, storeId: selectedStore?.store_id })
+      });
+      const result = await res.json();
       setIsLoading(false);
-      toast.error("No se pudieron obtener los batches de inventario.");
-      return;
-    }
-
-    // 2. Calcular el total actual y la diferencia con la cantidad nueva
-    const currentTotal = batches.reduce((sum, b) => sum + Number(b.quantity_remaining), 0);
-    const newTotal = Number(product.quantity);
-    const diff = newTotal - currentTotal;
-
-    // 3. Aquí irá la lógica para aumentar o disminuir inventario según diff
-    //    - Si diff > 0: crear nuevo batch
-    //    - Si diff < 0: restar de batches existentes (FIFO)
-    //    - Si diff === 0: no hacer nada
-
-    if (diff > 0) {
-      // Aumentar inventario: crear un nuevo batch
-      // Usar el último unit_cost conocido (del batch más reciente) o 0 si no hay batches
-      let lastCost = 0;
-      if (batches.length > 0) {
-        lastCost = Number(batches[batches.length - 1].unit_cost) || 0;
-      } else if (product.cost) {
-        lastCost = Number(product.cost) || 0;
+      if (res.ok && result.success) {
+        toast.success("Cambios guardados");
+        router.push("/inventario");
+      } else {
+        toast.error(result.error || "No se pudieron guardar los cambios. Intenta de nuevo.");
       }
-      const { error: batchInsertError } = await supabase.from("inventory_batches").insert([
-        {
-          store_id: selectedStore?.store_id,
-          product_reference_id: product.product_type === "custom" ? product.store_product_id : product.id,
-          product_type: product.product_type,
-          quantity_received: diff,
-          quantity_remaining: diff,
-          unit_cost: lastCost,
-          received_date: new Date().toISOString(),
-          expiration_date: null,
-        }
-      ]);
-      if (batchInsertError) {
-        setIsLoading(false);
-        toast.error("No se pudo crear el nuevo batch de inventario.");
-        return;
-      }
-    }
-
-    if (diff < 0) {
-      // Reducir inventario: restar unidades de los batches existentes (FIFO)
-      let toRemove = Math.abs(diff);
-      for (const batch of batches) {
-        if (toRemove <= 0) break;
-        const removeQty = Math.min(Number(batch.quantity_remaining), toRemove);
-        const newQty = Number(batch.quantity_remaining) - removeQty;
-        const { error: updateBatchError } = await supabase
-          .from("inventory_batches")
-          .update({ quantity_remaining: newQty })
-          .eq("batch_id", batch.batch_id);
-        if (updateBatchError) {
-          setIsLoading(false);
-          toast.error("No se pudo actualizar el inventario por lotes.");
-          return;
-        }
-        toRemove -= removeQty;
-      }
-    }
-
-    console.log("PRODUCT STATE:", product);
-
-    if (product.product_type === "global") {
-      // Solo actualiza el alias y los campos de inventario
-      const { error: invError } = await supabase
-        .from("store_inventory")
-        .update({
-          name_alias: product.name_alias,
-          quantity: product.quantity,
-          unit_price: product.price,
-        })
-        .eq("inventory_id", product.id);
-
-      error = invError;
-    } else if (product.product_type === "custom") {
-      // Actualiza el producto personalizado
-      const { error: prodError } = await supabase
-        .from("store_products")
-        .update({
-          name: product.name,
-          category: product.category,
-          barcode: product.barcode,
-          description: product.description,
-        })
-        .eq("store_product_id", product.store_product_id);
-
-      // Actualiza el inventario
-      const { error: invError } = await supabase
-        .from("store_inventory")
-        .update({
-          quantity: product.quantity,
-          unit_price: product.price,
-        })
-        .eq("inventory_id", product.id);
-
-      console.log("UPDATE store_products error:", prodError);
-      console.log("UPDATE store_inventory error:", invError);
-
-      error = prodError || invError;
-    }
-
-    // Después de la lógica de batches (aumentar/reducir), actualiza el unit_cost en todos los batches activos
-    const { error: updateCostError } = await supabase
-      .from("inventory_batches")
-      .update({ unit_cost: Number(product.cost) })
-      .eq("product_reference_id", product.product_type === "custom" ? product.store_product_id : product.id)
-      .eq("store_id", selectedStore?.store_id)
-      .gt("quantity_remaining", 0);
-    if (updateCostError) {
+    } catch (e) {
       setIsLoading(false);
-      toast.error("No se pudo actualizar el costo en los batches activos.");
-      return;
-    }
-
-    // Sumar los quantity_remaining de todos los batches activos y actualizar store_inventory.quantity
-    const { data: updatedBatches } = await supabase
-      .from("inventory_batches")
-      .select("quantity_remaining")
-      .eq("product_reference_id", product.product_type === "custom" ? product.store_product_id : product.id)
-      .eq("store_id", selectedStore?.store_id)
-      .gt("quantity_remaining", 0);
-
-    const newQuantity = updatedBatches
-      ? updatedBatches.reduce((sum, b) => sum + Number(b.quantity_remaining), 0)
-      : 0;
-
-    const { error: updateInventoryQtyError } = await supabase
-      .from("store_inventory")
-      .update({ quantity: newQuantity })
-      .eq("inventory_id", product.id);
-    if (updateInventoryQtyError) {
-      setIsLoading(false);
-      toast.error("No se pudo actualizar la cantidad total en inventario.");
-      return;
-    }
-
-    const { error: priceUpdateError } = await supabase
-      .from("store_inventory")
-      .update({ unit_price: Number(product.price) })
-      .eq("inventory_id", product.id);
-
-    if (priceUpdateError) {
-      setIsLoading(false);
-      toast.error("No se pudo actualizar el precio del producto.");
-      return;
-    }
-
-    setIsLoading(false);
-    if (!error) {
-      toast.success("Cambios guardados");
-      router.push("/inventario");
-    } else {
       toast.error("No se pudieron guardar los cambios. Intenta de nuevo.");
     }
   };
