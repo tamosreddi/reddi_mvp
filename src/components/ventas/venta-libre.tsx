@@ -196,7 +196,7 @@ export default function RegisterSale() {
         }}
       />
       {/* Form content - with padding to account for fixed header */}
-      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
+      <form onSubmit={handleSubmit} className="mt-14 space-y-4 p-4">
         {/* Date and Payment Status */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={date} onChange={setDate} />
@@ -205,12 +205,6 @@ export default function RegisterSale() {
 
         {/* Value Input - Redesigned */}
         <ValueInput value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)} inputRef={inputRef} required />
-
-        {/* Total Value Display */}
-        <div className="flex items-center justify-between rounded-xl bg-gray-100 p-4">
-          <span className="text-lg font-medium text-gray-700">Valor Total</span>
-          <span className="text-lg font-medium text-green-600">$ {formattedValue}</span>
-        </div>
 
         {/* Concept Input */}
         <ConceptInput value={concept} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConcept(e.target.value)} />

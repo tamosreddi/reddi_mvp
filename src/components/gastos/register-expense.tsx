@@ -220,16 +220,19 @@ export default function RegisterExpense() {
       />
 
       {/* Form content - with padding to account for fixed header */}
-      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
+      <form onSubmit={handleSubmit} className="mt-14 space-y-4 p-4">
         {/* Date and Payment Status on the same line */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={date} onChange={setDate} />
           <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagado", credit: "Deuda" }} className="h-12" />
         </div>
 
+        {/* Amount Input */}
+        <ValueInput value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} required />
+
         {/* Expense Category */}
         <div>
-          <Label htmlFor="expense-category" className="text-base font-bold">
+          <Label htmlFor="expense-category" className="text-lg font-medium">
             Categoría del gasto <span className="text-red-500">*</span>
           </Label>
           <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
@@ -246,13 +249,7 @@ export default function RegisterExpense() {
           </Select>
         </div>
 
-        {/* Amount Input */}
-        <ValueInput value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} required />
-        {/* Total Value Display */}
-        <div className="flex items-center justify-between rounded-xl bg-gray-100 p-4 mt-2">
-          <span className="text-lg font-medium text-gray-700">Valor Total</span>
-          <span className="text-lg font-medium text-green-600">$ {amount || "0"}</span>
-        </div>
+
 
         {/* Supplier */}
         <div>
@@ -263,11 +260,11 @@ export default function RegisterExpense() {
           />
         </div>
 
-        {/* Payment Method Selection */}
-        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
-
         {/* Description Input */}
         <ConceptInput value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} placeholder="Añadir una descripción" />
+
+        {/* Payment Method Selection */}
+        <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />
 
         {/* Submit Button */}
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-white p-4 border-t border-gray-200">

@@ -8,8 +8,9 @@ import { es } from "date-fns/locale"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import DeleteSaleModal from "@/components/shared/delete-sale-modal"
 import { useStore } from "@/lib/contexts/StoreContext"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface ExpenseDetailProps {
   expense: {
@@ -19,6 +20,8 @@ interface ExpenseDetailProps {
     payment_method: string
     transaction_date: string
     transaction_subtype?: string
+    stakeholder_type?: string
+    stakeholder_id?: string
     // ...otros campos relevantes
   }
   onClose: () => void
@@ -28,9 +31,27 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { selectedStore } = useStore();
   const router = useRouter();
+  const [supplierName, setSupplierName] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchSupplier = async () => {
+      if (expense.stakeholder_type === 'supplier' && expense.stakeholder_id) {
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('name')
+          .eq('supplier_id', expense.stakeholder_id)
+          .single()
+        if (data && data.name) setSupplierName(data.name)
+        else setSupplierName('Sin proveedor seleccionado')
+      } else {
+        setSupplierName('Sin proveedor seleccionado')
+      }
+    }
+    fetchSupplier()
+  }, [expense.stakeholder_type, expense.stakeholder_id])
 
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-reddi-background z-50 flex flex-col">
       {/* Header */}
       <TopProfileMenu
         simpleMode
@@ -45,6 +66,11 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
           <h2 className="text-lg font-bold text-gray-800 mb-2">Resumen del gasto</h2>
 
           <div className="text-blue-600 text-sm mb-3">Transacción #{expense.transaction_id}</div>
+
+          <div className="border-t border-gray-200 py-3">
+            <div className="text-gray-600 text-xs mb-1.5">Proveedor</div>
+            <div className="text-base font-medium mt-1">{supplierName ?? 'Sin proveedor seleccionado'}</div>
+          </div>
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Concepto</div>

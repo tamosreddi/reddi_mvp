@@ -46,7 +46,7 @@ export default function BalanceDetailView({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-reddi-background z-50 flex flex-col">
       {/* Header */}
       <TopProfileMenu
         simpleMode
@@ -64,13 +64,13 @@ export default function BalanceDetailView({
         </div>
 
         {/* General Summary */}
-        <div className="mx-4 mb-4 bg-white rounded-lg p-4 shadow-sm">
+        <div className="mx-4 mb-4 bg-reddi-background rounded-lg p-4 shadow-sm">
           <div className="flex items-center mb-4">
             <FileText className="h-5 w-5 text-gray-700 mr-2" />
             <h2 className="text-xl font-bold text-gray-800">Resumen General</h2>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-reddi-background rounded-lg p-4">
             <div className="flex justify-between items-center mb-3">
               <span className="text-lg font-medium">Ingresos</span>
               <span className="text-lg font-bold text-green-600">$ {formatNumber(incomesTotal)}</span>
@@ -96,7 +96,7 @@ export default function BalanceDetailView({
         </div>
 
         {/* Income Summary */}
-        <div className="mx-4 mb-4 bg-white rounded-lg p-4 shadow-sm">
+        <div className="mx-4 mb-4 bg-reddi-background rounded-lg p-4 shadow-sm">
           <div className="flex items-center mb-4">
             <ArrowUpRight className="h-5 w-5 text-green-600 mr-2" />
             <h2 className="text-xl font-bold text-gray-800">Resumen de ingresos</h2>
@@ -128,7 +128,7 @@ export default function BalanceDetailView({
         </div>
 
         {/* Expense Summary */}
-        <div className="mx-4 mb-4 bg-white rounded-lg p-4 shadow-sm">
+        <div className="mx-4 mb-4 bg-reddi-background rounded-lg p-4 shadow-sm">
           <div className="flex items-center mb-4">
             <ArrowDownRight className="h-5 w-5 text-red-600 mr-2" />
             <h2 className="text-xl font-bold text-gray-800">Resumen de egresos</h2>
@@ -160,7 +160,7 @@ export default function BalanceDetailView({
         </div>
 
         {/* Product Profit */}
-        <div className="mx-4 mb-4 bg-gray-100 rounded-lg p-4 shadow-sm">
+        <div className="mx-4 mb-4 bg-reddi-background rounded-lg p-4 shadow-sm">
           <div className="flex items-center mb-2">
             <Package className="h-5 w-5 text-gray-700 mr-2" />
             <h2 className="text-xl font-bold text-gray-800">Ganancia de productos</h2>

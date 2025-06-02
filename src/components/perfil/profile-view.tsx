@@ -87,13 +87,6 @@ export default function ProfileView() {
         </div>
 
         {/* Add Business y Community Links y Terms and Privacy */}
-        <div className="space-y-4">
-          <button className="rounded-xl border border-gray-200 bg-white p-4 w-full flex items-center text-left">
-            <div className="h-10 w-10 rounded-full border-2 border-gray-800 flex items-center justify-center mr-4">
-              <Plus className="h-5 w-5" />
-            </div>
-            <span className="text-base w-full text-left">Agregar otro negocio</span>
-          </button>
 
           <button className="rounded-xl border border-gray-200 bg-white p-4 w-full flex items-center text-left">
             <div className="h-10 w-10 rounded-full flex items-center justify-center mr-4">
@@ -129,7 +122,6 @@ export default function ProfileView() {
             </div>
             <span className="text-base w-full text-left">¿Quieres eliminar tu cuenta?</span>
           </button>
-        </div>
 
         {/* Social Media */}
         <div className="py-6">

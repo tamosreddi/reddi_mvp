@@ -69,7 +69,7 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
   console.log('IncomeDetailView render', transaction.transaction_id)
 
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-reddi-background z-50 flex flex-col">
       {/* Header */}
       <TopProfileMenu
         simpleMode

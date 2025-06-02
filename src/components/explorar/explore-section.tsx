@@ -34,7 +34,7 @@ export default function ExploreSection() {
 
       {/* Main Content */}
       <div className="flex-1 p-4">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Tu negocio</h1>
+        <h1 className="text-lg font-medium text-gray-800 mb-6"></h1>
 
         {/* Navigation Grid - Centered 2 icons with larger size */}
         <div className="flex justify-center gap-8">

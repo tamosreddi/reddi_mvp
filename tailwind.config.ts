@@ -18,8 +18,11 @@ const config: Config = {
   				'InterVariable',
   				'Inter',
   				'ui-sans-serif',
-  				'system-ui'
-  			]
+  				'system-ui',
+				'MerriweatherVariable',
+				'Merriweather',
+  			],
+  			merriweather: ['var(--font-merriweather)'],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -66,10 +69,23 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			'reddi-top': '#F8F8F8',
+			'is-paid-toggle': '#57BAB5',
+			'reddi-bottom': '#57BAB5',
+			'reddi-background': '#F8F8F8',
+			'reddi-bottom-text': '#E6F0EF', // Texto de los botones del bottom navigation
+			'reddi-bottom-text-active': '#FACC15', // Texto de los botones del bottom navigation activos
+			'reddi-balance-view-dates': '#F7F7F7',
   		}
   	}
   },
   plugins: [require("tailwindcss-animate")],
 };
 export default config;
+
+//Good reddi-bottom: #0F2A43 Like Navy Blue
+// Good reddi-background: F9FAFB_ This was the pre selected color
+// Notion light grey: #F8F8F7
+//GOOD 'reddi-bottom': '#5A9D96'
+//Navi Blue current button color: 1F2937

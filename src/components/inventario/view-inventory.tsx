@@ -171,7 +171,7 @@ export default function ViewInventory() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-reddi-background">
       {/* Header */}
       <TopProfileMenu onSearchClick={handleSearchClick} />
 

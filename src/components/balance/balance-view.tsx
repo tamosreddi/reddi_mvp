@@ -65,7 +65,7 @@ function IncomeList({
         return (
           <button
             key={transaction.transaction_id}
-            className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
+            className="flex items-center bg-reddi-background rounded-xl p-4 shadow-sm w-full text-left"
             onClick={() => onTransactionClick(transaction)}
           >
             <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
@@ -113,7 +113,7 @@ function ExpenseList({
       {transactions.map((transaction: Transaction) => (
         <button
           key={transaction.transaction_id}
-          className="flex items-center bg-white rounded-xl p-4 shadow-sm w-full text-left"
+          className="flex items-center bg-reddi-background rounded-xl p-4 shadow-sm w-full text-left"
           onClick={() => onTransactionClick(transaction)}
         >
           <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
@@ -143,11 +143,11 @@ function ExpenseList({
   )
 }
 
-interface BalanceViewProps {
+interface BalanceProps {
   onNewSale: () => void
 }
 
-export default function BalanceView({ onNewSale }: BalanceViewProps) {
+export default function BalanceView({ onNewSale }: BalanceProps) {
   const router = useRouter()
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "egresos" ? "egresos" : "ingresos";
@@ -342,12 +342,12 @@ export default function BalanceView({ onNewSale }: BalanceViewProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-reddi-background">
       {/* Header */}
       <BalanceHeader />
 
       {/* Date Selector */}
-      <div className="bg-yellow-400 px-4 py-2 flex items-center justify-between border-t border-yellow-500/30">
+      <div className="px-4 py-2 flex items-center justify-between border-t border-gray-300 bg-reddi-balance-view-dates">
         {getDates().map((date, index) => (
           <button
             key={index}

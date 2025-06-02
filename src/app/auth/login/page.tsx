@@ -56,7 +56,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-8 px-4">
+    <div className="h-screen sm:h-[100svh] flex items-center justify-center bg-gray-50 py-2 sm:py-8 px-4">
       <FormWrapper
         title=""
         description=""
