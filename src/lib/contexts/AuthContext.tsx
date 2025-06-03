@@ -3,6 +3,7 @@
 import React, { createContext, useEffect, useState, useContext } from "react";
 import { supabase } from "../supabase/supabaseClient";
 import { User, Session } from "@supabase/supabase-js";
+import { useDemo } from "./DemoContext";
 
 interface AuthContextType {
   user: User | null;
@@ -20,8 +21,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isDemoMode, user: demoUser } = useDemo();
 
   useEffect(() => {
+    if (isDemoMode) {
+      // In demo mode, set a mock session and user
+      setUser(demoUser as unknown as User);
+      setSession({ user: demoUser as unknown as User } as Session);
+      setIsLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       setSession(data.session);
@@ -39,9 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isDemoMode, demoUser]);
 
   const signIn = async (email: string, password: string) => {
+    if (isDemoMode) {
+      // In demo mode, simulate successful login
+      setUser(demoUser as unknown as User);
+      setSession({ user: demoUser as unknown as User } as Session);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     const { error } = await supabase.auth.signInWithPassword({
@@ -49,12 +67,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
     if (error) throw error;
-    // Espera a que el contexto se actualice
     await supabase.auth.getSession();
     setIsLoading(false);
   };
 
   const signUp = async (email: string, password: string) => {
+    if (isDemoMode) {
+      // In demo mode, simulate successful signup
+      setUser(demoUser as unknown as User);
+      setSession({ user: demoUser as unknown as User } as Session);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -63,6 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (isDemoMode) {
+      // In demo mode, just clear the session
+      setUser(null);
+      setSession(null);
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };

@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Inter, Merriweather } from 'next/font/google';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
+import { DemoProvider } from '@/lib/contexts/DemoContext';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,11 +25,13 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${merriweather.variable}`}>
       <body className="font-sans bg-reddi-background min-h-screen"> {/* bg-gray-50 es el color de fondo de la página */}
-        <AuthProvider>
-          <main className="relative">
-            {children}
-          </main>
-        </AuthProvider>
+        <DemoProvider>
+          <AuthProvider>
+            <main className="relative">
+              {children}
+            </main>
+          </AuthProvider>
+        </DemoProvider>
       </body>
     </html>
   );
