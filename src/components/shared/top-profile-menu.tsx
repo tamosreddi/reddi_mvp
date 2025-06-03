@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
+import { useDemo } from "@/lib/contexts/DemoContext"
 
 interface TopProfileMenuProps {
   userRole?: string
@@ -36,6 +37,7 @@ export default function TopProfileMenu({
   rightContent,
 }: TopProfileMenuProps) {
   const { selectedStore } = useStore()
+  const { isDemoMode, store: demoStore } = useDemo();
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -106,7 +108,11 @@ export default function TopProfileMenu({
         {/* Nombre de la tienda centrado */}
         <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
           <h1 className="font-merriweather text-base font-light text-gray-900 truncate max-w-[70vw] text-center pointer-events-auto">
-            {selectedStore ? selectedStore.store_name : "Cargando..."}
+            {isDemoMode
+              ? demoStore.store_name
+              : selectedStore
+                ? selectedStore.store_name
+                : "Cargando..."}
           </h1>
         </div>
 
