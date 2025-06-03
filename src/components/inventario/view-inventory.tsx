@@ -13,6 +13,8 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
+import { useDemo } from '@/lib/contexts/DemoContext'
+import { mockProducts } from '@/lib/demo/mockData'
 
 export default function ViewInventory() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -27,9 +29,28 @@ export default function ViewInventory() {
   // New state to control whether to show the select product modal
   const [showSelectProductModal, setShowSelectProductModal] = useState(false)
   const [totalCost, setTotalCost] = useState(0)
+  const { isDemoMode } = useDemo()
 
   // Fetch inventory from Supabase
   useEffect(() => {
+    if (isDemoMode) {
+      // Mapea los productos demo al formato esperado por el inventario
+      const demoInventory = mockProducts.map((p, idx) => ({
+        id: idx.toString(),
+        name: p.name,
+        name_alias: p.name,
+        category: p.category,
+        image: p.image,
+        quantity: p.quantity ?? 0,
+        price: p.price,
+        cost: 0, // o el valor que quieras mostrar
+      }));
+      setInventory(demoInventory);
+      setTotalCost(demoInventory.reduce((acc, item) => acc + (item.cost * item.quantity), 0));
+      setLoading(false);
+      return;
+    }
+
     const fetchInventory = async () => {
       if (!selectedStore?.store_id) return;
       setLoading(true)
@@ -106,7 +127,7 @@ export default function ViewInventory() {
       setLoading(false)
     }
     fetchInventory()
-  }, [selectedStore])
+  }, [selectedStore, isDemoMode])
 
   // Get unique categories
   const categories = Array.from(new Set(inventory.map((item) => item.category)))

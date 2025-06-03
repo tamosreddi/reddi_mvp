@@ -24,37 +24,52 @@ export const mockStore = {
 
 export const mockProducts = [
   {
-    product_id: uuidv4(),
+    product_id: 'demo-1',
     sku: 'PROD001',
-    name: 'Coca Cola 600ml',
+    name: 'Coca Cola 1L',
     description: 'Refresco de cola',
     brand: 'Coca Cola',
-    image: 'https://picsum.photos/200',
+    image: '/Groserybasket.png',
     category: 'Bebidas',
     barcode: '7501234567890',
-    price: 18.00
+    price: 12,
+    quantity: 4,
   },
   {
-    product_id: uuidv4(),
+    product_id: 'demo-2',
     sku: 'PROD002',
-    name: 'Sabritas Original',
-    description: 'Papas fritas',
-    brand: 'Sabritas',
-    image: 'https://picsum.photos/200',
+    name: 'Mamut Chocolate',
+    description: 'Galleta cubierta de chocolate',
+    brand: 'Gamesa',
+    image: '/Groserybasket.png',
     category: 'Snacks',
     barcode: '7501234567891',
-    price: 15.00
+    price: 40,
+    quantity: 9,
+  },
+  {
+    product_id: 'demo-3',
+    sku: 'PROD003',
+    name: 'Fanta',
+    description: 'Refresco sabor naranja',
+    brand: 'Fanta',
+    image: '/Groserybasket.png',
+    category: 'Bebidas',
+    barcode: '7501234567892',
+    price: 15,
+    quantity: 49,
   },
   {
     product_id: uuidv4(),
-    sku: 'PROD003',
+    sku: 'PROD004',
     name: 'Pan Bimbo',
     description: 'Pan de caja blanco',
     brand: 'Bimbo',
-    image: 'https://picsum.photos/200',
+    image: '/Groserybasket.png',
     category: 'Panadería',
-    barcode: '7501234567892',
-    price: 45.00
+    barcode: '7501234567893',
+    price: 45.00,
+    quantity: 10,
   }
 ];
 
@@ -101,4 +116,18 @@ export const mockTransactions = [
     is_paid: true,
     total_amount: 33.00
   }
+];
+
+export const mockSuppliers = [
+  {
+    supplier_id: 'demo-1',
+    store_id: 'demo-store-id',
+    name: 'El Duero',
+    email: 'elduero@demo.com',
+    phone: '555-3333',
+    address: 'Calle Falsa 123',
+    is_active: true,
+    notes: 'Proveedor de abarrotes'
+  }
+  // Puedes agregar más si lo deseas
 ]; 

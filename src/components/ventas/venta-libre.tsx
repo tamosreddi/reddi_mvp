@@ -28,6 +28,7 @@ import ConceptInput from "../ui/concept-input"
 import CustomerSelection from "../ui/customer-selection"
 import PaymentMethod from '../ui/payment-method'
 import ValueInput from "../ui/value-input"
+import { useDemo } from '@/lib/contexts/DemoContext'
 
 interface Customer {
   id: number
@@ -49,6 +50,7 @@ export default function RegisterSale() {
   const { user } = useAuth()
   const { selectedStore } = useStore()
   const [isLoading, setIsLoading] = useState(false)
+  const { isDemoMode } = useDemo()
 
   // Restaurar estado del formulario si existe en localStorage
   useEffect(() => {
@@ -96,6 +98,40 @@ export default function RegisterSale() {
     setIsLoading(true)
 
     try {
+      // --- DEMO MODE ---
+      if (isDemoMode) {
+        const demoSales = JSON.parse(localStorage.getItem('demoSales') || '[]')
+        const newSale = {
+          id: Date.now(),
+          date: date.toISOString(),
+          products: [
+            {
+              productId: "libre",
+              name: concept || "Venta libre",
+              cartQuantity: 1,
+              price: Number(value),
+            }
+          ],
+          total: Number(value),
+          paymentMethod,
+          isPaid,
+          customer: selectedCustomer?.name || "",
+        }
+        localStorage.setItem('demoSales', JSON.stringify([...demoSales, newSale]))
+        setSelectedCustomer(null)
+        localStorage.removeItem("selectedCustomer")
+        localStorage.removeItem("registerSaleForm")
+        toast.success(`Ingreso demo: $${value}`)
+        setValue("")
+        setConcept("")
+        setPaymentMethod("cash")
+        setDate(new Date())
+        setIsLoading(false)
+        router.push("/balance?tab=ingresos")
+        return
+      }
+      // --- FIN DEMO MODE ---
+
       console.log('Iniciando registro de venta...')
       console.log('User:', user)
       console.log('Selected Store:', selectedStore)

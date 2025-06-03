@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
+import { useDemo } from '@/lib/contexts/DemoContext'
+import { mockClients } from '@/lib/demo/mockData'
 
 export default function ViewCustomers() {
   const router = useRouter()
@@ -16,6 +18,7 @@ export default function ViewCustomers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { selectedStore } = useStore()
+  const { isDemoMode } = useDemo()
 
   // Check if we're in selection mode (coming from a sale)
   const isSelecting = searchParams.get("select") === "true"
@@ -23,6 +26,11 @@ export default function ViewCustomers() {
 
   // Fetch customers from Supabase for the current store or search term
   useEffect(() => {
+    if (isDemoMode) {
+      setCustomers(mockClients)
+      setLoading(false)
+      return
+    }
     const fetchCustomers = async () => {
       if (!selectedStore) {
         setCustomers([])
@@ -49,7 +57,7 @@ export default function ViewCustomers() {
       setLoading(false)
     }
     fetchCustomers()
-  }, [selectedStore, searchTerm])
+  }, [selectedStore, searchTerm, isDemoMode])
 
   // Navigate to create customer form
   const navigateToCreateCustomer = () => {

@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
+import { useDemo } from '@/lib/contexts/DemoContext'
+import { mockSuppliers } from '@/lib/demo/mockData'
 
 export default function ViewSuppliers() {
   const router = useRouter()
@@ -16,6 +18,7 @@ export default function ViewSuppliers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { selectedStore } = useStore()
+  const { isDemoMode } = useDemo()
 
   // Check if we're in selection mode (coming from a sale)
   const isSelecting = searchParams.get("select") === "true"
@@ -24,6 +27,11 @@ export default function ViewSuppliers() {
   // Fetch customers from Supabase for the current store or search term
   useEffect(() => {
     const fetchSuppliers = async () => {
+      if (isDemoMode) {
+        setSuppliers(mockSuppliers)
+        setLoading(false)
+        return
+      }
       if (!selectedStore) {
         setSuppliers([])
         setLoading(false)
@@ -49,7 +57,7 @@ export default function ViewSuppliers() {
       setLoading(false)
     }
     fetchSuppliers()
-  }, [selectedStore, searchTerm])
+  }, [selectedStore, searchTerm, isDemoMode])
 
   // Navegar a la página de crear proveedor
   const navigateToCreateSupplier = () => {

@@ -16,6 +16,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
 import Image from 'next/image'
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
+import { useDemo } from '@/lib/contexts/DemoContext'
 
 // Definición de tipos
 interface CartItem {
@@ -66,6 +67,7 @@ export default function CartView() {
   const [paymentMethod, setPaymentMethod] = useState<string>("Efectivo")
   const { selectedStore } = useStore()
   const cartItemsRef = useRef(cartItems);
+  const { isDemoMode } = useDemo();
 
   // Measure the height of the bottom section using useLayoutEffect for more accurate measurements
   useLayoutEffect(() => {
@@ -269,6 +271,23 @@ export default function CartView() {
     router.push(destination)
   }
 
+  const handleConfirmSale = () => {
+    if (isDemoMode) {
+      const demoSales = JSON.parse(localStorage.getItem('demoSales') || '[]');
+      const newSale = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        products: cartItems,
+        total: cartTotal,
+      };
+      localStorage.setItem('demoSales', JSON.stringify([...demoSales, newSale]));
+      setCartItems([]);
+      router.push('/balance');
+      return;
+    }
+    // ... lógica real para producción
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
@@ -452,7 +471,7 @@ export default function CartView() {
             } else {
               router.back();
             }
-          } : openPaymentModal}
+          } : handleConfirmSale}
           size="lg"
           fullWidth
           variant="primary"

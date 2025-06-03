@@ -21,6 +21,7 @@ import ValueInput from '../ui/value-input'
 import ConceptInput from '../ui/concept-input'
 import PaymentMethod from '../ui/payment-method'
 import SupplierSelection from '../ui/supplier-selection'
+import { useDemo } from '@/lib/contexts/DemoContext'
 
 interface Supplier {
   supplier_id: number
@@ -43,6 +44,7 @@ export default function RegisterExpense() {
   const { user } = useAuth()
   const { selectedStore } = useStore()
   const pathname = usePathname();
+  const { isDemoMode } = useDemo();
 
   // Cargar proveedor seleccionado desde localStorage
   useEffect(() => {
@@ -146,13 +148,29 @@ export default function RegisterExpense() {
       console.log('Selected Store:', selectedStore)
 
       // Validar que tenemos un usuario y una tienda seleccionada
-      if (!user) {
-        throw new Error("Debes iniciar sesión para registrar un gasto")
+      if (isDemoMode) {
+        const demoExpenses = JSON.parse(localStorage.getItem('demoExpenses') || '[]');
+        const newExpense = {
+          id: Date.now(),
+          date: date?.toISOString() || "",
+          category: expenseCategory,
+          amount: Number.parseFloat(amount) || 0,
+          supplier: selectedSupplier?.name || "",
+          description,
+          paymentMethod,
+          isPaid,
+        };
+        localStorage.setItem('demoExpenses', JSON.stringify([...demoExpenses, newExpense]));
+        toast.success("Gasto demo creado con éxito");
+        router.push("/balance?tab=egresos");
+        localStorage.removeItem("registerExpenseForm");
+        localStorage.removeItem("selectedSupplier");
+        setIsLoading(false);
+        return;
       }
 
-      if (!selectedStore) {
-        throw new Error("Debes seleccionar una tienda")
-      }
+      if (!user) throw new Error("Debes iniciar sesión para registrar un gasto");
+      if (!selectedStore) throw new Error("Debes seleccionar una tienda");
 
       const paymentMethodMap = {
         efectivo: "cash",
@@ -248,8 +266,6 @@ export default function RegisterExpense() {
             </SelectContent>
           </Select>
         </div>
-
-
 
         {/* Supplier */}
         <div>

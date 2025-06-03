@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
+import { useDemo } from '@/lib/contexts/DemoContext'
+import { mockProducts } from '@/lib/demo/mockData'
 
 // Definición de tipos
 interface Product {
@@ -42,10 +44,26 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
   // New state to control whether to show the select product modal
   const [showSelectProductModal, setShowSelectProductModal] = useState(false)
+  const { isDemoMode } = useDemo()
 
   // Nueva función para refrescar inventario
   const fetchInventory = async () => {
-    if (!selectedStore) return;
+    if (isDemoMode) {
+      const demoProducts = mockProducts.map((p, idx) => ({
+        id: typeof p.product_id === 'number' ? p.product_id : idx,
+        name: p.name,
+        price: p.price,
+        quantity: p.quantity ?? 0,
+        category: p.category,
+        image: p.image,
+        productId: p.product_id.toString(),
+        productType: "global",
+      }));
+      setProducts(demoProducts);
+      setCategories(Array.from(new Set(demoProducts.map((p) => p.category))));
+      return;
+    }
+    if (!selectedStore) return
     // 1. Obtener inventario de la tienda (solo productos custom por ahora)
     const { data: inventory, error } = await supabase
       .from("store_inventory")
@@ -96,7 +114,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   useEffect(() => {
     fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStore])
+  }, [selectedStore, isDemoMode])
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {

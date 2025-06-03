@@ -16,6 +16,7 @@ import SaleTypeModal from "@/components/shared/sale-type-modal"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { useAuth } from "@/lib/contexts/AuthContext"
+import { useDemo } from '@/lib/contexts/DemoContext'
 
 type Transaction = {
   transaction_id: string
@@ -25,6 +26,29 @@ type Transaction = {
   unit_amount: number
   total_amount: number
   // ...otros campos relevantes
+}
+
+interface DemoSale {
+  id: number;
+  date: string;
+  products: {
+    productId: string;
+    name: string;
+    cartQuantity: number;
+    // ...otros campos que uses
+  }[];
+  total: number;
+}
+
+interface DemoExpense {
+  id: number;
+  date: string;
+  category: string;
+  amount: number;
+  supplier: string;
+  description: string;
+  paymentMethod: string;
+  isPaid: boolean;
 }
 
 function truncateText(text: string | null | undefined, maxLength: number) {
@@ -161,28 +185,61 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
   const [incomeTransactions, setIncomeTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [productsByTransaction, setProductsByTransaction] = useState<Record<string, string[]>>({});
+  const { isDemoMode } = useDemo();
+  const [sales, setSales] = useState<DemoSale[]>([]);
 
   useEffect(() => {
-    if (!selectedStore || !user) return
-    setLoading(true)
-    const fetchIncomes = async () => {
-      const start = new Date(selectedDate)
-      start.setHours(0, 0, 0, 0)
-      const end = new Date(selectedDate)
-      end.setHours(23, 59, 59, 999)
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("store_id", selectedStore.store_id)
-        .eq("user_id", user.id)
-        .gte("transaction_date", start.toISOString())
-        .lte("transaction_date", end.toISOString())
-        .order("transaction_date", { ascending: false })
-      if (!error) setIncomeTransactions(data || [])
-      setLoading(false)
+    if (isDemoMode) {
+      // Ingresos demo
+      const demoSales = JSON.parse(localStorage.getItem('demoSales') || '[]');
+      const demoTransactions = demoSales.map((sale: DemoSale) => ({
+        transaction_id: sale.id.toString(),
+        transaction_description: sale.products.map(p => p.name).join(', '),
+        payment_method: 'cash',
+        transaction_date: sale.date,
+        unit_amount: sale.total,
+        total_amount: sale.total,
+        transaction_type: 'sale',
+        transaction_subtype: 'products-sale',
+      }));
+
+      // Egresos demo
+      const demoExpenses = JSON.parse(localStorage.getItem('demoExpenses') || '[]');
+      const demoExpenseTransactions = demoExpenses.map((expense: DemoExpense) => ({
+        transaction_id: expense.id.toString(),
+        transaction_description: expense.description || expense.category,
+        payment_method: expense.paymentMethod,
+        transaction_date: expense.date,
+        unit_amount: expense.amount,
+        total_amount: expense.amount,
+        transaction_type: 'expense',
+        transaction_subtype: expense.category,
+      }));
+
+      // Junta ambos arrays
+      setIncomeTransactions([...demoTransactions, ...demoExpenseTransactions]);
+    } else {
+      if (!selectedStore || !user) return
+      setLoading(true)
+      const fetchIncomes = async () => {
+        const start = new Date(selectedDate)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(selectedDate)
+        end.setHours(23, 59, 59, 999)
+        const { data, error } = await supabase
+          .from("transactions")
+          .select("*")
+          .eq("store_id", selectedStore.store_id)
+          .eq("user_id", user.id)
+          .gte("transaction_date", start.toISOString())
+          .lte("transaction_date", end.toISOString())
+          .order("transaction_date", { ascending: false })
+        if (!error) setIncomeTransactions(data || [])
+        setLoading(false)
+      }
+      fetchIncomes()
     }
-    fetchIncomes()
-  }, [selectedStore, user, selectedDate])
+  }, [selectedStore, user, selectedDate, isDemoMode]);
 
   useEffect(() => {
     // Cuando incomeTransactions cambian, obtener los productos de todas las transacciones
