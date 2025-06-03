@@ -112,7 +112,7 @@ export const mockTransactions = [
     transaction_type: 'sale',
     transaction_description: 'Venta regular',
     payment_method: 'efectivo',
-    transaction_date: new Date().toISOString(),
+    transaction_date: new Date(2024, 5, 3, 10, 30, 0, 0).toISOString(),
     is_paid: true,
     total_amount: 33.00
   }
@@ -130,4 +130,47 @@ export const mockSuppliers = [
     notes: 'Proveedor de abarrotes'
   }
   // Puedes agregar más si lo deseas
+];
+
+export const demoInitialSales = [
+  {
+    id: 1001,
+    date: "2024-06-03T10:30:00.000Z",
+    products: [
+      { productId: "demo-1", name: "Coca Cola 1L", cartQuantity: 2 },
+      { productId: "demo-2", name: "Mamut Chocolate", cartQuantity: 1 }
+    ],
+    total: 64
+  },
+  {
+    id: 1002,
+    date: "2024-06-03T13:15:00.000Z",
+    products: [
+      { productId: "demo-3", name: "Fanta", cartQuantity: 1 }
+    ],
+    total: 15
+  }
+];
+
+export const demoInitialExpenses = [
+  {
+    id: 2001,
+    date: "2024-06-03T11:00:00.000Z",
+    category: "Compra de mercancía",
+    amount: 120,
+    supplier: "El Duero",
+    description: "Compra semanal de abarrotes",
+    paymentMethod: "cash",
+    isPaid: true
+  },
+  {
+    id: 2002,
+    date: "2024-06-03T15:00:00.000Z",
+    category: "Servicios",
+    amount: 50,
+    supplier: "CFE",
+    description: "Pago de luz",
+    paymentMethod: "card",
+    isPaid: true
+  }
 ]; 

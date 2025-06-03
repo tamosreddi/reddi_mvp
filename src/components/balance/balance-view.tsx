@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { useAuth } from "@/lib/contexts/AuthContext"
 import { useDemo } from '@/lib/contexts/DemoContext'
+import { demoInitialSales, demoInitialExpenses } from '@/lib/demo/mockData'
 
 type Transaction = {
   transaction_id: string
@@ -190,11 +191,38 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
 
   useEffect(() => {
     if (isDemoMode) {
-      // Ingresos demo
+      // Solo precarga si no existen ventas/gastos en localStorage
+      if (!localStorage.getItem('demoSales')) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const day = now.getDate();
+
+        const sale1 = { ...demoInitialSales[0], date: new Date(year, month, day, 10, 30, 0, 0).toISOString() };
+        const sale2 = { ...demoInitialSales[1], date: new Date(year, month, day, 13, 15, 0, 0).toISOString() };
+
+        localStorage.setItem('demoSales', JSON.stringify([sale1, sale2]));
+      }
+      if (!localStorage.getItem('demoExpenses')) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const day = now.getDate();
+
+        const expense1 = { ...demoInitialExpenses[0], date: new Date(year, month, day, 11, 0, 0, 0).toISOString() };
+        const expense2 = { ...demoInitialExpenses[1], date: new Date(year, month, day, 15, 0, 0, 0).toISOString() };
+
+        localStorage.setItem('demoExpenses', JSON.stringify([expense1, expense2]));
+      }
       const demoSales = JSON.parse(localStorage.getItem('demoSales') || '[]');
+      const demoExpenses = JSON.parse(localStorage.getItem('demoExpenses') || '[]');
+      console.log('DEMO SALES:', demoSales);
+      console.log('DEMO EXPENSES:', demoExpenses);
+
+      // Transforma los demoSales y demoExpenses a la estructura de transacción
       const demoTransactions = demoSales.map((sale: DemoSale) => ({
         transaction_id: sale.id.toString(),
-        transaction_description: sale.products.map(p => p.name).join(', '),
+        transaction_description: sale.products.map((p: DemoSale['products'][0]) => p.name).join(', '),
         payment_method: 'cash',
         transaction_date: sale.date,
         unit_amount: sale.total,
@@ -203,8 +231,6 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
         transaction_subtype: 'products-sale',
       }));
 
-      // Egresos demo
-      const demoExpenses = JSON.parse(localStorage.getItem('demoExpenses') || '[]');
       const demoExpenseTransactions = demoExpenses.map((expense: DemoExpense) => ({
         transaction_id: expense.id.toString(),
         transaction_description: expense.description || expense.category,
@@ -216,7 +242,7 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
         transaction_subtype: expense.category,
       }));
 
-      // Junta ambos arrays
+      // Junta ambos arrays y setéalos en el estado
       setIncomeTransactions([...demoTransactions, ...demoExpenseTransactions]);
     } else {
       if (!selectedStore || !user) return
@@ -267,6 +293,8 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
     };
     fetchProducts();
   }, [incomeTransactions]);
+
+  console.log('SELECTED DATE:', selectedDate);
 
   // Filter transactions based on selected date and active tab
   const filteredTransactions = incomeTransactions.filter(
