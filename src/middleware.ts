@@ -4,6 +4,19 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next();
 
+  // --- DEMO MODE REDIRECT ---
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    if (
+      request.nextUrl.pathname === '/auth/login' ||
+      request.nextUrl.pathname === '/auth/register'
+    ) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    // En demo, no bloqueamos el acceso a nada más
+    return response;
+  }
+  // --- END DEMO MODE REDIRECT ---
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
