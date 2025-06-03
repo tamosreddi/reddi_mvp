@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const mockUser = {
   user_id: 'demo-user-id',
-  name: 'Demo User',
+  name: 'Tienda Demo',
   email: 'demo@example.com',
   phone: '555-0123',
   country: 'Mexico',

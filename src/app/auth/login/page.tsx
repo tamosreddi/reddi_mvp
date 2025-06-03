@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useDemo } from '@/lib/contexts/DemoContext';
 import { supabase } from '@/lib/supabase/supabaseClient';
 import FormWrapper from '@/components/ui/FormWrapper';
 import Input from '@/components/ui/Input';
@@ -13,12 +14,24 @@ import Image from 'next/image';
 export default function LoginPage() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { isDemoMode } = useDemo();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  useEffect(() => {
+    if (isDemoMode) {
+      router.replace('/dashboard');
+    }
+  }, [isDemoMode, router]);
+
+  if (isDemoMode) {
+    // Mientras redirige, no renderiza nada
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
