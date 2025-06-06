@@ -271,6 +271,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
           value={concept} 
           onChange={e => setConcept(e.target.value)}
           placeholder="Edita/agrega el concepto del gasto"
+          label="Concepto"
         />
 
 

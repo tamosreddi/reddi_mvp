@@ -273,6 +273,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
           value={concept} 
           onChange={e => setConcept(e.target.value)}
           placeholder="Edita/agrega el concepto de la venta"
+          label="Concepto"
         />
         {/* Cliente */}
         <div>
