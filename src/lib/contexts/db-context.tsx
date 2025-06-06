@@ -140,6 +140,17 @@ export const databaseSchema = {
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro del proveedor.",
         notes: "TEXT - Notas adicionales sobre el proveedor, si se quiere registrar.",
         is_active: "BOOLEAN - Estado del proveedor (activo/inactivo)."
+    },
+    lost_sales: {
+        lost_sale_id: "UUID - Identificador único de la venta perdida.",
+        user_id: "UUID - Identificador del usuario que registra la venta perdida.",
+        store_id: "UUID - Identificador de la tienda donde ocurrió la venta perdida.",
+        lost_sale_date: "TIMESTAMPTZ - Fecha y hora en que ocurrió la venta perdida.",
+        description: "TEXT - Descripción detallada de lo que el cliente solicitó.",
+        product_reference_id: "UUID - Referencia opcional al producto solicitado (global o personalizado).",
+        product_type: "TEXT - Tipo de producto referenciado ('global' o 'custom').",
+        created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro."
     }
 };
 
@@ -155,5 +166,6 @@ const tablesContext = {
     transaction_items: "Desglosa los productos involucrados en cada transacción. Cada fila representa un producto específico vendido o comprado.",
     distributors: "Registra información de distribuidores que abastecen productos a las tiendas. Se puede relacionar con productos y transacciones de compra.",
     clients: "Contiene la información de clientes frecuentes de la tienda. Se usa para registrar ventas personalizadas o historial por cliente.",
-    suppliers: "Contiene la información de proveedores frecuentes de la tienda. Se usa para registrar compras, historial y selección de proveedores."
+    suppliers: "Contiene la información de proveedores frecuentes de la tienda. Se usa para registrar compras, historial y selección de proveedores.",
+    lost_sales: "Registra las ventas perdidas cuando los clientes solicitan productos no disponibles en el inventario. Permite documentar oportunidades de venta y mejorar el inventario basado en la demanda real."
   };

@@ -12,7 +12,7 @@ export default function ExploreSection() {
   const navigationOptions = [
     { id: "clientes", name: "Clientes", path: "/clientes", imgSrc: "/icons/clientes.png", imgAlt: "Clientes" },
     { id: "proveedores", name: "Proveedores", path: "/proveedores", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
-    { id: "venta-perdida", name: "Venta Perdida", path: "/venta-perdida", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
+    { id: "venta-perdida", name: "Ventas Perdidas", path: "/explorar/ventas-perdidas", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
     { id: "pedidos", name: "Pedidos", path: "/pedidos", imgSrc: "/icons/pedidos.png", imgAlt: "Pedidos" },
     { id: "catalogo", name: "Catálogo virtual", path: "/catalogo", imgSrc: "/icons/catalogo.png", imgAlt: "Catálogo virtual" },
     { id: "empleados", name: "Empleados", path: "/empleados", imgSrc: "/icons/empleados.png", imgAlt: "Empleados" },

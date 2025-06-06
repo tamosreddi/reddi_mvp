@@ -8,6 +8,9 @@ interface ConceptInputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   id?: string
   placeholder?: string
+  label: string
+  inputClassName?: string
+  labelClassName?: string
 }
 
 export default function ConceptInput({
@@ -15,11 +18,14 @@ export default function ConceptInput({
   onChange,
   id = "concept",
   placeholder = "Agrega una descripción",
+  label,
+  inputClassName = "",
+  labelClassName = "",
 }: ConceptInputProps) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <Label htmlFor={id} className="mb-1 block text-lg font-medium">
-        Concepto
+      <Label htmlFor={id} className={`mb-1 block text-lg font-medium ${labelClassName}`}>
+        {label}
       </Label>
       <div className="flex items-center gap-2">
         <Tag className="h-5 w-5 text-gray-400" />
@@ -27,7 +33,7 @@ export default function ConceptInput({
           id={id}
           value={value}
           onChange={onChange}
-          className="border-none shadow-none focus-visible:ring-0"
+          className={`border-none shadow-none focus-visible:ring-0 ${inputClassName}`}
           placeholder={placeholder}
         />
       </div>

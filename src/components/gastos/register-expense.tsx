@@ -261,7 +261,7 @@ export default function RegisterExpense() {
         </div>
 
         {/* Description Input */}
-        <ConceptInput value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} placeholder="Añadir una descripción" />
+        <ConceptInput value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} placeholder="Añadir una descripción" label={"Concepto"} />
 
         {/* Payment Method Selection */}
         <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />

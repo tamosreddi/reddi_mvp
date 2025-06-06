@@ -207,7 +207,11 @@ export default function RegisterSale() {
         <ValueInput value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)} inputRef={inputRef} required />
 
         {/* Concept Input */}
-        <ConceptInput value={concept} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConcept(e.target.value)} />
+        <ConceptInput 
+          value={concept} 
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConcept(e.target.value)} 
+          label="Concepto"
+        />
 
         {/* Customer Selection */}
         <CustomerSelection
