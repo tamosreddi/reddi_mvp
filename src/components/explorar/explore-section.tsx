@@ -3,24 +3,19 @@
 import { useRouter } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import Image from 'next/image'
+import ExploreButton from "./explore-button"
 
 export default function ExploreSection() {
   const router = useRouter()
 
-  // Opciones de navegación reducidas a solo Clientes y Proveedores
+  // Opciones de navegación inspiradas en la imagen, puedes cambiar los textos y rutas después
   const navigationOptions = [
-    {
-      id: "clientes",
-      name: "Clientes",
-      icon: "/icons/customers-icon.png",
-      path: "/clientes",
-    },
-    {
-      id: "proveedores",
-      name: "Proveedores",
-      icon: "/icons/suppliers-icon.png",
-      path: "/proveedores",
-    },
+    { id: "clientes", name: "Clientes", path: "/clientes", imgSrc: "/icons/clientes.png", imgAlt: "Clientes" },
+    { id: "proveedores", name: "Proveedores", path: "/proveedores", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
+    { id: "venta-perdida", name: "Venta Perdida", path: "/venta-perdida", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
+    { id: "pedidos", name: "Pedidos", path: "/pedidos", imgSrc: "/icons/pedidos.png", imgAlt: "Pedidos" },
+    { id: "catalogo", name: "Catálogo virtual", path: "/catalogo", imgSrc: "/icons/catalogo.png", imgAlt: "Catálogo virtual" },
+    { id: "empleados", name: "Empleados", path: "/empleados", imgSrc: "/icons/empleados.png", imgAlt: "Empleados" },
   ]
 
   const handleOptionClick = (path: string) => {
@@ -28,33 +23,22 @@ export default function ExploreSection() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-reddi-background">
       {/* Header */}
       <TopProfileMenu />
 
       {/* Main Content */}
       <div className="flex-1 p-4">
-        <h1 className="text-lg font-medium text-gray-800 mb-6"></h1>
-
-        {/* Navigation Grid - Centered 2 icons with larger size */}
-        <div className="flex justify-center gap-8">
-          {navigationOptions.map((option) => (
-            <button
+        <h1 className="text-base font-extra-light text-gray-800 mb-6"></h1>
+        <div className="grid grid-cols-4 gap-7 max-w-2xl mx-auto">
+          {navigationOptions.map(option => (
+            <ExploreButton
               key={option.id}
+              imgSrc={option.imgSrc}
+              imgAlt={option.imgAlt}
+              label={option.name}
               onClick={() => handleOptionClick(option.path)}
-              className="flex flex-col items-center"
-            >
-              <div className="h-24 w-24 mb-3 bg-white rounded-2xl p-3 shadow-md flex items-center justify-center">
-                <Image
-                  src={option.icon || "/placeholder.svg"}
-                  alt={option.name}
-                  width={96}
-                  height={96}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <span className="text-center text-lg font-medium text-gray-800">{option.name}</span>
-            </button>
+            />
           ))}
         </div>
       </div>
