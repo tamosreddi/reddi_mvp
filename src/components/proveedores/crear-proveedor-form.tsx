@@ -81,6 +81,9 @@ export default function CreateSupplierForm() {
             notes: result.notes || notes || ""
           }))
         }
+        // Redirigir siempre a la lista de proveedores después de editar
+        router.push("/dashboard/proveedores")
+        return
       } else {
         // POST para crear proveedor
         const res = await fetch("/api/gastos/crear-proveedor", {

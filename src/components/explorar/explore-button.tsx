@@ -24,7 +24,7 @@ const ExploreButton: React.FC<ExploreButtonProps> = ({
     aria-label={ariaLabel || label}
     type="button"
   >
-    <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full mr-4 shadow-md">
+    <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full shadow-md">
       <Image src={imgSrc} alt={imgAlt} width={48} height={48} className="object-contain" />
     </div>
     <div className="flex flex-col items-center justify-center">
