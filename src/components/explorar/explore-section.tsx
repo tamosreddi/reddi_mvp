@@ -11,7 +11,7 @@ export default function ExploreSection() {
   // Opciones de navegación inspiradas en la imagen, puedes cambiar los textos y rutas después
   const navigationOptions = [
     { id: "clientes", name: "Clientes", path: "/clientes", imgSrc: "/icons/clientes.png", imgAlt: "Clientes" },
-    { id: "proveedores", name: "Proveedores", path: "/proveedores", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
+    { id: "proveedores", name: "Proveedores", path: "/dashboard/proveedores?returnTo=/explorar", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
     { id: "venta-perdida", name: "Ventas Perdidas", path: "/explorar/ventas-perdidas", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
     { id: "pedidos", name: "Pedidos", path: "/pedidos", imgSrc: "/icons/pedidos.png", imgAlt: "Pedidos" },
     { id: "catalogo", name: "Catálogo virtual", path: "/catalogo", imgSrc: "/icons/catalogo.png", imgAlt: "Catálogo virtual" },
@@ -29,8 +29,8 @@ export default function ExploreSection() {
 
       {/* Main Content */}
       <div className="flex-1 p-4">
-        <h1 className="text-base font-extra-light text-gray-800 mb-6"></h1>
-        <div className="grid grid-cols-4 gap-7 max-w-2xl mx-auto">
+        <h1 className="text-lg font-extra-light text-gray-800 mb-6"></h1>
+        <div className="grid grid-cols-3 gap-7 max-w-2xl mx-auto">
           {navigationOptions.map(option => (
             <ExploreButton
               key={option.id}

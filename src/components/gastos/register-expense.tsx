@@ -81,7 +81,7 @@ export default function RegisterExpense() {
   // Navegar a la selección de proveedores
   const navigateToSupplierSelection = () => {
     // Usa la ruta actual para volver después de la selección
-    router.push(`/dashboard/proveedores/ver-proveedor?select=true&returnTo=${encodeURIComponent(pathname)}`)
+    router.push(`/dashboard/proveedores?select=true&returnTo=${encodeURIComponent(pathname)}`)
   }
 
   // Eliminar proveedor seleccionado

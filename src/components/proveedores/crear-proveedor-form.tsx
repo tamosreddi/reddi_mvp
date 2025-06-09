@@ -2,14 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Button from "@/components/ui/button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
-import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 
 export default function CreateSupplierForm() {
@@ -17,12 +16,38 @@ export default function CreateSupplierForm() {
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isEdit, setIsEdit] = useState(false)
+  const [supplierId, setSupplierId] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { selectedStore } = useStore()
 
   // Get the return path from query parameters
   const returnTo = searchParams.get("returnTo") || "/proveedores"
+  const selectMode = searchParams.get("select") === "true"
+
+  // Detect edit mode and fetch supplier data if editing
+  useEffect(() => {
+    const id = searchParams.get("supplierId")
+    if (id) {
+      setIsEdit(true)
+      setSupplierId(id)
+      setLoading(true)
+      fetch(`/api/proveedores?storeId=${selectedStore?.store_id || ""}`)
+        .then(res => res.json())
+        .then(data => {
+          const supplier = data.find((s: any) => s.supplier_id === id)
+          if (supplier) {
+            setName(supplier.name || "")
+            setNotes(supplier.notes || "")
+          } else {
+            setError("Proveedor no encontrado")
+          }
+        })
+        .catch(() => setError("Error al cargar proveedor"))
+        .finally(() => setLoading(false))
+    }
+  }, [searchParams, selectedStore])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,24 +59,48 @@ export default function CreateSupplierForm() {
       return
     }
     try {
-      const res = await fetch("/api/gastos/crear-proveedor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          notes,
-          store_id: selectedStore.store_id,
+      let result
+      if (isEdit && supplierId) {
+        // PATCH para editar proveedor
+        const res = await fetch("/api/proveedores", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            supplierId,
+            name,
+            notes,
+          })
         })
-      })
-      const result = await res.json()
-      if (!result.success) throw new Error(result.error || "No se pudo registrar el proveedor")
-      if (result.success && result.data) {
-        // Guarda el proveedor recién creado en localStorage
-        localStorage.setItem("selectedSupplier", JSON.stringify({
-          supplier_id: result.data.supplier_id,
-          name: result.data.name,
-          notes: result.data.notes || ""
-        }));
+        result = await res.json()
+        if (!res.ok) throw new Error(result.error || "No se pudo actualizar el proveedor")
+        // Si viene de selección, guardar en localStorage
+        if (selectMode) {
+          localStorage.setItem("selectedSupplier", JSON.stringify({
+            supplier_id: result.supplier_id || supplierId,
+            name: result.name || name,
+            notes: result.notes || notes || ""
+          }))
+        }
+      } else {
+        // POST para crear proveedor
+        const res = await fetch("/api/gastos/crear-proveedor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            notes,
+            store_id: selectedStore.store_id,
+          })
+        })
+        result = await res.json()
+        if (!result.success) throw new Error(result.error || "No se pudo registrar el proveedor")
+        if (result.success && result.data && selectMode) {
+          localStorage.setItem("selectedSupplier", JSON.stringify({
+            supplier_id: result.data.supplier_id,
+            name: result.data.name,
+            notes: result.data.notes || ""
+          }));
+        }
       }
       router.push(returnTo)
     } catch (err: any) {
@@ -62,7 +111,6 @@ export default function CreateSupplierForm() {
   }
 
   const handleBack = () => {
-    // Regresa a la página anterior inmediatamente
     router.back()
   }
 
@@ -70,15 +118,15 @@ export default function CreateSupplierForm() {
     <div className="pb-6">
       <TopProfileMenu 
         simpleMode={true}
-        title="Crear proveedor"
+        title={isEdit ? "Editar proveedor" : "Crear proveedor"}
         onBackClick={handleBack}
       />
 
       {/* Form content - with padding to account for fixed header */}
-      <form onSubmit={handleSubmit} className="mt-20 space-y-4 p-4">
+      <form onSubmit={handleSubmit} className="mt-16 space-y-4 p-4">
         {/* Customer Name */}
         <div>
-          <Label htmlFor="name" className="text-lg font-medium">
+          <Label htmlFor="name" className="text-lg font-normal">
             Nombre del proveedor <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -93,7 +141,7 @@ export default function CreateSupplierForm() {
 
         {/* Notes */}
         <div>
-          <Label htmlFor="notes" className="text-lg font-medium">
+          <Label htmlFor="notes" className="text-lg font-normal">
             Notas
           </Label>
           <Textarea
@@ -118,7 +166,7 @@ export default function CreateSupplierForm() {
           disabled={loading}
           isLoading={loading}
         >
-          Crear proveedor
+          {isEdit ? "Guardar cambios" : "Crear proveedor"}
         </Button>
       </form>
     </div>

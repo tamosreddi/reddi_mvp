@@ -7,6 +7,7 @@ interface ExploreButtonProps {
   label: string;
   onClick: () => void;
   ariaLabel?: string;
+  subtitle?: string;
 }
 
 const ExploreButton: React.FC<ExploreButtonProps> = ({
@@ -15,6 +16,7 @@ const ExploreButton: React.FC<ExploreButtonProps> = ({
   label,
   onClick,
   ariaLabel,
+  subtitle,
 }) => (
   <button
     onClick={onClick}
@@ -25,7 +27,10 @@ const ExploreButton: React.FC<ExploreButtonProps> = ({
     <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full mr-4 shadow-md">
       <Image src={imgSrc} alt={imgAlt} width={48} height={48} className="object-contain" />
     </div>
-    <span className="text-xs text-gray-800 font-extra-light text-center mt-1">{label}</span>
+    <div className="flex flex-col items-center justify-center">
+      <span className="text-center text-sm font-extra-light mt-2">{label}</span>
+      {subtitle && <span className="text-center text-sm text-gray-600">{subtitle}</span>}
+    </div>
   </button>
 );
 

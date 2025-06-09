@@ -28,7 +28,7 @@ export default function SupplierSelection({
               <User className="h-5 w-5 text-blue-600" />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-lg font-medium">{selectedSupplier.name}</span>
+              <span className="text-lg font-normal">{selectedSupplier.name}</span>
               {selectedSupplier.notes && <span className="text-sm text-gray-600">{selectedSupplier.notes}</span>}
             </div>
           </div>

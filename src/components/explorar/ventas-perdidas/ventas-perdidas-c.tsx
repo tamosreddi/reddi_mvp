@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from "@/lib/hooks/useAuth"
 import type { AuthContextType } from "@/lib/contexts/AuthContext"
 import { toast } from "sonner"
+import { HelpCircle } from "lucide-react"
 
 export default function VentasPerdidas() {
   const { selectedStore } = useStore()
@@ -70,7 +71,22 @@ export default function VentasPerdidas() {
   return (
     <div className="min-h-screen flex flex-col bg-reddi-background">
       {/* Header solo con back y título */}
-      <TopProfileMenu simpleMode={true} title="Ventas Perdidas" onBackClick={() => router.push('/explorar')} />
+      <TopProfileMenu 
+        simpleMode={true} 
+        title="Ventas Perdidas" 
+        onBackClick={() => router.push('/explorar')}
+        rightContent={
+          <button
+            onClick={() => toast.info('Aquí puedes registrar ventas perdidas cuando un cliente te pide un producto que no tienes en inventario.', {
+              icon: '💡'
+            })}
+            className="flex h-10 w-10 items-center justify-center rounded-full"
+            aria-label="Ayuda"
+          >
+            <HelpCircle className="h-5 w-5 text-gray-900 stroke-2" />
+          </button>
+        }
+      />
       <main className="flex-1 bg-reddi-background rounded-t-2xl p-4">
         <div className="max-w-md mx-auto flex flex-col gap-6 mt-2 pt-14">
           {/* Selector de fecha */}
@@ -78,14 +94,14 @@ export default function VentasPerdidas() {
 
           {/* Input de producto perdido con label arriba, igual que crear-categoria-form */}
           <div>
-            <Label htmlFor="lost-product" className="text-lg font-medium text-gray-800">
+            <Label htmlFor="lost-product" className="text-lg font-normal text-gray-800">
               ¿Qué producto te pidieron y no tuviste en tu inventario?
             </Label>
             <textarea
               id="lost-product"
               value={product}
               onChange={e => setProduct(e.target.value)}
-              className="mt-1 min-h-[100px] rounded-xl border border-gray-200 text-base font-extralight w-full resize-none p-4"
+              className="mt-1 min-h-[100px] rounded-xl border border-gray-200 text-base font-light w-full resize-none p-4"
               placeholder="Ej. un gansito frío"
               required
             />
@@ -105,8 +121,8 @@ export default function VentasPerdidas() {
           {/* Link para ver historial */}
           <div className="text-center mt-0">
             <Link
-              href="/explorar/ventas-perdidas-historial"
-              className="text-sm font-medium tracking-tight no-underline hover:text-gray-800 transition-colors"
+              href="/explorar/historial"
+              className="text-sm font-normal tracking-tight no-underline hover:text-gray-800 transition-colors"
             >
               Ver historial
             </Link>

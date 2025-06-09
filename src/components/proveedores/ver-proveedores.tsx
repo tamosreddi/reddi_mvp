@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, User, Plus } from "lucide-react"
+import { Search, User, Plus, MoreVertical, Edit, Trash2 } from "lucide-react"
 import Button from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
-import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 
 export default function ViewSuppliers() {
@@ -21,7 +20,7 @@ export default function ViewSuppliers() {
   const isSelecting = searchParams.get("select") === "true"
   const returnTo = searchParams.get("returnTo") || "/"
 
-  // Fetch customers from Supabase for the current store or search term
+  // Fetch suppliers from API
   useEffect(() => {
     const fetchSuppliers = async () => {
       if (!selectedStore) {
@@ -31,20 +30,20 @@ export default function ViewSuppliers() {
       }
       setLoading(true)
       setError(null)
-      let query = supabase
-        .from("suppliers")
-        .select("supplier_id, name, notes")
-        .eq("store_id", selectedStore.store_id)
-        .order("created_at", { ascending: false })
-      if (searchTerm.trim() !== "") {
-        query = query.ilike("name", `%${searchTerm.trim()}%`)
-      }
-      const { data, error } = await query
-      if (error) {
-        setError("Error al cargar proveedores: " + error.message)
-        setSuppliers([])
-      } else {
+      try {
+        const response = await fetch(
+          `/api/proveedores?storeId=${selectedStore.store_id}${
+            searchTerm.trim() ? `&searchTerm=${encodeURIComponent(searchTerm.trim())}` : ""
+          }`
+        )
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || "Error al cargar proveedores")
+        }
         setSuppliers(data || [])
+      } catch (err: any) {
+        setError(err.message)
+        setSuppliers([])
       }
       setLoading(false)
     }
@@ -82,15 +81,37 @@ export default function ViewSuppliers() {
 
       // Return to the previous screen
       console.log('🔍 [Ver Proveedores] Redirigiendo a:', returnTo);
-      console.log('[VerProveedores] Navegando a:', returnTo)
       if (returnTo) {
         router.push(returnTo)
       } else {
         router.back()
       }
-    } else {
-      // In the future, this could navigate to a supplier detail view
-      alert(`Ver detalles del proveedor ${supplierId}`)
+    }
+  }
+
+  // Handle supplier edit
+  const handleEdit = (supplierId: number) => {
+    router.push(`/dashboard/proveedores/crear-proveedor?supplierId=${supplierId}&returnTo=${encodeURIComponent(returnTo)}`)
+  }
+
+  // Handle supplier delete
+  const handleDelete = async (supplierId: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este proveedor?")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/proveedores?supplierId=${supplierId}`, {
+        method: "DELETE",
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Error al eliminar el proveedor")
+      }
+      // Actualizar la lista de proveedores
+      setSuppliers(suppliers.filter(s => s.supplier_id !== supplierId))
+    } catch (err: any) {
+      alert(err.message)
     }
   }
 
@@ -109,11 +130,8 @@ export default function ViewSuppliers() {
         }}
       />
 
-      {/* Main Content - Add padding at the bottom to prevent content from being hidden behind the fixed button */}
-      <div className="flex-1 p-4 pb-24 space-y-4 mt-20">
-        {/* Title */}
-        {/* <h1 className="text-xl font-bold text-center">{isSelecting ? "Seleccionar Cliente" : "Clientes"}</h1> */}
-
+      {/* Main Content */}
+      <div className="flex-1 p-4 pb-24 space-y-4 mt-16">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -134,19 +152,60 @@ export default function ViewSuppliers() {
             <div className="py-8 text-center text-red-500">{error}</div>
           ) : suppliers.length > 0 ? (
             suppliers.map((supplier) => (
-              <button
+              <div
                 key={supplier.supplier_id}
-                className="flex items-center w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left hover:bg-gray-50"
-                onClick={() => selectSupplier(supplier.supplier_id)}
+                className="flex items-center w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:bg-gray-50"
               >
-                <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center mr-4">
-                  <User className="h-6 w-6 text-gray-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">{supplier.name}</h3>
-                  {supplier.notes && <p className="text-sm text-gray-600 line-clamp-1">{supplier.notes}</p>}
-                </div>
-              </button>
+                <button
+                  className="flex-1 flex items-center text-left"
+                  onClick={() => selectSupplier(supplier.supplier_id)}
+                >
+                  <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                    <User className="h-6 w-6 text-gray-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-normal text-gray-900">{supplier.name}</h3>
+                    {supplier.notes && <p className="text-sm text-gray-600 line-clamp-1">{supplier.notes}</p>}
+                  </div>
+                </button>
+                {!isSelecting && (
+                  <div className="relative ml-2">
+                    <button
+                      className="p-2 hover:bg-gray-100 rounded-full"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const menu = document.getElementById(`menu-${supplier.supplier_id}`)
+                        if (menu) {
+                          menu.classList.toggle("hidden")
+                        }
+                      }}
+                    >
+                      <MoreVertical className="h-5 w-5 text-gray-600" />
+                    </button>
+                    <div
+                      id={`menu-${supplier.supplier_id}`}
+                      className="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+                    >
+                      <div className="py-1">
+                        <button
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => handleEdit(supplier.supplier_id)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </button>
+                        <button
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          onClick={() => handleDelete(supplier.supplier_id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ))
           ) : (
             <div className="py-8 text-center text-gray-500">
