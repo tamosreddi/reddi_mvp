@@ -118,16 +118,17 @@ export default function RegisterSale() {
         total_amount: Number(value),
       }
 
-      console.log('Enviando a Supabase:', transactionData)
+      console.log('Enviando a API /api/ventas/registrar-venta-libre:', transactionData)
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert(transactionData)
-        .select()
+      const res = await fetch('/api/ventas/registrar-venta-libre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transactionData)
+      })
+      const result = await res.json()
+      console.log('Respuesta de API:', result)
 
-      console.log('Respuesta de Supabase:', { data, error })
-
-      if (error) throw error
+      if (!result.success) throw new Error(result.error || 'No se pudo registrar la venta')
 
       // Limpiar cliente y formulario temporal después de registrar la venta
       setSelectedCustomer(null)
