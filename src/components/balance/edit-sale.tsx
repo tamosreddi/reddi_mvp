@@ -221,7 +221,7 @@ export default function EditSale({ transactionId }: EditSaleProps) {
     localStorage.setItem("editSaleForm", JSON.stringify({
       transactionId,
     }))
-    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=/balance/edit-income/${transactionId}`)
+    router.push(`/dashboard/clientes?select=true&returnTo=/balance/edit-income/${transactionId}`)
   }
 
   const [blockAutoClient, setBlockAutoClient] = useState(false);

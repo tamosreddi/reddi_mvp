@@ -1,3 +1,6 @@
+// Este es el modal para seleccionar el método de pago, PERO...
+// Se utiliza en VENTA DE CANASTA DE PRODUCTOS, aquí se confirma la venta y se llama el API.
+
 "use client"
 
 import { useState, useEffect } from "react"

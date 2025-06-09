@@ -416,7 +416,7 @@ export default function CartView() {
           </div>
         ) : (
           <button
-            onClick={() => router.push('/dashboard/clientes/ver-cliente?select=true&returnTo=/dashboard/ventas/canasta')}
+            onClick={() => router.push('/dashboard/clientes?select=true&returnTo=/dashboard/ventas/canasta')}
             className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium shadow-sm"
           >
             <div className="flex items-center">

@@ -10,8 +10,6 @@ import Button from "@/components/ui/button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-
-import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, isToday, isTomorrow } from "date-fns"
@@ -96,6 +94,7 @@ export default function RegisterSale() {
     setIsLoading(true)
 
     try {
+      console.log('A continuación se muestra el código que se ejecuta para registrar la venta:');
       console.log('Iniciando registro de venta...')
       console.log('User:', user)
       console.log('Selected Store:', selectedStore)
@@ -164,7 +163,7 @@ export default function RegisterSale() {
         paymentMethod,
       })
     )
-    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=${encodeURIComponent("/dashboard/ventas/libre")}`)
+    router.push(`/dashboard/clientes?select=true&returnTo=${encodeURIComponent("/dashboard/ventas/libre")}`)
   }
 
   // Remove selected customer

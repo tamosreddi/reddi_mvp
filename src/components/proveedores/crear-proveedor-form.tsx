@@ -129,7 +129,7 @@ export default function CreateSupplierForm() {
       <form onSubmit={handleSubmit} className="mt-16 space-y-4 p-4">
         {/* Customer Name */}
         <div>
-          <Label htmlFor="name" className="text-lg font-normal">
+          <Label htmlFor="name" className="text-base font-normal">
             Nombre del proveedor <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -144,7 +144,7 @@ export default function CreateSupplierForm() {
 
         {/* Notes */}
         <div>
-          <Label htmlFor="notes" className="text-lg font-normal">
+          <Label htmlFor="notes" className="text-base font-normal">
             Notas
           </Label>
           <Textarea

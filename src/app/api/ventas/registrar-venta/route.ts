@@ -1,3 +1,5 @@
+// Creado para registrar VENTA DE PRODUCTOS de inventario
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 

@@ -183,9 +183,9 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
 
   const handleSelectCustomer = () => {
     localStorage.setItem("editExpenseForm", JSON.stringify({
-      transactionId,
+      transactionId,  
     }))
-    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=/balance/edit-expense/${transactionId}`)
+    router.push(`/dashboard/clientes?select=true&returnTo=/balance/edit-expense/${transactionId}`)
   }
 
   const [blockAutoClient, setBlockAutoClient] = useState(false);

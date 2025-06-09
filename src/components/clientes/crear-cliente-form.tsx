@@ -23,7 +23,7 @@ export default function CreateCustomerForm() {
   const { selectedStore } = useStore()
 
   const select = searchParams.get("select") === "true"
-  const returnTo = searchParams.get("returnTo") || "/dashboard/clientes/ver-cliente"
+  const returnTo = searchParams.get("returnTo") || "/dashboard/clientes"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,7 +60,7 @@ export default function CreateCustomerForm() {
   }
 
   const handleBack = () => {
-    router.push(`/dashboard/clientes/ver-cliente?select=true&returnTo=${encodeURIComponent(returnTo)}`)
+    router.push(`/dashboard/clientes?select=true&returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   return (
@@ -75,7 +75,7 @@ export default function CreateCustomerForm() {
       <form onSubmit={handleSubmit} className="mt-14 space-y-4 p-4">
         {/* Customer Name */}
         <div>
-          <Label htmlFor="name" className="text-lg font-medium">
+          <Label htmlFor="name" className="text-base font-medium">
             Nombre del cliente <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -90,7 +90,7 @@ export default function CreateCustomerForm() {
 
         {/* Notes */}
         <div>
-          <Label htmlFor="notes" className="text-lg font-medium">
+          <Label htmlFor="notes" className="text-base font-medium">
             Notas
           </Label>
           <Textarea
