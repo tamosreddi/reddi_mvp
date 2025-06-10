@@ -10,7 +10,7 @@ export default function ExploreSection() {
 
   // Opciones de navegación inspiradas en la imagen, puedes cambiar los textos y rutas después
   const navigationOptions = [
-    { id: "clientes", name: "Clientes", path: "/clientes", imgSrc: "/icons/clientes.png", imgAlt: "Clientes" },
+    { id: "clientes", name: "Clientes", path: "/dashboard/clientes?returnTo=/explorar", imgSrc: "/icons/clientes.png", imgAlt: "Clientes" },
     { id: "proveedores", name: "Proveedores", path: "/dashboard/proveedores?returnTo=/explorar", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
     { id: "venta-perdida", name: "Ventas Perdidas", path: "/explorar/ventas-perdidas", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
     { id: "pedidos", name: "Pedidos", path: "/pedidos", imgSrc: "/icons/pedidos.png", imgAlt: "Pedidos" },

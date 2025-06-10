@@ -94,13 +94,21 @@ export default function ViewCustomers() {
   }
 
   // Handle customer delete
-  const handleDelete = async (clientId: number) => {
+  const handleDelete = async (clientId: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este cliente?")) {
       return
     }
     try {
+      // 1. Obtén el token de sesión del usuario
+      const { data: { session } } = await supabase.auth.getSession()
+      const accessToken = session?.access_token
+
+      // 2. Haz el fetch enviando el token en el header Authorization
       const response = await fetch(`/api/clientes?clientId=${clientId}`, {
         method: "DELETE",
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        }
       })
       const data = await response.json()
       if (!response.ok) {
@@ -197,7 +205,7 @@ export default function ViewCustomers() {
                         </button>
                         <button
                           className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                          onClick={() => handleDelete(customer.client_id)}
+                          onClick={() => handleDelete(customer.client_id.toString())}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Eliminar

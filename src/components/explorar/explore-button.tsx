@@ -24,8 +24,18 @@ const ExploreButton: React.FC<ExploreButtonProps> = ({
     aria-label={ariaLabel || label}
     type="button"
   >
-    <div className="w-12 h-12 flex items-center justify-center bg-blue-50 rounded-full shadow-md">
-      <Image src={imgSrc} alt={imgAlt} width={48} height={48} className="object-contain" />
+    <div className="relative w-14 h-14 flex items-center justify-center overflow-visible">
+      {/* Background circle with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 rounded-full shadow-lg" />
+      
+      {/* Icon that overflows the container */}
+      <Image 
+        src={imgSrc} 
+        alt={imgAlt} 
+        width={72} 
+        height={72} 
+        className="object-contain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+      />
     </div>
     <div className="flex flex-col items-center justify-center">
       <span className="text-center text-sm font-extra-light mt-2">{label}</span>
