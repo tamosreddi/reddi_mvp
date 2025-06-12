@@ -14,7 +14,6 @@ export default function ExploreSection() {
     { id: "proveedores", name: "Proveedores", path: "/dashboard/proveedores?returnTo=/explorar", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
     { id: "venta-perdida", name: "Ventas Perdidas", path: "/explorar/ventas-perdidas", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
     { id: "pedidos", name: "Pedidos", path: "/pedidos", imgSrc: "/icons/pedidos.png", imgAlt: "Pedidos" },
-    { id: "catalogo", name: "Catálogo virtual", path: "/catalogo", imgSrc: "/icons/catalogo.png", imgAlt: "Catálogo virtual" },
     { id: "empleados", name: "Empleados", path: "/empleados", imgSrc: "/icons/empleados.png", imgAlt: "Empleados" },
   ]
 

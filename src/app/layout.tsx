@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Inter, Merriweather } from 'next/font/google';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
+import "react-day-picker/dist/style.css";
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
