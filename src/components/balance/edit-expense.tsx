@@ -218,7 +218,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
         {/* Fecha y Estado (Pagada/A crédito) */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={dateObj} onChange={handleDateChange} />
-          <IsPaidToggle value={status === 'paid'} onChange={v => setStatus(v ? 'paid' : 'credit')} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" />
+          {/* <IsPaidToggle value={status === 'paid'} onChange={v => setStatus(v ? 'paid' : 'credit')} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" /> */}
         </div>
         {/* Valor editable */}
         <ValueInput

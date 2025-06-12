@@ -56,7 +56,7 @@ export function Combobox({ options, value, onChange }: ComboboxProps) {
       </PopoverTrigger>
       <PopoverContent className="min-w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
-          <CommandInput placeholder="Buscar..." className="h-9" />
+          <CommandInput placeholder="Buscar..." className="h-9 text-base font-normal" />
           <CommandList>
             <CommandEmpty>No se encontraron opciones.</CommandEmpty>
             <CommandGroup>
