@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, User, Trash2 } from "lucide-react"
+import { Check, ChevronDown, User, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Button from "@/components/ui/button"
 import {
@@ -41,20 +41,20 @@ export function Combobox({ options, value, onChange }: ComboboxProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className={`w-full justify-between mt-1 rounded-xl py-5 px-4 ${selectedOption ? 'bg-white' : 'bg-gray-100'}`}
         >
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-gray-400" />
             {selectedOption ? (
-              <span>{selectedOption.name}</span>
+              <span className="text-base font-normal">{selectedOption.name}</span>
             ) : (
-              <span className="text-gray-400">Sin seleccionar</span>
+              <span className="text-gray-400 text-base font-normal">Sin seleccionar</span>
             )}
           </div>
-          <ChevronsUpDown className="opacity-50 ml-2" />
+          <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full min-w-[220px] p-0">
+      <PopoverContent className="min-w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput placeholder="Buscar..." className="h-9" />
           <CommandList>
@@ -67,6 +67,7 @@ export function Combobox({ options, value, onChange }: ComboboxProps) {
                   onChange(null)
                   setOpen(false)
                 }}
+                className="text-base font-normal"
               >
                 <span className="text-gray-400">Sin seleccionar</span>
                 {!value && <Check className="ml-auto opacity-100" />}
@@ -78,6 +79,7 @@ export function Combobox({ options, value, onChange }: ComboboxProps) {
                     onChange(option.id)
                     setOpen(false)
                   }}
+                  className="text-base font-normal"
                 >
                   {option.name}
                   {value === option.id && <Check className="ml-auto opacity-100" />}

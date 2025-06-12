@@ -14,6 +14,7 @@ import PaymentMethod from '@/components/ui/payment-method'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import ValueInput from '@/components/ui/value-input'
+import SelectDropdown from "@/components/ui/select-dropdown";
 
 interface EditExpenseProps {
   transactionId: string
@@ -227,23 +228,14 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
         />
 
         {/* Categoría del gasto */}
-        <div>
-          <Label htmlFor="expense-category" className="text-lg font-medium">
-            Categoría del gasto <span className="text-red-500">*</span>
-          </Label>
-          <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
-            <SelectTrigger id="expense-category" className="mt-1 rounded-xl border-gray-200 bg-white py-5 px-4">
-              <SelectValue placeholder="Selecciona una opción" />
-            </SelectTrigger>
-            <SelectContent>
-              {expenseCategories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SelectDropdown
+          label="Categoría del gasto"
+          id="expense-category"
+          value={expenseCategory}
+          onChange={setExpenseCategory}
+          options={expenseCategories.map((cat) => ({ value: cat, label: cat }))}
+          required
+        />
 
          {/* Proveedor */}
           <div>

@@ -1,3 +1,5 @@
+// Componente de navegación inferior
+
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
@@ -21,12 +23,6 @@ export default function BottomNavigation() {
       icon: FileBarChart,
       path: "/balance",
       active: pathname.startsWith("/balance"),
-    },
-    {
-      name: "Deudas",
-      icon: DollarSign,
-      path: "/deudas",
-      active: pathname.startsWith("/deudas"),
     },
     {
       name: "Inventario",

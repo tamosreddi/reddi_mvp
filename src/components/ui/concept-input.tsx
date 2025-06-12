@@ -28,12 +28,12 @@ export default function ConceptInput({
         {label}
       </Label>
       <div className="flex items-center gap-2">
-        <Tag className="h-5 w-5 text-gray-400" />
+        <Tag className="h-5 w-5 text-gray-400 text-base font-normal" />
         <Input
           id={id}
           value={value}
           onChange={onChange}
-          className={`border-none shadow-none focus-visible:ring-0 ${inputClassName}`}
+          className={`border-none shadow-none focus-visible:ring-0 text-base font-normal ${inputClassName}`}
           placeholder={placeholder}
         />
       </div>
