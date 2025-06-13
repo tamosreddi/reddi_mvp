@@ -348,7 +348,7 @@ export default function ViewInventory() {
         </div>
 
         {/* Mi Tienda Tab Content */}
-        <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-4 pb-40">
+        <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-4 pb-2">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Cargando productos...</div>
           ) : filteredInventory.length > 0 ? (
