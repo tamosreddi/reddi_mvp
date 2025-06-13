@@ -82,16 +82,16 @@ export default function IncomeDetailView({ transaction, onClose }: IncomeDetailP
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-2">Resumen del ingreso</h2>
 
-          <div className="text-blue-600 text-sm mb-3">Transacción #{transaction.transaction_id}</div>
+          <div className="text-blue-600 text-xs mb-3">Transacción #{transaction.transaction_id}</div>
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Cliente</div>
-            <div className="text-base font-medium mt-1">{clientName ?? 'Sin cliente seleccionado'}</div>
+            <div className="text-base font-normal mt-1">{clientName ?? 'Sin cliente seleccionado'}</div>
           </div>
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Concepto</div>
-            <div className="text-lg font-bold mt-1">{transaction.transaction_description || 'Ingreso'}</div>
+            <div className="text-base font-normal mt-1">{transaction.transaction_description || 'Ingreso'}</div>
           </div>
 
           <div className="border-t border-gray-200 py-3">

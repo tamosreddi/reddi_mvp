@@ -32,6 +32,7 @@ export default function CategoryCreateProductModal({
   const [isClient, setIsClient] = useState(false)
   const router = useRouter()
   const [newCategory, setNewCategory] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("efectivo")
 
   useEffect(() => {
     if (isOpen) setIsVisible(true)

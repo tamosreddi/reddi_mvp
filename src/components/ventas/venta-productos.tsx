@@ -243,7 +243,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
 
   // Otherwise, render the product sale view
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-16 pt-16">
+    <div className="flex flex-col min-h-screen bg-reddi-background pb-16 pt-16">
       {/* Header */}
       <TopProfileMenu 
         simpleMode={true}
@@ -381,8 +381,8 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
                     {product.name}
                   </h3>
 
-                  {/* Availability */}
-                  <p
+                  {/* Availability - Ocultado temporalmente */}
+                  {/* <p
                     className={cn(
                       "text-[10px] sm:text-xs mt-1",
                       product.quantity <= 0 ? "text-red-500" : "text-gray-500"
@@ -391,7 +391,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
                     <span className="sm:hidden">DISP</span>
                     <span className="hidden sm:inline">disponibles</span>
                     : {product.quantity}
-                  </p>
+                  </p> */}
 
                   {/* Add/Remove Buttons */}
                   <div className="flex justify-between items-center mt-1 w-full">

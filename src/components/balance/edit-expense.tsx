@@ -144,7 +144,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
       setLoading(false)
     }
     initExpense();
-  }, [transactionId, client, clientManuallySelected]);
+  }, [transactionId]);
 
   const handleSave = async () => {
     setSaving(true)
@@ -240,7 +240,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
          {/* Proveedor */}
           <div>
           <Label htmlFor="expense-supplier" className="text-lg font-medium">
-            Proveedor <span className="text-red-500">*</span>
+            Proveedor 
           </Label>
           <Combobox
             options={proveedores}

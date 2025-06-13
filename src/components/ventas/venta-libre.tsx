@@ -17,9 +17,11 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
 import CalendarSelect from "@/components/ui/calendar-select"
 import ConceptInput from "../ui/concept-input"
-import CustomerSelection from "../ui/customer-selection"
+import { Combobox, Option } from "@/components/ui/combobox"
+import { Label } from "@/components/ui/label"
 import PaymentMethod from '../ui/payment-method'
 import ValueInput from "../ui/value-input"
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 interface Customer {
   id: number
@@ -41,6 +43,10 @@ export default function RegisterSale() {
   const { user } = useAuth()
   const { selectedStore } = useStore()
   const [isLoading, setIsLoading] = useState(false)
+  const [clientes, setClientes] = useState<Option[]>([])
+  const [clientesLoading, setClientesLoading] = useState(true)
+  const [client, setClient] = useState<any>(null)
+  const [clientManuallySelected, setClientManuallySelected] = useState(false)
 
   // Restaurar estado del formulario si existe en localStorage
   useEffect(() => {
@@ -69,6 +75,30 @@ export default function RegisterSale() {
       }
     }
   }, [])
+
+  // Fetch clientes al montar o cuando cambia la tienda
+  useEffect(() => {
+    if (!selectedStore) {
+      setClientes([]);
+      setClientesLoading(false);
+      return;
+    }
+    setClientesLoading(true);
+    supabase
+      .from('clients')
+      .select('client_id, name, notes')
+      .eq('store_id', selectedStore.store_id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }: any) => {
+        if (error) {
+          setClientes([]);
+        } else {
+          setClientes((data || []).map((c: any) => ({ id: c.client_id, name: c.name, notes: c.notes })));
+        }
+        setClientesLoading(false);
+      });
+  }, [selectedStore]);
 
   // Función para formatear la fecha de manera compacta
   const formatCompactDate = (date: Date) => {
@@ -194,7 +224,7 @@ export default function RegisterSale() {
         {/* Date and Payment Status */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={date} onChange={setDate} />
-          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" />
+          {/* <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" /> */}
         </div>
 
         {/* Value Input - Redesigned */}
@@ -208,11 +238,25 @@ export default function RegisterSale() {
         />
 
         {/* Customer Selection */}
-        <CustomerSelection
-          selectedCustomer={selectedCustomer}
-          onRemoveCustomer={removeSelectedCustomer}
-          onSelectCustomer={navigateToCustomerSelection}
-        />
+        <div>
+          <Label htmlFor="sale-customer" className="text-lg font-medium">
+            Cliente <span className="text-gray-400 text-base font-normal" />
+          </Label>
+          <Combobox
+            options={clientes}
+            value={client?.id || null}
+            onChange={(clienteId) => {
+              if (!clienteId) {
+                setClient(null);
+                setClientManuallySelected(false);
+              } else {
+                const selected = clientes.find(c => c.id === clienteId) || null;
+                setClient(selected ? { id: selected.id, type: 'client', name: selected.name, notes: selected.notes } : null);
+                setClientManuallySelected(true);
+              }
+            }}
+          />
+        </div>
 
         {/* Payment Method Selection */}
         <PaymentMethod value={paymentMethod} onChange={setPaymentMethod} />

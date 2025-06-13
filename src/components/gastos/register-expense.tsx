@@ -1,3 +1,5 @@
+// Register Expense
+
 "use client"
 
 import type React from "react"
@@ -21,6 +23,8 @@ import ValueInput from '../ui/value-input'
 import ConceptInput from '../ui/concept-input'
 import PaymentMethod from '../ui/payment-method'
 import SupplierSelection from '../ui/supplier-selection'
+import SelectDropdown from "@/components/ui/select-dropdown"
+import { Combobox, Option } from "@/components/ui/combobox"
 
 interface Supplier {
   supplier_id: number
@@ -35,14 +39,18 @@ export default function RegisterExpense() {
   const [amount, setAmount] = useState("")
   const [supplier, setSupplier] = useState("")
   const [description, setDescription] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState("efectivo")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const toast = useToast()
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const { selectedStore } = useStore()
   const pathname = usePathname();
+  const [proveedores, setProveedores] = useState<Option[]>([])
+  const [proveedoresLoading, setProveedoresLoading] = useState(true)
+  const [client, setClient] = useState<any>(null)
+  const [clientManuallySelected, setClientManuallySelected] = useState(false)
 
   // Cargar proveedor seleccionado desde localStorage
   useEffect(() => {
@@ -135,6 +143,29 @@ export default function RegisterExpense() {
     }));
   }, [date, isPaid, expenseCategory, amount, supplier, description, paymentMethod, selectedSupplier]);
 
+  // Fetch proveedores al montar o cuando cambia la tienda
+  useEffect(() => {
+    if (!selectedStore) {
+      setProveedores([]);
+      setProveedoresLoading(false);
+      return;
+    }
+    setProveedoresLoading(true);
+    supabase
+      .from('suppliers')
+      .select('supplier_id, name, notes')
+      .eq('store_id', selectedStore.store_id)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }: any) => {
+        if (error) {
+          setProveedores([]);
+        } else {
+          setProveedores((data || []).map((p: any) => ({ id: p.supplier_id, name: p.name, notes: p.notes })));
+        }
+        setProveedoresLoading(false);
+      });
+  }, [selectedStore]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -157,8 +188,13 @@ export default function RegisterExpense() {
       const paymentMethodMap = {
         efectivo: "cash",
         tarjeta: "card",
-        transferencia: "transfer"
+        transferencia: "transfer",
+        other: "other",
+        cash: "cash",
+        card: "card",
+        transfer: "transfer"
       };
+      const mappedPaymentMethod = paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap] || paymentMethod;
 
       // Solo insertamos los campos básicos
       // Para el registro de gastos, unit_amount es el monto del gasto y quantity es 1
@@ -167,27 +203,31 @@ export default function RegisterExpense() {
         store_id: selectedStore.store_id,
         transaction_type: 'expense',
         transaction_description: description,
-        payment_method: paymentMethodMap[paymentMethod as keyof typeof paymentMethodMap],
+        payment_method: mappedPaymentMethod,
         is_paid: isPaid,
         transaction_subtype: expenseCategory,
         transaction_date: date?.toISOString() || "",
-        stakeholder_id: selectedSupplier?.supplier_id || null,
-        stakeholder_type: 'supplier',
+        stakeholder_id: client?.id || null,
+        stakeholder_type: client ? client.type : null,
         total_amount: Number.parseFloat(amount) || 0,
       }
 
       console.log('Sending transaction data:', transactionData)
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert(transactionData)
-        .select()
+      // Llamar a la API interna en vez de Supabase directo
+      const res = await fetch("/api/gastos/registrar-gasto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify(transactionData),
+      });
+      const data = await res.json();
 
-      console.log('Supabase response:', { data, error })
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
+      if (!data.success) {
+        console.error('API error:', data.error)
+        throw new Error(data.error || "No se pudo crear el gasto")
       }
 
       // Mostrar mensaje de éxito
@@ -224,39 +264,40 @@ export default function RegisterExpense() {
         {/* Date and Payment Status on the same line */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={date} onChange={setDate} />
-          <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagado", credit: "Deuda" }} className="h-12" />
+          {/* <IsPaidToggle value={isPaid} onChange={setIsPaid} labels={{ paid: "Pagado", credit: "Deuda" }} className="h-12" /> */}
         </div>
 
         {/* Amount Input */}
         <ValueInput value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} required />
 
         {/* Expense Category */}
-        <div>
-          <Label htmlFor="expense-category" className="text-lg font-medium">
-            Categoría del gasto <span className="text-red-500">*</span>
-          </Label>
-          <Select value={expenseCategory} onValueChange={setExpenseCategory} required>
-            <SelectTrigger id="expense-category" className="mt-1 rounded-xl border-gray-200 bg-white p-4">
-              <SelectValue placeholder="Selecciona una opción" />
-            </SelectTrigger>
-            <SelectContent>
-              {expenseCategories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-
+        <SelectDropdown
+          label="Categoría del gasto"
+          id="expense-category"
+          value={expenseCategory}
+          onChange={setExpenseCategory}
+          options={expenseCategories.map((cat) => ({ value: cat, label: cat }))}
+          required
+        />
 
         {/* Supplier */}
         <div>
-          <SupplierSelection
-            selectedSupplier={selectedSupplier}
-            onRemoveSupplier={removeSelectedSupplier}
-            onSelectSupplier={handleSelectSupplier}
+          <Label htmlFor="expense-supplier" className="text-lg font-medium">
+            Proveedor 
+          </Label>
+          <Combobox
+            options={proveedores}
+            value={client?.id || null}
+            onChange={(proveedorId) => {
+              if (!proveedorId) {
+                setClient(null);
+                setClientManuallySelected(false);
+              } else {
+                const selected = proveedores.find(p => p.id === proveedorId) || null;
+                setClient(selected ? { id: selected.id, type: 'supplier', name: selected.name, notes: selected.notes } : null);
+                setClientManuallySelected(true);
+              }
+            }}
           />
         </div>
 
