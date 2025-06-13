@@ -2,8 +2,8 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { FileText, Grid } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { FileText, Grid, Heart, Search, Edit } from "lucide-react"
 import Button from "@/components/ui/button"
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -13,20 +13,77 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Input from "@/components/ui/Input"
+import useDebounce from "@/lib/hooks/useDebounce"
+
+// Placeholder categories - these will be replaced with data from Supabase
+const PLACEHOLDER_CATEGORIES = [
+  "Todas las categorías",
+  "Bebidas",
+  "Snacks",
+  "Lácteos",
+  "Panadería",
+  "Carnes",
+  "Frutas y Verduras",
+  "Limpieza",
+  "Higiene",
+  "Abarrotes",
+  "Congelados",
+  "Enlatados"
+]
+
+// Helper para saber si un producto está en el inventario
+const isInInventory = (productId: string, inventory: any[]) => {
+  return inventory.some(item => String(item.product_reference_id) === String(productId));
+};
 
 export default function ViewInventory() {
+  const [activeTab, setActiveTab] = useState("mi-tienda")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [inventory, setInventory] = useState<any[]>([])
+  const [catalogProducts, setCatalogProducts] = useState<any[]>([])
   const router = useRouter()
   const pathname = usePathname()
   const { selectedStore } = useStore()
   const [loading, setLoading] = useState(true)
-  // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
-  // New state to control whether to show the select product modal
   const [showSelectProductModal, setShowSelectProductModal] = useState(false)
   const [totalCost, setTotalCost] = useState(0)
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState<string>("");
+  const [savingPrice, setSavingPrice] = useState(false);
+
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  // Fetch catalog products
+  useEffect(() => {
+    const fetchCatalogProducts = async () => {
+      if (!selectedStore?.store_id) return;
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .order("name")
+          .limit(20) // Initial load
+
+        if (error) throw error;
+        setCatalogProducts(data || []);
+      } catch (error) {
+        console.error("Error fetching catalog products:", error);
+        setCatalogProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeTab === "productos") {
+      fetchCatalogProducts();
+    }
+  }, [selectedStore, activeTab]);
 
   // Fetch inventory from Supabase
   useEffect(() => {
@@ -60,7 +117,6 @@ export default function ViewInventory() {
             .eq("is_active", true)
             .maybeSingle();
           if (error) {
-            // Opcional: console.log("Error al buscar producto personalizado:", error.message);
             product = null;
           } else {
             product = data;
@@ -108,33 +164,75 @@ export default function ViewInventory() {
     fetchInventory()
   }, [selectedStore])
 
-  // Get unique categories
-  const categories = Array.from(new Set(inventory.map((item) => item.category)))
-
   // Filter inventory based on search term and selected category
   const filteredInventory = inventory.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     const matchesCategory = selectedCategory ? item.category === selectedCategory : true
     return matchesSearch && matchesCategory
   })
 
-  // Calculate total references (unique products)
-  const totalReferences = inventory.length
+  // Filter catalog products based on search term and selected category
+  const filteredCatalogProducts = catalogProducts.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    const matchesCategory = selectedCategory ? item.category === selectedCategory : true
+    return matchesSearch && matchesCategory
+  })
+
+  // Handle product selection
+  const handleProductSelect = async (productId: string) => {
+    if (!selectedStore?.store_id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("store_inventory")
+        .insert({
+          store_id: selectedStore.store_id,
+          product_reference_id: productId,
+          product_type: "global",
+          quantity: 0,
+          unit_price: 0
+        });
+
+      if (error) throw error;
+      
+      // Refresh inventory
+      // TODO: Implement proper refresh
+    } catch (error) {
+      console.error("Error selecting product:", error);
+    }
+  };
+
+  // Handle product deselection
+  const handleProductDeselect = async (productId: string) => {
+    if (!selectedStore?.store_id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("store_inventory")
+        .delete()
+        .eq("store_id", selectedStore.store_id)
+        .eq("product_reference_id", productId);
+
+      if (error) throw error;
+      
+      // Refresh inventory
+      // TODO: Implement proper refresh
+    } catch (error) {
+      console.error("Error deselecting product:", error);
+    }
+  };
 
   // Handle report generation
   const handleGenerateReport = () => {
     alert("Generando reporte de inventario...")
-    // Functionality to be implemented later
   }
 
   // Handle category creation
   const handleCreateCategory = () => {
     alert("Funcionalidad para crear categoría será implementada próximamente")
-    // Functionality to be implemented later
   }
 
   const handleSearchClick = () => {
-    // Implementar funcionalidad de búsqueda aquí
     alert("Funcionalidad de búsqueda será implementada próximamente")
   }
 
@@ -156,8 +254,28 @@ export default function ViewInventory() {
   // Handle successful product creation
   const handleCreateProductSuccess = () => {
     setShowCreateProductForm(false)
-    // In a real app, you would refresh the product list here
   }
+
+  // Guardar el precio editado en Supabase
+  const handleSavePrice = async (item: any) => {
+    const newPrice = parseFloat(editingPriceValue);
+    if (isNaN(newPrice) || newPrice <= 0) {
+      // Opcional: mostrar error visual
+      return;
+    }
+    setSavingPrice(true);
+    try {
+      await supabase
+        .from("store_inventory")
+        .update({ unit_price: newPrice })
+        .eq("inventory_id", item.id);
+      // Refrescar inventario
+      item.price = newPrice;
+    } finally {
+      setSavingPrice(false);
+      setEditingPriceId(null);
+    }
+  };
 
   // If showing create product form, render it
   if (showCreateProductForm) {
@@ -175,96 +293,212 @@ export default function ViewInventory() {
       {/* Header */}
       <TopProfileMenu onSearchClick={handleSearchClick} />
 
-      {/* Main Content - Add padding at the bottom to prevent products from being hidden */}
-      <div className="flex-1 p-4 space-y-4 pb-40">
-
-
-        
-        {/* Reports Button - Temporarily hidden */}
-        {/* <Button
-          variant="outline"
-          className="w-full rounded-xl border-gray-300 bg-white px-6 text-sm"
-          onClick={handleGenerateReport}
-        >
-          <FileText className="mr-2 h-5 w-5" />
-          Reportes
-        </Button> */}
-
-        {/* Stats Cards - Temporarily hidden */}
-        {/* <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
-            <h2 className="text-sm font-semibold text-gray-700">Productos Totales</h2>
-            <p className="text-xl font-bold text-left mt-4">{totalReferences}</p>
-          </div>
-
-          <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
-            <h2 className="text-sm font-semibold text-gray-700">Costo total</h2>
-            <p className="text-xl font-bold text-left mt-4">
-              $
-              {new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalCost)}
-            </p>
-          </div>
-        </div> */}
-
-        {/* Category Filter */}
-        <div className="flex overflow-x-auto py-2 space-x-2 scrollbar-hide">
-          <Button
-            variant="outline"
-            className={cn(
-              "rounded-full px-4 py-1 text-sm whitespace-nowrap",
-              !selectedCategory ? "bg-yellow-400 border-yellow-400 text-gray-900" : "bg-white",
-            )}
-            onClick={() => setSelectedCategory(null)}
+      {/* Tabs */}
+      <Tabs defaultValue="mi-tienda" className="w-full" onValueChange={setActiveTab}>
+        <TabsList className="w-full grid grid-cols-2 h-auto p-0 bg-transparent">
+          <TabsTrigger
+            value="mi-tienda"
+            className={`py-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-black data-[state=active]:shadow-none ${
+              activeTab === "mi-tienda" ? "font-bold" : "text-gray-500"
+            }`}
           >
-            Todas las categorías
-          </Button>
+            Mi Tienda
+          </TabsTrigger>
+          <TabsTrigger
+            value="productos"
+            className={`py-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-black data-[state=active]:shadow-none ${
+              activeTab === "productos" ? "font-bold" : "text-gray-500"
+            }`}
+          >
+            Productos
+          </TabsTrigger>
+        </TabsList>
 
-          {categories.map((category) => (
-            <Button
+        {/* Search Bar */}
+        <div className="px-4 py-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Buscar productos..."
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white"
+            />
+          </div>
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex overflow-x-auto py-2 px-4 space-x-2 scrollbar-hide">
+          {PLACEHOLDER_CATEGORIES.map((category) => (
+            <button
               key={category}
-              variant="outline"
+              type="button"
               className={cn(
-                "rounded-full px-4 py-1 text-sm whitespace-nowrap",
-                selectedCategory === category ? "bg-yellow-400 border-yellow-400 text-gray-900" : "bg-white",
+                "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all",
+                (!selectedCategory && category === "Todas las categorías") || selectedCategory === category
+                  ? "bg-yellow-400 text-gray-900 shadow-md"
+                  : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
               )}
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory(category === "Todas las categorías" ? null : category)}
             >
               {category}
-            </Button>
+            </button>
           ))}
         </div>
 
-        {/* Product List */}
-        <div className="space-y-3">
-          {filteredInventory.length > 0 ? (
-            filteredInventory.map((item) => (
-              <button
-                key={item.id}
-                className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50"
-                onClick={() => navigateToProductDetail(String(item.id))}
-              >
-                <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
-                  <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
+        {/* Mi Tienda Tab Content */}
+        <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-4 pb-40">
+          {loading ? (
+            <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+          ) : filteredInventory.length > 0 ? (
+            <div className="space-y-3 w-full">
+              {filteredInventory.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
+                  // onClick={() => navigateToProductDetail(String(item.id))} // Solo detalle al hacer click en el nombre
+                >
+                  {/* Imagen */}
+                  <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden flex-shrink-0">
+                    <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
+                  </div>
+                  {/* Nombre */}
+                  <div className="flex-1 min-w-0" onClick={() => navigateToProductDetail(String(item.id))}>
+                    <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px] cursor-pointer">
+                      {item.name_alias ? item.name_alias : item.name}
+                    </h3>
+                  </div>
+                  {/* Precio + Editar */}
+                  <div className="flex items-center gap-2 ml-2">
+                    {editingPriceId === item.id ? (
+                      <form
+                        onSubmit={e => {
+                          e.preventDefault();
+                          handleSavePrice(item);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <Input
+                          type="number"
+                          min={0.01}
+                          step={0.01}
+                          value={editingPriceValue}
+                          autoFocus
+                          disabled={savingPrice}
+                          onChange={e => setEditingPriceValue(e.target.value)}
+                          onBlur={() => handleSavePrice(item)}
+                          className="w-20 text-sm font-semibold"
+                        />
+                      </form>
+                    ) : (
+                      <button
+                        className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
+                        style={{ background: 'none' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditingPriceId(item.id);
+                          setEditingPriceValue(item.price.toFixed(2));
+                        }}
+                        aria-label="Editar precio"
+                        type="button"
+                      >
+                        <span className="text-sm font-semibold select-none group-hover:text-blue-700">${item.price.toFixed(2)}</span>
+                        <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />
+                      </button>
+                    )}
+                  </div>
+                  {/* Corazón */}
+                  <span
+                    className={"ml-3 transition-colors text-reddi-select cursor-pointer"}
+                    style={{ transition: 'color 0.2s' }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleProductDeselect(item.id);
+                    }}
+                  >
+                    <Heart className="h-6 w-6" fill="currentColor" strokeWidth={0} />
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
-                    {item.name_alias ? item.name_alias : item.name}
-                  </h3>
-                  <p className="text-sm font-semibold">${item.price.toFixed(2)}</p>
-                  {/* <p className="text-sm text-gray-600">{item.quantity} disponibles</p> */}
-                </div>
-              </button>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="py-8 text-center text-gray-500">
-              No se encontraron productos que coincidan con tu búsqueda.
+            <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
+              <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
+                <span className="text-6xl" role="img" aria-label="Store">
+                  🏪
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes productos en tu tienda</h2>
+              <p className="text-gray-600 mb-8">Selecciona productos del catálogo para agregarlos a tu tienda</p>
             </div>
           )}
-        </div>
-      </div>
+        </TabsContent>
 
-      {/* Action Buttons - Fixed at the bottom, above the navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-45 p-4 pb-20 bg-gray-50 border-t border-gray-200 shadow-md">
+        {/* Productos Tab Content */}
+        <TabsContent value="productos" className="mt-0 flex-1 flex flex-col items-center justify-center p-4 pb-40">
+          {loading ? (
+            <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+          ) : filteredCatalogProducts.length > 0 ? (
+            <div className="space-y-3 w-full">
+              {filteredCatalogProducts.map((item) => {
+                const selected = isInInventory(item.id, inventory);
+                return (
+                  <button
+                    key={item.id}
+                    className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
+                  >
+                    <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
+                      <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-600">{item.category}</p>
+                    </div>
+                    <span
+                      className={
+                        selected
+                          ? "transition-colors text-reddi-select"
+                          : "transition-colors text-gray-300 hover:text-reddi-select"
+                      }
+                      style={{ transition: 'color 0.2s' }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (selected) {
+                          handleProductDeselect(item.id);
+                        } else {
+                          handleProductSelect(item.id);
+                        }
+                      }}
+                    >
+                      <Heart
+                        className="h-6 w-6"
+                        fill={selected ? "currentColor" : "none"}
+                        strokeWidth={selected ? 0 : 2}
+                      />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
+              <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
+                <span className="text-6xl" role="img" aria-label="Products">
+                  📦
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">No se encontraron productos</h2>
+              <p className="text-gray-600 mb-8">Intenta con otra búsqueda o categoría</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Action Buttons */}
+      <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 flex gap-2">
         <Button
           onClick={() => setShowSelectProductModal(true)}
           className="w-full rounded-xl bg-gray-800 p-5 text-lg font-medium text-white hover:bg-gray-700"
@@ -281,7 +515,6 @@ export default function ViewInventory() {
             router.push('/inventario/crear')
           } else {
             console.log('Tipo de producto seleccionado:', type)
-            // Aquí puedes manejar la lógica para inventario
           }
         }}
       />

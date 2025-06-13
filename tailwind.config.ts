@@ -72,6 +72,7 @@ const config: Config = {
   			},
   			'reddi-top': '#F8F8F8',
 			'is-paid-toggle': '#57BAB5',
+			'reddi-select': '#57BAB5',
 			'reddi-bottom': '#57BAB5',
 			'reddi-background': '#F8F8F8',
 			'reddi-bottom-text': '#E6F0EF', // Texto de los botones del bottom navigation

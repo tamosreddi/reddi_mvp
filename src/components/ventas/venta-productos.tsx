@@ -3,7 +3,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, Search, Barcode, ShoppingCart, ChevronRight, Plus, Minus } from "lucide-react"
+import { ArrowLeft, Search, Barcode, ShoppingCart, ChevronRight, Plus, Minus, Home } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import CreateProductForm from "@/components/inventario/create-product-form"
@@ -34,7 +34,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   const pathname = usePathname()
   const { selectedStore } = useStore()
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>("__mi_tienda__")
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<string[]>([])
@@ -42,6 +42,8 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
   // New state to control whether to show the select product modal
   const [showSelectProductModal, setShowSelectProductModal] = useState(false)
+  // Al cargar el componente, obtén los product_reference_id de store_inventory para la tienda actual
+  const [myStoreProductIds, setMyStoreProductIds] = useState<string[]>([])
 
   // Nueva función para refrescar inventario
   const fetchInventory = async () => {
@@ -150,11 +152,38 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
     }
   }, []);
 
+  // Al cargar el componente, obtén los product_reference_id de store_inventory para la tienda actual
+  useEffect(() => {
+    const fetchMyStoreProducts = async () => {
+      if (!selectedStore) return;
+      const { data, error } = await supabase
+        .from("store_inventory")
+        .select("product_reference_id")
+        .eq("store_id", selectedStore.store_id);
+      if (!error && data) {
+        setMyStoreProductIds(data.map((row) => String(row.product_reference_id)));
+      }
+    };
+    fetchMyStoreProducts();
+  }, [selectedStore]);
+
   // Filtrar productos basados en búsqueda y categoría
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory ? product.category === selectedCategory : true
-    return matchesSearch && matchesCategory
+    let matchesCategory = true;
+    if (selectedCategory === "__mi_tienda__") {
+      // Solo productos de mi tienda (store_inventory)
+      // Suponiendo que tienes una lista de product_reference_id de store_inventory
+      // Debes obtener esta lista al cargar el componente
+      if (myStoreProductIds && myStoreProductIds.length > 0) {
+        matchesCategory = myStoreProductIds.includes(product.productId);
+      } else {
+        matchesCategory = false;
+      }
+    } else if (selectedCategory) {
+      matchesCategory = product.category === selectedCategory;
+    }
+    return matchesSearch && matchesCategory;
   })
 
   // Añadir producto al carrito
@@ -277,6 +306,21 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       {/* Category Filter */}
       <div className="px-4 overflow-x-auto max-w-4xl mx-auto w-full">
         <div className="flex space-x-2 pb-3">
+          {/* Mi Tienda (Casa) Filtro */}
+          <button
+            onClick={() => setSelectedCategory("__mi_tienda__")}
+            className={cn(
+              "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all flex items-center justify-center",
+              selectedCategory === "__mi_tienda__"
+                ? "bg-[#57BAB5] text-white shadow-md"
+                : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            )}
+            aria-label="Solo productos de mi tienda"
+            style={{ minWidth: 40, minHeight: 40 }}
+          >
+            <Home className={cn("h-5 w-5", selectedCategory === "__mi_tienda__" ? "text-white" : "text-gray-500")} />
+          </button>
+
           <button
             onClick={() => setSelectedCategory(null)}
             className={cn(

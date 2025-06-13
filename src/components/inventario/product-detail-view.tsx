@@ -203,8 +203,22 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           )}
         </div>
 
-        {/* Available Quantity */}
+        {/* Description */}
         <div>
+          <Label htmlFor="description" className="text-base font-bold">
+            Descripción
+          </Label>
+          <Textarea
+            id="description"
+            value={product.description}
+            onChange={(e) => handleChange("description", e.target.value)}
+            className="mt-1 min-h-[100px] rounded-xl border-gray-200"
+            placeholder="Añadir una descripción ayudará a tus clientes a elegir más fácil"
+          />
+        </div>
+
+        {/* Available Quantity - Hidden for now */}
+        {/* <div>
           <Label htmlFor="quantity" className="text-base font-bold">
             Cantidad disponible
           </Label>
@@ -218,7 +232,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
             className="rounded-xl border-gray-200"
             placeholder="0"
           />
-        </div>
+        </div> */}
 
         {/* Price */}
         <div>
@@ -323,19 +337,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           </div>
         </div>
 
-        {/* Description */}
-        <div>
-          <Label htmlFor="description" className="text-base font-bold">
-            Descripción
-          </Label>
-          <Textarea
-            id="description"
-            value={product.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-            className="mt-1 min-h-[100px] rounded-xl border-gray-200"
-            placeholder="Añadir una descripción ayudará a tus clientes a elegir más fácil"
-          />
-        </div>
+
 
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>

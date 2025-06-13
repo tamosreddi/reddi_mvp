@@ -92,13 +92,16 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
       // Insertar en STORE_INVENTORY si el producto fue creado
       if (Array.isArray(response.data) && response.data.length > 0) {
         const store_product_id = response.data[0].store_product_id;
+        const safeQuantity = quantity === "" ? 0 : Number(quantity);
+        const safePrice = price === "" ? 0 : Number(price);
+        const safeCost = cost === "" ? 0 : Number(cost);
         const invRes = await supabase.from("store_inventory").insert([
           {
             store_id: selectedStore?.store_id,
             product_reference_id: store_product_id,
             product_type: "custom",
-            quantity,
-            unit_price: price,
+            quantity: safeQuantity,
+            unit_price: safePrice,
           }
         ])
         if (invRes.error) throw invRes.error;
@@ -109,9 +112,9 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             store_id: selectedStore?.store_id,
             product_reference_id: store_product_id,
             product_type: "custom",
-            quantity_received: quantity,
-            quantity_remaining: quantity,
-            unit_cost: cost || null,
+            quantity_received: safeQuantity,
+            quantity_remaining: safeQuantity,
+            unit_cost: safeCost || null,
             received_date: new Date().toISOString(),
             expiration_date: null,
           }
@@ -238,8 +241,8 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           </div>
         </div>
 
-        {/* Available Quantity */}
-        <div>
+        {/* Available Quantity - Hidden for now */}
+        {/* <div>
           <Label htmlFor="quantity" className="text-lg font-medium">
             Cantidad disponible
           </Label>
@@ -252,7 +255,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
             className="mt-1 rounded-xl border-gray-200"
             placeholder="0"
           />
-        </div>
+        </div> */}
 
         {/* Category */}
         <div>
@@ -298,8 +301,8 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
           />
         </div>
 
-        {/* Barcode */}
-        <div>
+        {/* Barcode - Hidden for now */}
+        {/* <div>
           <Label htmlFor="barcode" className="text-lg font-medium">
             Código de barras (Opcional)
           </Label>
@@ -319,7 +322,7 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
               <Barcode className="h-6 w-6" />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>
