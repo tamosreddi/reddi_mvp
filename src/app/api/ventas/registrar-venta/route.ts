@@ -44,35 +44,48 @@ export async function POST(req: NextRequest) {
     // 2. Insertar los productos vendidos en transaction_items (con product_name)
     const transactionItemsPayload = [];
     for (const item of items) {
-      let productName = "";
-      if (item.productType === "custom") {
-        // Buscar en store_products
-        const { data } = await supabase
-          .from("store_products")
-          .select("name")
-          .eq("store_product_id", item.productId)
-          .single();
-        productName = data?.name || "";
+      if (item.productType === "free-sale") {
+        // Venta libre: no buscar nombre ni batches
+        transactionItemsPayload.push({
+          transaction_id: transaction.transaction_id,
+          product_reference_id: null,
+          product_type: "free-sale",
+          quantity: 1,
+          unit_price: item.unitPrice,
+          store_id: storeId,
+          created_at: new Date().toISOString(),
+          product_name: item.productName || item.name || "Venta libre"
+        });
       } else {
-        // Buscar en products
-        const { data } = await supabase
-          .from("products")
-          .select("name")
-          .eq("product_id", item.productId)
-          .single();
-        productName = data?.name || "";
+        let productName = "";
+        if (item.productType === "custom") {
+          // Buscar en store_products
+          const { data } = await supabase
+            .from("store_products")
+            .select("name")
+            .eq("store_product_id", item.productId)
+            .single();
+          productName = data?.name || "";
+        } else {
+          // Buscar en products
+          const { data } = await supabase
+            .from("products")
+            .select("name")
+            .eq("product_id", item.productId)
+            .single();
+          productName = data?.name || "";
+        }
+        transactionItemsPayload.push({
+          transaction_id: transaction.transaction_id,
+          product_reference_id: item.productId,
+          product_type: item.productType,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          store_id: storeId,
+          created_at: new Date().toISOString(),
+          product_name: productName,
+        });
       }
-
-      transactionItemsPayload.push({
-        transaction_id: transaction.transaction_id,
-        product_reference_id: item.productId,
-        product_type: item.productType,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        store_id: storeId,
-        created_at: new Date().toISOString(),
-        product_name: productName,
-      });
     }
 
     const { data: transactionItems, error: transactionItemsError } = await supabase
@@ -87,6 +100,8 @@ export async function POST(req: NextRequest) {
     // 3. Por cada producto vendido, asignar batches y registrar en transaction_item_batches
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
+      // Saltar lógica de batches/inventario para ventas libres
+      if (item.productType === "free-sale") continue;
       let quantityToSell = item.quantity;
       // Obtener batches activos (FIFO)
       const { data: batches, error: batchesError } = await supabase
@@ -99,6 +114,8 @@ export async function POST(req: NextRequest) {
       if (batchesError) {
         return NextResponse.json({ success: false, error: `Error obteniendo batches para producto ${item.productId}: ${batchesError.message}` }, { status: 500 })
       }
+
+      // Registrar la venta sin validar cantidad disponible
       for (const batch of batches) {
         if (quantityToSell <= 0) break;
         const used = Math.min(Number(batch.quantity_remaining), quantityToSell);
@@ -126,9 +143,7 @@ export async function POST(req: NextRequest) {
         }
         quantityToSell -= used;
       }
-      if (quantityToSell > 0) {
-        return NextResponse.json({ success: false, error: `No hay suficiente inventario para el producto ${item.productId}` }, { status: 400 })
-      }
+
       // 4. Actualizar store_inventory.quantity para este producto
       const { data: updatedBatches } = await supabase
         .from('inventory_batches')

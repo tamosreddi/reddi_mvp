@@ -242,18 +242,19 @@ export default function EditSale({ transactionId }: EditSaleProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-reddi-background flex flex-col">
       {/* Header con TopProfileMenu */}
       <TopProfileMenu
         simpleMode
         title="Editar venta"
         onBackClick={() => router.push(`/balance/income/${transactionId}`)}
       />
-      <div className="flex-1 p-4 pb-24 space-y-4 mt-20">
+      <div className="flex-1 p-4 pb-24 space-y-4 mt-16">
         {/* Fecha y Estado (Pagada/A crédito) */}
         <div className="grid grid-cols-2 gap-3">
           <CalendarSelect value={dateObj} onChange={handleDateChange} />
-          <IsPaidToggle value={status === 'paid'} onChange={v => setStatus(v ? 'paid' : 'credit')} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" />
+          {/* IsPaidToggle - Ocultado temporalmente */}
+          {/* <IsPaidToggle value={status === 'paid'} onChange={v => setStatus(v ? 'paid' : 'credit')} labels={{ paid: "Pagada", credit: "Deuda" }} className="h-12" /> */}
         </div>
         {/* Productos */}
         <div className="rounded-lg bg-white p-4 flex flex-col gap-2">

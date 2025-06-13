@@ -16,6 +16,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
 import Image from 'next/image'
 import IsPaidToggle from "@/components/ui/is-paid-toggle"
+import FreeSaleModal from "@/components/shared/free-sale-modal"
 
 // Definición de tipos
 interface CartItem {
@@ -66,6 +67,7 @@ export default function CartView() {
   const [paymentMethod, setPaymentMethod] = useState<string>("Efectivo")
   const { selectedStore } = useStore()
   const cartItemsRef = useRef(cartItems);
+  const [isFreeSaleModalOpen, setIsFreeSaleModalOpen] = useState(false)
 
   // Measure the height of the bottom section using useLayoutEffect for more accurate measurements
   useLayoutEffect(() => {
@@ -269,6 +271,24 @@ export default function CartView() {
     router.push(destination)
   }
 
+  // Agregar venta libre a la canasta
+  const addFreeSaleToCart = (concept: string, amount: number) => {
+    setCartItems((prevItems) => [
+      ...prevItems,
+      {
+        id: Date.now() + Math.floor(Math.random() * 10000), // id único
+        name: concept,
+        price: amount,
+        quantity: 1,
+        cartQuantity: 1,
+        category: "Venta Libre",
+        image: undefined,
+        productId: `free-sale-${Date.now()}`,
+        productType: "free-sale"
+      }
+    ])
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
@@ -306,12 +326,13 @@ export default function CartView() {
             </PopoverContent>
           </Popover>
 
-          <IsPaidToggle
+          {/* IsPaidToggle - Ocultado temporalmente */}
+          {/* <IsPaidToggle
             value={isPaid}
             onChange={setIsPaid}
             labels={{ paid: "Pagada", credit: "Deuda" }}
             className="h-10"
-          />
+          /> */}
         </div>
 
         {/* Cart Items */}
@@ -319,67 +340,128 @@ export default function CartView() {
           {isLoading ? (
             <div className="text-center py-8">Cargando productos...</div>
           ) : cartItems.length > 0 ? (
-            cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl p-3 shadow-sm flex">
-                {/* Imagen con trash */}
-                <div className="relative h-14 w-14 rounded-lg bg-gray-100 mr-3 flex-shrink-0 overflow-hidden">
-                  <Image
-                    src={item.image || "/Groserybasket.png"}
-                    alt={item.name}
-                    width={56}
-                    height={56}
-                    className="h-full w-full object-cover grayscale"
-                  />
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 rounded-lg transition-colors"
-                    aria-label="Eliminar producto"
-                    style={{ zIndex: 2 }}
-                  >
-                    <span className="bg-black/80 rounded-full p-1.5 shadow-lg">
-                      <Trash2 className="h-5 w-5 text-white" />
-                    </span>
-                  </button>
-                </div>
-                {/* Info producto */}
-                <div className="flex-1 flex flex-col justify-between">
-                  {/* Nombre */}
-                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1">{item.name}</h3>
-                  {/* Cantidad y precio unitario alineados, total debajo */}
-                  <div className="flex items-center gap-3 justify-between">
-                    {/* Cantidad */}
-                    <div className="flex items-center space-x-1">
+            <>
+              {cartItems.map((item) => (
+                <div key={item.id} className="bg-white rounded-xl p-3 shadow-sm flex">
+                  {/* Imagen con trash */}
+                  {item.productType !== "free-sale" ? (
+                    <div className="relative h-14 w-14 rounded-lg bg-gray-100 mr-3 flex-shrink-0 overflow-hidden">
+                      <Image
+                        src={item.image || "/Groserybasket.png"}
+                        alt={item.name}
+                        width={56}
+                        height={56}
+                        className="h-full w-full object-cover grayscale"
+                      />
                       <button
-                        onClick={() => decrementQuantity(item.id)}
-                        className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
-                        disabled={item.cartQuantity <= 1}
+                        onClick={() => removeItem(item.id)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 rounded-lg transition-colors"
+                        aria-label="Eliminar producto"
+                        style={{ zIndex: 2 }}
                       >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <span className="font-medium text-sm">{item.cartQuantity}</span>
-                      <button
-                        onClick={() => incrementQuantity(item.id)}
-                        className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
-                      >
-                        <Plus className="h-4 w-4" />
+                        <span className="bg-black/80 rounded-full p-1.5 shadow-lg">
+                          <Trash2 className="h-5 w-5 text-white" />
+                        </span>
                       </button>
                     </div>
-                    {/* Precio unitario alineado a la derecha */}
-                    <button
-                      onClick={() => handlePriceEdit(item.id)}
-                      className="flex items-center text-gray-900 text-sm font-bold ml-auto"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      <span>${item.price.toFixed(2)}</span>
-                    </button>
-                  </div>
-                  {/* Precio total debajo, alineado a la derecha */}
-                  <div className="flex justify-end">
-                    <span className="text-xs text-gray-500 mt-0.5">= ${(item.price * item.cartQuantity).toFixed(2)}</span>
+                  ) : (
+                    <div className="relative h-14 w-14 rounded-lg bg-gray-100 mr-3 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                      <span className="text-2xl text-gray-400">💸</span>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 rounded-lg transition-colors"
+                        aria-label="Eliminar venta libre"
+                        style={{ zIndex: 2 }}
+                      >
+                        <span className="bg-black/80 rounded-full p-1.5 shadow-lg">
+                          <Trash2 className="h-5 w-5 text-white" />
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                  {/* Info producto o venta libre */}
+                  <div className="flex-1 flex flex-col justify-between">
+                    {/* Nombre o concepto */}
+                    <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1">{item.name}</h3>
+                    {/* Si es venta libre, replica la fila de cantidad/precio pero oculta los botones de cantidad */}
+                    {item.productType === "free-sale" ? (
+                      <>
+                        <div className="flex items-center gap-3 justify-between">
+                          {/* Espacio para alinear con los botones de cantidad, pero oculto */}
+                          <div className="flex items-center space-x-1 opacity-0 pointer-events-none select-none">
+                            <button className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center" disabled>
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="font-medium text-sm">1</span>
+                            <button className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center" disabled>
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          {/* Botón editar monto alineado a la derecha */}
+                          <button
+                            onClick={() => handlePriceEdit(item.id)}
+                            className="flex items-center text-gray-900 text-sm font-bold ml-auto"
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            <span>${item.price.toFixed(2)}</span>
+                          </button>
+                        </div>
+                        <div className="flex justify-end">
+                          <span className="text-xs text-gray-500 mt-0.5">= ${item.price.toFixed(2)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3 justify-between">
+                          {/* Cantidad */}
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => decrementQuantity(item.id)}
+                              className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                              disabled={item.cartQuantity <= 1}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="font-medium text-sm">{item.cartQuantity}</span>
+                            <button
+                              onClick={() => incrementQuantity(item.id)}
+                              className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          {/* Precio unitario alineado a la derecha */}
+                          <button
+                            onClick={() => handlePriceEdit(item.id)}
+                            className="flex items-center text-gray-900 text-sm font-bold ml-auto"
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            <span>${item.price.toFixed(2)}</span>
+                          </button>
+                        </div>
+                        <div className="flex justify-end">
+                          <span className="text-xs text-gray-500 mt-0.5">= ${(item.price * item.cartQuantity).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
+              ))}
+              {/* Botón Agregar Venta Libre */}
+              <div className="pt-2">
+                <button
+                  onClick={() => setIsFreeSaleModalOpen(true)}
+                  className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium shadow-sm hover:bg-gray-50"
+                  type="button"
+                >
+                  <div className="flex items-center">
+                    <span className="text-lg mr-2">💸</span>
+                    <span className="text-xs font-medium">Agregar una venta libre</span>
+                  </div>
+                  <span className="text-xs text-gray-400 ml-1">(editar total)</span>
+                </button>
               </div>
-            ))
+            </>
           ) : (
             <div className="text-center py-8 text-gray-500">
               No hay productos en la canasta.
@@ -433,7 +515,6 @@ export default function CartView() {
           <h3 className="text-xl text-gray-600">Total</h3>
           <div className="flex items-center">
             <span className="text-2xl font-bold">$ {cartTotal.toFixed(2)}</span>
-            <ChevronUp className="h-5 w-5 ml-2" />
           </div>
         </div>
 
@@ -471,6 +552,13 @@ export default function CartView() {
         cartItems={transformCartItems()}
         storeId={selectedStore?.store_id || ""}
         customer={selectedCustomer}
+      />
+
+      {/* Free Sale Modal */}
+      <FreeSaleModal
+        isOpen={isFreeSaleModalOpen}
+        onClose={() => setIsFreeSaleModalOpen(false)}
+        onAdd={addFreeSaleToCart}
       />
     </div>
   )

@@ -400,9 +400,9 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
 
           {/* Footer Actions */}
           <div className="flex justify-between items-center pt-3">
-            <button className="text-gray-700 text-sm flex items-center">
+            <button className="text-gray-700 text-sm flex items-center opacity-0">
               <Download className="h-4 w-4 mr-1" />
-              Descargar Reportes
+              <span>Descargar Reportes</span>
             </button>
             <button onClick={handleShowBalanceDetail} className="text-blue-600 text-sm flex items-center">
               Ver Balance

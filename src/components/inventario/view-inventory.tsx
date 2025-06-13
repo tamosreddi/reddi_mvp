@@ -177,25 +177,26 @@ export default function ViewInventory() {
 
       {/* Main Content - Add padding at the bottom to prevent products from being hidden */}
       <div className="flex-1 p-4 space-y-4 pb-40">
-        {/* Reports Button */}
-        <Button
+
+
+        
+        {/* Reports Button - Temporarily hidden */}
+        {/* <Button
           variant="outline"
           className="w-full rounded-xl border-gray-300 bg-white px-6 text-sm"
           onClick={handleGenerateReport}
         >
           <FileText className="mr-2 h-5 w-5" />
           Reportes
-        </Button>
+        </Button> */}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Total References */}
+        {/* Stats Cards - Temporarily hidden */}
+        {/* <div className="grid grid-cols-2 gap-4">
           <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
             <h2 className="text-sm font-semibold text-gray-700">Productos Totales</h2>
             <p className="text-xl font-bold text-left mt-4">{totalReferences}</p>
           </div>
 
-          {/* Total Cost */}
           <div className="rounded-xl bg-white p-4 shadow-sm flex flex-col justify-between h-full">
             <h2 className="text-sm font-semibold text-gray-700">Costo total</h2>
             <p className="text-xl font-bold text-left mt-4">
@@ -203,7 +204,7 @@ export default function ViewInventory() {
               {new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalCost)}
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* Category Filter */}
         <div className="flex overflow-x-auto py-2 space-x-2 scrollbar-hide">
@@ -239,7 +240,7 @@ export default function ViewInventory() {
             filteredInventory.map((item) => (
               <button
                 key={item.id}
-                className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left hover:bg-gray-50"
+                className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50"
                 onClick={() => navigateToProductDetail(String(item.id))}
               >
                 <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
@@ -250,7 +251,7 @@ export default function ViewInventory() {
                     {item.name_alias ? item.name_alias : item.name}
                   </h3>
                   <p className="text-sm font-semibold">${item.price.toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">{item.quantity} disponibles</p>
+                  {/* <p className="text-sm text-gray-600">{item.quantity} disponibles</p> */}
                 </div>
               </button>
             ))

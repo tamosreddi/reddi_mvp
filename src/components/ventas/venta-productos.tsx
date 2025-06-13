@@ -159,7 +159,8 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
 
   // Añadir producto al carrito
   const addToCart = (product: Product) => {
-    if (product.quantity <= 0) return // No añadir productos sin stock
+    // Eliminar la validación de cantidad
+    // if (product.quantity <= 0) return // No añadir productos sin stock
 
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id)
@@ -322,22 +323,18 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
           {/* Product Cards - Redesigned with improved styling */}
           {filteredProducts.map((product) => {
             const inCart = cart.find((item) => item.id === product.id)
-            const isOutOfStock = product.quantity <= 0
+            // const isOutOfStock = product.quantity <= 0 // No usar validación de stock
 
             return (
               <div
                 key={product.id}
-                onClick={() => !isOutOfStock && addToCart(product)}
+                onClick={() => addToCart(product)}
                 className={cn(
-                  "bg-white rounded-lg overflow-hidden relative flex flex-col shadow-sm",
-                  isOutOfStock
-                    ? "opacity-70"
-                    : "cursor-pointer hover:shadow-md transition-all hover:translate-y-[-2px]",
-                  "p-1 sm:p-2"
+                  "bg-white rounded-lg overflow-hidden relative flex flex-col shadow-sm cursor-pointer hover:shadow-md transition-all hover:translate-y-[-2px] p-1 sm:p-2"
                 )}
               >
-                {/* Product Image - Improved sizing and styling */}
-                <div className={cn("h-16 sm:h-20 bg-gray-200 flex items-center justify-center")}>
+                {/* Product Image */}
+                <div className={cn("h-16 sm:h-20 bg-gray-200 flex items-center justify-center")}> 
                   <Image
                     src={product.image || "/Groserybasket.png"}
                     alt={product.name}
@@ -352,15 +349,6 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
                       )
                     }
                   />
-
-                  {/* Add button overlay for desktop */}
-                  {!isOutOfStock && !inCart && (
-                    <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity sm:flex">
-                      <div className="bg-yellow-400 rounded-full p-2 shadow-md">
-                        <Plus className="h-6 w-6" />
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Cart indicator if product is in cart */}
@@ -371,79 +359,50 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
                   </div>
                 )}
 
-                {/* Product Info - Improved layout and spacing */}
+                {/* Product Info */}
                 <div className="p-1 sm:p-2 flex-1 flex flex-col justify-between">
                   {/* Price */}
                   <p className="text-xs sm:text-base font-bold text-gray-900 leading-tight">$ {product.price.toLocaleString()}</p>
-
-                  {/* Product Name - Ensure it wraps properly */}
+                  {/* Product Name */}
                   <h3 className="font-normal sm:font-medium text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] text-gray-800">
                     {product.name}
                   </h3>
-
-                  {/* Availability - Ocultado temporalmente */}
-                  {/* <p
-                    className={cn(
-                      "text-[10px] sm:text-xs mt-1",
-                      product.quantity <= 0 ? "text-red-500" : "text-gray-500"
-                    )}
-                  >
-                    <span className="sm:hidden">DISP</span>
-                    <span className="hidden sm:inline">disponibles</span>
-                    : {product.quantity}
-                  </p> */}
-
-                  {/* Add/Remove Buttons */}
-                  <div className="flex justify-between items-center mt-1 w-full">
+                  {/* Plus/Minus Buttons si el producto está en el carrito */}
+                  <div className="flex justify-between items-center mt-2 w-full">
                     {inCart ? (
                       <>
-                        {/* Minus button moved to the left */}
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            decrementCartItem(product.id)
+                          onClick={e => {
+                            e.stopPropagation();
+                            decrementCartItem(product.id);
                           }}
                           className="w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100"
                           aria-label={`Quitar ${product.name} del carrito`}
                         >
                           <Minus className="h-5 w-5" />
                         </button>
-
-                        {/* Plus button stays on the right */}
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            addToCart(product)
+                          onClick={e => {
+                            e.stopPropagation();
+                            addToCart(product);
                           }}
-                          disabled={isOutOfStock}
-                          className={cn(
-                            "w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100",
-                            isOutOfStock && "opacity-50 cursor-not-allowed",
-                          )}
+                          className="w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100"
                           aria-label={`Añadir ${product.name} al carrito`}
                         >
                           <Plus className="h-5 w-5" />
                         </button>
                       </>
                     ) : (
-                      <>
-                        {/* Empty div to maintain layout when not in cart */}
-                        <div></div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            addToCart(product)
-                          }}
-                          disabled={isOutOfStock}
-                          className={cn(
-                            "w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100",
-                            isOutOfStock && "opacity-50 cursor-not-allowed",
-                          )}
-                          aria-label={`Añadir ${product.name} al carrito`}
-                        >
-                          <Plus className="h-5 w-5" />
-                        </button>
-                      </>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          addToCart(product);
+                        }}
+                        className="w-9 h-9 rounded-md border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100"
+                        aria-label={`Añadir ${product.name} al carrito`}
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
                     )}
                   </div>
                 </div>
