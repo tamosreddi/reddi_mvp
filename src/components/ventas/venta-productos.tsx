@@ -8,10 +8,10 @@ import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import CreateProductForm from "@/components/inventario/create-product-form"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
-import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
+import { supabase } from "@/lib/supabase/supabaseClient"
 
 // Definición de tipos
 interface Product {
@@ -45,54 +45,33 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   // Al cargar el componente, obtén los product_reference_id de store_inventory para la tienda actual
   const [myStoreProductIds, setMyStoreProductIds] = useState<string[]>([])
 
-  // Nueva función para refrescar inventario
+  // Nueva función para obtener productos desde el API
   const fetchInventory = async () => {
-    if (!selectedStore) return;
-    // 1. Obtener inventario de la tienda (solo productos custom por ahora)
-    const { data: inventory, error } = await supabase
-      .from("store_inventory")
-      .select("product_reference_id, quantity, name_alias, unit_price")
-      .eq("store_id", selectedStore.store_id)
-      .eq("product_type", "custom")
-    if (error) {
-      console.error("Error fetching inventory:", error)
-      return
+    if (!selectedStore?.store_id) return;
+    let token = "";
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      if (session) {
+        token = session.access_token;
+      }
+    } catch (e) {
+      token = "";
     }
-    if (!inventory || inventory.length === 0) {
-      setProducts([])
-      setCategories([])
-      return
-    }
-    // 2. Obtener los datos de los productos custom
-    const productIds = inventory.map((item) => item.product_reference_id)
-    const { data: productsData, error: prodError } = await supabase
-      .from("store_products")
-      .select("store_product_id, name, category, image, barcode")
-      .in("store_product_id", productIds)
-      .eq("is_active", true)
-    if (prodError) {
-      console.error("Error fetching products:", prodError)
-      return
-    }
-    // 3. Mapear al formato Product
-    const productsMapped = inventory
-      .map((inv) => {
-        const prod = productsData.find((p) => p.store_product_id === inv.product_reference_id)
-        if (!prod) return null; // Si no existe el producto (inactivo o borrado), no lo muestres
-        return {
-          id: inv.product_reference_id,
-          name: prod.name || "Sin nombre",
-          price: Number(inv.unit_price) || 0,
-          quantity: Number(inv.quantity) || 0,
-          category: prod.category || "Sin categoría",
-          image: prod.image || "/Groserybasket.png",
-          productId: inv.product_reference_id.toString(),
-          productType: "custom"
+    try {
+      const res = await fetch(`/api/ventas/productos?storeId=${selectedStore.store_id}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
         }
-      })
-      .filter((p): p is Product => Boolean(p)); // Type guard para Product
-    setProducts(productsMapped)
-    setCategories(Array.from(new Set(productsMapped.map((p) => p.category))))
+      });
+      if (!res.ok) throw new Error("Error al obtener productos");
+      const productsMapped = await res.json();
+      setProducts(productsMapped);
+      setCategories(Array.from(new Set(productsMapped.map((p: any) => p.category))));
+    } catch (err) {
+      setProducts([]);
+      setCategories([]);
+      console.error("Error al obtener productos desde API:", err);
+    }
   }
 
   useEffect(() => {
@@ -152,20 +131,10 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
     }
   }, []);
 
-  // Al cargar el componente, obtén los product_reference_id de store_inventory para la tienda actual
+  // En su lugar, actualiza myStoreProductIds cada vez que cambian los products:
   useEffect(() => {
-    const fetchMyStoreProducts = async () => {
-      if (!selectedStore) return;
-      const { data, error } = await supabase
-        .from("store_inventory")
-        .select("product_reference_id")
-        .eq("store_id", selectedStore.store_id);
-      if (!error && data) {
-        setMyStoreProductIds(data.map((row) => String(row.product_reference_id)));
-      }
-    };
-    fetchMyStoreProducts();
-  }, [selectedStore]);
+    setMyStoreProductIds(products.map((p) => String(p.productId)));
+  }, [products]);
 
   // Filtrar productos basados en búsqueda y categoría
   const filteredProducts = products.filter((product) => {
