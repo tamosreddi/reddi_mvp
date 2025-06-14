@@ -277,6 +277,15 @@ export default function ViewInventory() {
     }
   };
 
+  // Obtener categorías únicas de los productos del catálogo y del inventario
+  const dynamicCatalogCategories = Array.from(new Set(catalogProducts.map((item) => item.category).filter(Boolean)));
+  const dynamicInventoryCategories = Array.from(new Set(inventory.map((item) => item.category).filter(Boolean)));
+
+  // Decide qué categorías mostrar según la pestaña activa
+  const categoriesToShow = activeTab === "productos"
+    ? dynamicCatalogCategories
+    : dynamicInventoryCategories;
+
   // If showing create product form, render it
   if (showCreateProductForm) {
     return (
@@ -330,9 +339,9 @@ export default function ViewInventory() {
 
         {/* Category Filters */}
         <div className="flex overflow-x-auto py-2 px-4 space-x-2 scrollbar-hide">
-          {PLACEHOLDER_CATEGORIES.map((category) => (
+          {["Todas las categorías", ...categoriesToShow].map((category, idx) => (
             <button
-              key={category}
+              key={category + '-' + idx}
               type="button"
               className={cn(
                 "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all",
@@ -348,14 +357,14 @@ export default function ViewInventory() {
         </div>
 
         {/* Mi Tienda Tab Content */}
-        <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-4 pb-2">
+        <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-2 pt-4">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Cargando productos...</div>
           ) : filteredInventory.length > 0 ? (
             <div className="space-y-3 w-full">
-              {filteredInventory.map((item) => (
+              {filteredInventory.map((item, idx) => (
                 <div
-                  key={item.id}
+                  key={item.id || idx}
                   className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
                   // onClick={() => navigateToProductDetail(String(item.id))} // Solo detalle al hacer click en el nombre
                 >
@@ -441,11 +450,11 @@ export default function ViewInventory() {
             <div className="p-8 text-center text-gray-500">Cargando productos...</div>
           ) : filteredCatalogProducts.length > 0 ? (
             <div className="space-y-3 w-full">
-              {filteredCatalogProducts.map((item) => {
+              {filteredCatalogProducts.map((item, idx) => {
                 const selected = isInInventory(item.id, inventory);
                 return (
                   <button
-                    key={item.id}
+                    key={item.id || idx}
                     className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
                   >
                     <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">

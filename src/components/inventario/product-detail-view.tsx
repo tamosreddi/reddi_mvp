@@ -314,8 +314,8 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           </Select>
         </div>
 
-        {/* Barcode */}
-        <div>
+        {/* Barcode - Hidden */}
+        {/* <div className="hidden">
           <Label htmlFor="barcode" className="text-base font-bold">
             Código de barras
           </Label>
@@ -335,7 +335,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
               <Barcode className="h-7 w-7" />
             </Button>
           </div>
-        </div>
+        </div> */}
 
 
 

@@ -301,7 +301,7 @@ export default function CartView() {
       {/* Main Content - Dynamic padding based on bottom section height */}
       <div
         ref={mainContentRef}
-        className="flex-1 p-4 space-y-4 pt-20"
+        className="flex-1 p-4 space-y-4 pt-16"
         style={{ paddingBottom: `${bottomSectionHeight}px` }}
       >
         {/* Date and Payment Status */}
