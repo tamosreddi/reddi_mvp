@@ -131,35 +131,32 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
     }
   }, []);
 
-  // En su lugar, actualiza myStoreProductIds cada vez que cambian los products:
+  // Actualiza myStoreProductIds solo con los productos de inventario
   useEffect(() => {
-    setMyStoreProductIds(products.map((p) => String(p.productId)));
+    setMyStoreProductIds(
+      products.filter((p) => p.productType === "custom").map((p) => String(p.productId))
+    );
   }, [products]);
 
-  // Filtrar productos basados en búsqueda y categoría
+  // Ajusta el filtro para 'Mi Tienda'
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    let matchesCategory = true;
-    if (selectedCategory === "__mi_tienda__") {
-      // Solo productos de mi tienda (store_inventory)
-      // Suponiendo que tienes una lista de product_reference_id de store_inventory
-      // Debes obtener esta lista al cargar el componente
-      if (myStoreProductIds && myStoreProductIds.length > 0) {
-        matchesCategory = myStoreProductIds.includes(product.productId);
-      } else {
-        matchesCategory = false;
-      }
-    } else if (selectedCategory) {
-      matchesCategory = product.category === selectedCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    // Si hay búsqueda, ignora cualquier filtro de categoría o 'Mi Tienda'
+    if (searchTerm.trim() !== "") {
+      return matchesSearch;
     }
-    return matchesSearch && matchesCategory;
-  })
+    // Si no hay búsqueda, sí aplica el filtro de categoría o 'Mi Tienda'
+    if (selectedCategory === "__mi_tienda__") {
+      return myStoreProductIds.includes(product.productId);
+    } else if (selectedCategory) {
+      return product.category === selectedCategory;
+    }
+    // Si no hay filtro de categoría, muestra todo
+    return true;
+  });
 
   // Añadir producto al carrito
   const addToCart = (product: Product) => {
-    // Eliminar la validación de cantidad
-    // if (product.quantity <= 0) return // No añadir productos sin stock
-
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id)
 
@@ -169,12 +166,12 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
           item.id === product.id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item,
         )
       } else {
-        // Si no existe, añadirlo con cantidad 1
+        // Si no existe, añadirlo con cantidad 1 y el productType original
         return [...prevCart, { 
           ...product, 
           cartQuantity: 1,
           productId: product.id.toString(),
-          productType: "custom"
+          productType: product.productType // Usa el tipo real del producto
         }]
       }
     })
@@ -266,9 +263,24 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
             type="text"
             placeholder="Buscar por nombre o código"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm"
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              if (e.target.value.trim() !== "") {
+                setSelectedCategory(null); // Forzar "Todas las categorías"
+              }
+            }}
+            className="w-full pl-10 pr-16 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 hover:text-red-500 focus:outline-none"
+              onClick={() => setSearchTerm("")}
+              tabIndex={-1}
+            >
+              borrar
+            </button>
+          )}
         </div>
       </div>
 

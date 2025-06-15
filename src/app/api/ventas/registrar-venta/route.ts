@@ -17,6 +17,44 @@ export async function POST(req: NextRequest) {
 
     const totalAmount = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
 
+    // 0. Para cada producto global o custom vendido, si no está en store_inventory, agrégalo; si ya está y el precio cambió, actualiza unit_price
+    for (const item of items) {
+      if (item.productType === "global" || item.productType === "custom") {
+        // Verifica si ya existe en store_inventory
+        const { data: existing, error: existError } = await supabase
+          .from("store_inventory")
+          .select("inventory_id, unit_price")
+          .eq("store_id", storeId)
+          .eq("product_reference_id", item.productId)
+          .maybeSingle();
+        if (!existing) {
+          // Insertar nuevo registro en store_inventory
+          const { error: insertError } = await supabase
+            .from("store_inventory")
+            .insert({
+              store_id: storeId,
+              product_reference_id: item.productId,
+              product_type: item.productType,
+              quantity: 0,
+              unit_price: item.unitPrice,
+              created_at: new Date().toISOString(),
+            });
+          if (insertError) {
+            return NextResponse.json({ success: false, error: `Error agregando producto a inventario: ${insertError.message}` }, { status: 500 })
+          }
+        } else if (existing.unit_price !== item.unitPrice) {
+          // Si ya existe y el precio cambió, actualiza unit_price
+          const { error: updateError } = await supabase
+            .from("store_inventory")
+            .update({ unit_price: item.unitPrice })
+            .eq("inventory_id", existing.inventory_id);
+          if (updateError) {
+            return NextResponse.json({ success: false, error: `Error actualizando precio en inventario: ${updateError.message}` }, { status: 500 })
+          }
+        }
+      }
+    }
+
     // 1. Insertar la transacción
     const { data: transaction, error: transactionError } = await supabase
       .from('transactions')

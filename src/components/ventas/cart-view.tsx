@@ -444,6 +444,11 @@ export default function CartView() {
                         </div>
                       </>
                     )}
+                    {item.price === 0 && (
+                      <span className="ml-2 px-2 py-0.5 rounded bg-yellow-300 text-yellow-900 text-xs font-semibold">
+                        ¡Asigna un precio!
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
