@@ -16,6 +16,7 @@ import Image from 'next/image'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Input from "@/components/ui/Input"
 import useDebounce from "@/lib/hooks/useDebounce"
+import SearchBar from "@/components/shared/SearchBar"
 
 // Placeholder categories - these will be replaced with data from Supabase
 const PLACEHOLDER_CATEGORIES = [
@@ -86,81 +87,82 @@ export default function ViewInventory() {
   }, [selectedStore, activeTab]);
 
   // Fetch inventory from Supabase
-  useEffect(() => {
-    const fetchInventory = async () => {
-      if (!selectedStore?.store_id) return;
-      setLoading(true)
-      // 1. Get all inventory items for this store
-      const { data: inventoryRows, error: invError } = await supabase
-        .from("store_inventory")
-        .select("*")
-        .eq("store_id", selectedStore.store_id)
-      if (invError) {
-        setInventory([])
-        setLoading(false)
-        return
-      }
-      // 2. For each inventory item, get product details
-      const products: any[] = []
-      let totalCost = 0
-
-      for (const item of inventoryRows) {
-        let product = null
-        let lastCost = 0
-
-        if (item.product_type === "custom") {
-          // Custom product
-          const { data, error } = await supabase
-            .from("store_products")
-            .select("name, category, image")
-            .eq("store_product_id", item.product_reference_id)
-            .eq("is_active", true)
-            .maybeSingle();
-          if (error) {
-            product = null;
-          } else {
-            product = data;
-          }
-        } else if (item.product_type === "global") {
-          // Global product
-          const { data } = await supabase
-            .from("products")
-            .select("name, category, brand")
-            .eq("product_id", item.product_reference_id)
-            .single()
-          product = data
-        }
-
-        // Buscar el batch más reciente para este producto y tienda
-        const { data: batches } = await supabase
-          .from("inventory_batches")
-          .select("unit_cost, received_date")
-          .eq("product_reference_id", item.product_reference_id)
-          .eq("store_id", selectedStore.store_id)
-          .order("received_date", { ascending: false })
-          .limit(1)
-        if (batches && batches.length > 0) {
-          lastCost = Number(batches[0].unit_cost) || 0
-        }
-
-        if (product) {
-          products.push({
-            id: String(item.inventory_id),
-            name: product.name,
-            name_alias: item.name_alias,
-            category: product.category,
-            image: 'image' in product && product.image ? product.image : "/Groserybasket.png",
-            quantity: item.quantity,
-            price: Number(item.unit_price),
-            cost: lastCost,
-          })
-          totalCost += lastCost * item.quantity
-        }
-      }
-      setInventory(products)
-      setTotalCost(totalCost)
+  const fetchInventory = async () => {
+    if (!selectedStore?.store_id) return;
+    setLoading(true)
+    const { data: inventoryRows, error: invError } = await supabase
+      .from("store_inventory")
+      .select("*")
+      .eq("store_id", selectedStore.store_id)
+      .eq("is_active", true); // Only active products
+    if (invError) {
+      setInventory([])
       setLoading(false)
+      return
     }
+    const products: any[] = []
+    let totalCost = 0
+
+    // Ordenar por created_at descendente (más reciente primero)
+    const sortedInventoryRows = [...inventoryRows].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    for (const item of sortedInventoryRows) {
+      let product = null
+      let lastCost = 0
+
+      if (item.product_type === "custom") {
+        const { data, error } = await supabase
+          .from("store_products")
+          .select("name, category, image")
+          .eq("store_product_id", item.product_reference_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (error) {
+          product = null;
+        } else {
+          product = data;
+        }
+      } else if (item.product_type === "global") {
+        const { data } = await supabase
+          .from("products")
+          .select("name, category, brand")
+          .eq("product_id", item.product_reference_id)
+          .single()
+        product = data
+      }
+
+      const { data: batches } = await supabase
+        .from("inventory_batches")
+        .select("unit_cost, received_date")
+        .eq("product_reference_id", item.product_reference_id)
+        .eq("store_id", selectedStore.store_id)
+        .order("received_date", { ascending: false })
+        .limit(1)
+      if (batches && batches.length > 0) {
+        lastCost = Number(batches[0].unit_cost) || 0
+      }
+
+      if (product) {
+        products.push({
+          id: String(item.inventory_id),
+          product_reference_id: item.product_reference_id,
+          name: product.name,
+          name_alias: item.name_alias,
+          category: product.category,
+          image: 'image' in product && product.image ? product.image : "/Groserybasket.png",
+          quantity: item.quantity,
+          price: Number(item.unit_price),
+          cost: lastCost,
+        })
+        totalCost += lastCost * item.quantity
+      }
+    }
+    setInventory(products)
+    setTotalCost(totalCost)
+    setLoading(false)
+  }
+
+  useEffect(() => {
     fetchInventory()
   }, [selectedStore])
 
@@ -175,48 +177,62 @@ export default function ViewInventory() {
   const filteredCatalogProducts = catalogProducts.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     const matchesCategory = selectedCategory ? item.category === selectedCategory : true
-    return matchesSearch && matchesCategory
+    const notInInventory = !isInInventory(item.product_id, inventory);
+    return matchesSearch && matchesCategory && notInInventory;
   })
 
   // Handle product selection
   const handleProductSelect = async (productId: string) => {
     if (!selectedStore?.store_id) return;
-    
     try {
-      const { error } = await supabase
+      // Check if the product already exists in store_inventory (active or inactive)
+      const { data: existing, error: fetchError } = await supabase
         .from("store_inventory")
-        .insert({
-          store_id: selectedStore.store_id,
-          product_reference_id: productId,
-          product_type: "global",
-          quantity: 0,
-          unit_price: 0
-        });
-
-      if (error) throw error;
-      
-      // Refresh inventory
-      // TODO: Implement proper refresh
+        .select("inventory_id, is_active")
+        .eq("store_id", selectedStore.store_id)
+        .eq("product_reference_id", productId)
+        .maybeSingle();
+      if (fetchError) throw fetchError;
+      if (existing) {
+        if (existing.is_active === false) {
+          // Reactivate the product
+          const { error: updateError } = await supabase
+            .from("store_inventory")
+            .update({ is_active: true })
+            .eq("inventory_id", existing.inventory_id);
+          if (updateError) throw updateError;
+        }
+        // If already active, do nothing
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from("store_inventory")
+          .insert({
+            store_id: selectedStore.store_id,
+            product_reference_id: productId,
+            product_type: "global",
+            quantity: 0,
+            unit_price: 0,
+            is_active: true
+          });
+        if (error) throw error;
+      }
+      await fetchInventory();
     } catch (error) {
       console.error("Error selecting product:", error);
     }
   };
 
   // Handle product deselection
-  const handleProductDeselect = async (productId: string) => {
+  const handleProductDeselect = async (inventoryId: string) => {
     if (!selectedStore?.store_id) return;
-    
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("store_inventory")
-        .delete()
-        .eq("store_id", selectedStore.store_id)
-        .eq("product_reference_id", productId);
-
-      if (error) throw error;
-      
-      // Refresh inventory
-      // TODO: Implement proper refresh
+        .update({ is_active: false })
+        .eq("inventory_id", inventoryId);
+      if (updateError) throw updateError;
+      await fetchInventory();
     } catch (error) {
       console.error("Error deselecting product:", error);
     }
@@ -286,6 +302,11 @@ export default function ViewInventory() {
     ? dynamicCatalogCategories
     : dynamicInventoryCategories;
 
+  // Resetear categoría al cambiar de sección
+  useEffect(() => {
+    setSelectedCategory(null);
+  }, [activeTab]);
+
   // If showing create product form, render it
   if (showCreateProductForm) {
     return (
@@ -304,38 +325,19 @@ export default function ViewInventory() {
 
       {/* Search Bar - sticky on mobile, ahora arriba de los tabs */}
       <div className="sticky top-0 z-10 bg-reddi-background px-4 py-2 md:static md:shadow-none mb-2">
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          <Input
-            type="text"
-            placeholder={
-              activeTab === "mi-tienda"
-                ? "Buscar en mi tienda..."
-                : "Buscar en el catálogo de productos..."
-            }
-            value={searchTerm}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-            className={
-              "pl-10 bg-white pr-10 focus:ring-2 focus:ring-yellow-400 transition-all duration-200 shadow-md" +
-              " " +
-              (searchTerm ? "rounded-r-none" : "")
-            }
-            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}
-            autoComplete="off"
-          />
-          {/* Clear button */}
-          {searchTerm && (
-            <button
-              type="button"
-              aria-label="Limpiar búsqueda"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-              onClick={() => setSearchTerm("")}
-              tabIndex={0}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          )}
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value);
+            setSelectedCategory(null);
+          }}
+          placeholder={
+            activeTab === "mi-tienda"
+              ? "Buscar en mi tienda..."
+              : "Buscar en el catálogo de productos..."
+          }
+          className="shadow-md"
+        />
       </div>
 
       {/* Vista de búsqueda global o vista normal */}
@@ -420,11 +422,19 @@ export default function ViewInventory() {
             {filteredCatalogProducts.length > 0 ? (
               <div className="space-y-3 w-full">
                 {filteredCatalogProducts.map((item, idx) => {
-                  const selected = isInInventory(item.id, inventory);
+                  const selected = isInInventory(item.product_id, inventory);
                   return (
                     <button
-                      key={item.id || idx}
+                      key={item.product_id || idx}
                       className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (selected) {
+                          handleProductDeselect(item.product_id);
+                        } else {
+                          handleProductSelect(item.product_id);
+                        }
+                      }}
                     >
                       <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
                         <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
@@ -442,14 +452,6 @@ export default function ViewInventory() {
                             : "transition-colors text-gray-300 hover:text-reddi-select"
                         }
                         style={{ transition: 'color 0.2s' }}
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (selected) {
-                            handleProductDeselect(item.id);
-                          } else {
-                            handleProductSelect(item.id);
-                          }
-                        }}
                       >
                         <Heart
                           className="h-6 w-6"
@@ -603,11 +605,19 @@ export default function ViewInventory() {
               ) : filteredCatalogProducts.length > 0 ? (
                 <div className="space-y-3 w-full">
                   {filteredCatalogProducts.map((item, idx) => {
-                    const selected = isInInventory(item.id, inventory);
+                    const selected = isInInventory(item.product_id, inventory);
                     return (
                       <button
-                        key={item.id || idx}
+                        key={item.product_id || idx}
                         className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (selected) {
+                            handleProductDeselect(item.product_id);
+                          } else {
+                            handleProductSelect(item.product_id);
+                          }
+                        }}
                       >
                         <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
                           <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
@@ -625,14 +635,6 @@ export default function ViewInventory() {
                               : "transition-colors text-gray-300 hover:text-reddi-select"
                           }
                           style={{ transition: 'color 0.2s' }}
-                          onClick={e => {
-                            e.stopPropagation();
-                            if (selected) {
-                              handleProductDeselect(item.id);
-                            } else {
-                              handleProductSelect(item.id);
-                            }
-                          }}
                         >
                           <Heart
                             className="h-6 w-6"

@@ -12,6 +12,7 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
 import { supabase } from "@/lib/supabase/supabaseClient"
+import SearchBar from "@/components/shared/SearchBar"
 
 // Definición de tipos
 interface Product {
@@ -257,31 +258,16 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
 
       {/* Search Bar */}
       <div className="p-4 max-w-4xl mx-auto w-full">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre o código"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              if (e.target.value.trim() !== "") {
-                setSelectedCategory(null); // Forzar "Todas las categorías"
-              }
-            }}
-            className="w-full pl-10 pr-16 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 hover:text-red-500 focus:outline-none"
-              onClick={() => setSearchTerm("")}
-              tabIndex={-1}
-            >
-              borrar
-            </button>
-          )}
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value);
+            if (value.trim() !== "") {
+              setSelectedCategory(null); // Forzar "Todas las categorías"
+            }
+          }}
+          placeholder="Buscar por nombre o código"
+        />
       </div>
 
       {/* Category Filter */}

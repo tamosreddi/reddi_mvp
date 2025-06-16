@@ -79,6 +79,7 @@ export const databaseSchema = {
         unit_price: "NUMERIC - Precio unitario del producto.",
         last_change: "TIMESTAMPTZ - Fecha del último cambio de inventario.",
         created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
+        is_active: "BOOLEAN - Indica si el producto está activo (visible en inventario).",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del registro."
     },
     distributors: {

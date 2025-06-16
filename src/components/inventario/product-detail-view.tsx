@@ -119,21 +119,32 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   const handleConfirmDelete = async () => {
     setShowDeleteModal(false);
     setIsLoading(true);
-    if (product.product_type === "custom") {
-      const { error } = await supabase
-        .from("store_products")
-        .update({ is_active: false })
-        .eq("store_product_id", product.store_product_id);
-      if (!error) {
+    try {
+      if (product.product_type === "custom") {
+        const { error } = await supabase
+          .from("store_products")
+          .update({ is_active: false })
+          .eq("store_product_id", product.store_product_id);
+        if (error) throw error;
         toast.success("Producto eliminado");
         router.push("/inventario");
       } else {
-        toast.error("No se pudo eliminar el producto.");
+        // Soft delete for global products in store_inventory
+        const { error } = await supabase
+          .from("store_inventory")
+          .update({ is_active: false })
+          .eq("store_id", selectedStore?.store_id)
+          .eq("product_reference_id", product.id);
+        if (error) throw error;
+        toast.success("Producto eliminado del inventario");
+        router.push("/inventario");
       }
-    } else {
-      toast.error("Solo puedes eliminar productos personalizados.");
+    } catch (error) {
+      console.error("Error al eliminar producto:", error);
+      toast.error("No se pudo eliminar el producto.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   // Estado para mostrar el tooltip de información de costo
