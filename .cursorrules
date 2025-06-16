@@ -2,11 +2,77 @@ You are an expert in TypeScript, Next.js App Router, React, and Tailwind. Follow
 
 For everything you build, prioritize the mobile experience.
 
+Codebase Structure and Guidelines:
 - All project files are saved in the /src folder. 
   - src/app has the page.tsx and layout.tsx files
   - src/app/api has the API routes
   - src/app/components has all the React components
   - src/app/lib has all the other code like helpers, hooks, and contexts
+
+Codebase Interaction Rules:
+- Always check existing components in src/app/components before creating new ones
+- Follow the established naming conventions:
+  - Components: PascalCase (e.g., UserProfile.tsx)
+  - Hooks: camelCase with 'use' prefix (e.g., useAuth.ts)
+  - Utils: camelCase (e.g., formatDate.ts)
+  - API routes: kebab-case (e.g., user-profile/route.ts)
+- Maintain consistent file organization:
+  - Keep related components in feature folders
+  - Group shared utilities in src/app/lib/utils
+  - Store types in src/app/lib/types
+  - Keep API route handlers focused and single-responsibility
+- Follow the established state management patterns:
+  - Use React Context for global state
+  - Use local state for component-specific state
+  - Use SWR/React Query for server state
+- Maintain consistent styling approach:
+  - Use Tailwind CSS for styling
+  - Follow mobile-first responsive design
+  - Use CSS modules only when necessary
+- Follow established error handling patterns:
+  - Use error boundaries for component errors
+  - Implement proper API error handling
+  - Use consistent error message formatting
+- Follow established testing patterns:
+  - Unit tests alongside components
+  - Integration tests in __tests__ folders
+  - E2E tests in cypress/e2e
+
+Development Best Practices:
+- Always implement proper error boundaries and loading states for all async operations
+- Use React Server Components by default, only use Client Components when necessary
+- Implement proper TypeScript types for all components, functions, and API responses
+- Follow the principle of least privilege for all API routes and database operations
+- Implement proper input validation and sanitization for all user inputs
+- Use proper SEO meta tags and implement proper accessibility (ARIA labels, semantic HTML)
+- Implement proper error logging and monitoring
+- Use proper caching strategies (SWR, React Query) for data fetching
+- Implement proper form validation and error handling
+- Use proper environment variable handling with .env files
+
+Security Considerations:
+- Never expose API keys or sensitive information in client-side code
+- Implement proper CORS policies for all API routes
+- Use proper authentication and authorization checks
+- Implement rate limiting for all API routes
+- Use proper password hashing and security measures
+- Implement proper session management and token handling
+- Use proper input sanitization to prevent XSS attacks
+- Implement proper CSRF protection
+- Use proper content security policies
+- Implement proper audit logging for sensitive operations
+
+Performance Optimization:
+- Implement proper code splitting and lazy loading
+- Use proper image optimization with next/image
+- Implement proper caching strategies
+- Use proper bundle size optimization
+- Implement proper performance monitoring
+- Use proper code minification and compression
+- Implement proper service worker caching
+- Use proper preloading and prefetching
+- Implement proper memory management
+- Use proper performance metrics tracking
 
 There are some pre-configured APIs in this template that can be used but only if required by the current project. These have already been created:
 
@@ -21,11 +87,31 @@ There are some pre-configured APIs in this template that can be used but only if
   
 - Anthropic
   - src/app/api/anthropic has chat/route.ts which is a simple API calling streamText from Anthropic using the Vercel AI library
-  
-- Deepgram
-  - src/app/api/deepgram has transcribe-audio/route.ts which is a simple API that returns the Deepgram API key to be used in the client side to transcribe audio in real-time..
-  - src/lib/contexts has a DeepgramContext.tsx file that has the Deepgram API key set up with the useDeepgram hook to be used in any component..
 
-  - Database Context
-  - In src/lib/context/db-context.ts, there is a file that defines the structure and descriptions of the database tables used in this project.
-  - Use this file as a reference for all database interactions, including data validation, form generation, and API route definitions.
+Database Context:
+- In src/lib/context/db-context.ts, there is a file that defines the structure and descriptions of the database tables used in this project.
+- Use this file as a reference for all database interactions, including data validation, form generation, and API route definitions.
+
+Testing Guidelines:
+- Implement unit tests for all utility functions and hooks
+- Implement integration tests for all API routes
+- Implement end-to-end tests for critical user flows
+- Use proper test coverage reporting
+- Implement proper mocking strategies
+- Use proper test data management
+- Implement proper CI/CD pipeline testing
+- Use proper performance testing
+- Implement proper security testing
+- Use proper accessibility testing
+
+Documentation Requirements:
+- Document all API routes with proper OpenAPI/Swagger specifications
+- Document all database schema changes
+- Document all environment variables
+- Document all deployment procedures
+- Document all security measures
+- Document all performance optimizations
+- Document all testing procedures
+- Document all monitoring and logging procedures
+- Document all backup and recovery procedures
+- Document all incident response procedures

@@ -302,219 +302,375 @@ export default function ViewInventory() {
       {/* Header */}
       <TopProfileMenu onSearchClick={handleSearchClick} />
 
-      {/* Tabs */}
-      <Tabs defaultValue="mi-tienda" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="w-full grid grid-cols-2 h-auto p-0 bg-transparent">
-          <TabsTrigger
-            value="mi-tienda"
-            className={`py-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-black data-[state=active]:shadow-none ${
-              activeTab === "mi-tienda" ? "font-bold" : "text-gray-500"
-            }`}
-          >
-            Mi Tienda
-          </TabsTrigger>
-          <TabsTrigger
-            value="productos"
-            className={`py-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-black data-[state=active]:shadow-none ${
-              activeTab === "productos" ? "font-bold" : "text-gray-500"
-            }`}
-          >
-            Productos
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Search Bar */}
-        <div className="px-4 py-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Buscar productos..."
-              value={searchTerm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white"
-            />
-          </div>
-        </div>
-
-        {/* Category Filters */}
-        <div className="flex overflow-x-auto py-2 px-4 space-x-2 scrollbar-hide">
-          {["Todas las categorías", ...categoriesToShow].map((category, idx) => (
+      {/* Search Bar - sticky on mobile, ahora arriba de los tabs */}
+      <div className="sticky top-0 z-10 bg-reddi-background px-4 py-2 md:static md:shadow-none mb-2">
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <Input
+            type="text"
+            placeholder={
+              activeTab === "mi-tienda"
+                ? "Buscar en mi tienda..."
+                : "Buscar en el catálogo de productos..."
+            }
+            value={searchTerm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            className={
+              "pl-10 bg-white pr-10 focus:ring-2 focus:ring-yellow-400 transition-all duration-200 shadow-md" +
+              " " +
+              (searchTerm ? "rounded-r-none" : "")
+            }
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}
+            autoComplete="off"
+          />
+          {/* Clear button */}
+          {searchTerm && (
             <button
-              key={category + '-' + idx}
               type="button"
-              className={cn(
-                "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all",
-                (!selectedCategory && category === "Todas las categorías") || selectedCategory === category
-                  ? "bg-yellow-400 text-gray-900 shadow-md"
-                  : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-              )}
-              onClick={() => setSelectedCategory(category === "Todas las categorías" ? null : category)}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              onClick={() => setSearchTerm("")}
+              tabIndex={0}
             >
-              {category}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-          ))}
-        </div>
-
-        {/* Mi Tienda Tab Content */}
-        <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-2 pt-4">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">Cargando productos...</div>
-          ) : filteredInventory.length > 0 ? (
-            <div className="space-y-3 w-full">
-              {filteredInventory.map((item, idx) => (
-                <div
-                  key={item.id || idx}
-                  className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
-                  // onClick={() => navigateToProductDetail(String(item.id))} // Solo detalle al hacer click en el nombre
-                >
-                  {/* Imagen */}
-                  <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden flex-shrink-0">
-                    <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
-                  </div>
-                  {/* Nombre */}
-                  <div className="flex-1 min-w-0" onClick={() => navigateToProductDetail(String(item.id))}>
-                    <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px] cursor-pointer">
-                      {item.name_alias ? item.name_alias : item.name}
-                    </h3>
-                  </div>
-                  {/* Precio + Editar */}
-                  <div className="flex items-center gap-2 ml-2">
-                    {editingPriceId === item.id ? (
-                      <form
-                        onSubmit={e => {
-                          e.preventDefault();
-                          handleSavePrice(item);
-                        }}
-                        className="flex items-center gap-1"
-                      >
-                        <Input
-                          type="number"
-                          min={0.01}
-                          step={0.01}
-                          value={editingPriceValue}
-                          autoFocus
-                          disabled={savingPrice}
-                          onChange={e => setEditingPriceValue(e.target.value)}
-                          onBlur={() => handleSavePrice(item)}
-                          className="w-20 text-sm font-semibold"
-                        />
-                      </form>
-                    ) : (
-                      <button
-                        className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
-                        style={{ background: 'none' }}
-                        onClick={e => {
-                          e.stopPropagation();
-                          setEditingPriceId(item.id);
-                          setEditingPriceValue(item.price.toFixed(2));
-                        }}
-                        aria-label="Editar precio"
-                        type="button"
-                      >
-                        <span className="text-sm font-semibold select-none group-hover:text-blue-700">${item.price.toFixed(2)}</span>
-                        <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />
-                      </button>
-                    )}
-                  </div>
-                  {/* Corazón */}
-                  <span
-                    className={"ml-3 transition-colors text-reddi-select cursor-pointer"}
-                    style={{ transition: 'color 0.2s' }}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleProductDeselect(item.id);
-                    }}
-                  >
-                    <Heart className="h-6 w-6" fill="currentColor" strokeWidth={0} />
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
-              <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
-                <span className="text-6xl" role="img" aria-label="Store">
-                  🏪
-                </span>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes productos en tu tienda</h2>
-              <p className="text-gray-600 mb-8">Selecciona productos del catálogo para agregarlos a tu tienda</p>
-            </div>
           )}
-        </TabsContent>
+        </div>
+      </div>
 
-        {/* Productos Tab Content */}
-        <TabsContent value="productos" className="mt-0 flex-1 flex flex-col items-center justify-center p-4 pb-40">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">Cargando productos...</div>
-          ) : filteredCatalogProducts.length > 0 ? (
-            <div className="space-y-3 w-full">
-              {filteredCatalogProducts.map((item, idx) => {
-                const selected = isInInventory(item.id, inventory);
-                return (
-                  <button
+      {/* Vista de búsqueda global o vista normal */}
+      {searchTerm ? (
+        <div className="w-full px-4 space-y-6 pb-32">
+          {/* Resultados en tu tienda */}
+          <div>
+            <h4 className="text-base font-semibold text-gray-700 mb-2">En tu tienda</h4>
+            {filteredInventory.length > 0 ? (
+              <div className="space-y-3 w-full">
+                {filteredInventory.map((item, idx) => (
+                  <div
                     key={item.id || idx}
-                    className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
+                    className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
                   >
-                    <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
+                    <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden flex-shrink-0">
                       <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
-                        {item.name}
+                    <div className="flex-1 min-w-0" onClick={() => navigateToProductDetail(String(item.id))}>
+                      <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px] cursor-pointer">
+                        {item.name_alias ? item.name_alias : item.name}
                       </h3>
-                      <p className="text-sm text-gray-600">{item.category}</p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-2">
+                      {editingPriceId === item.id ? (
+                        <form
+                          onSubmit={e => {
+                            e.preventDefault();
+                            handleSavePrice(item);
+                          }}
+                          className="flex items-center gap-1"
+                        >
+                          <Input
+                            type="number"
+                            min={0.01}
+                            step={0.01}
+                            value={editingPriceValue}
+                            autoFocus
+                            disabled={savingPrice}
+                            onChange={e => setEditingPriceValue(e.target.value)}
+                            onBlur={() => handleSavePrice(item)}
+                            className="w-20 text-sm font-semibold"
+                          />
+                        </form>
+                      ) : (
+                        <button
+                          className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
+                          style={{ background: 'none' }}
+                          onClick={e => {
+                            e.stopPropagation();
+                            setEditingPriceId(item.id);
+                            setEditingPriceValue(item.price.toFixed(2));
+                          }}
+                          aria-label="Editar precio"
+                          type="button"
+                        >
+                          <span className="text-sm font-semibold select-none group-hover:text-blue-700">${item.price.toFixed(2)}</span>
+                          <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />
+                        </button>
+                      )}
                     </div>
                     <span
-                      className={
-                        selected
-                          ? "transition-colors text-reddi-select"
-                          : "transition-colors text-gray-300 hover:text-reddi-select"
-                      }
+                      className={"ml-3 transition-colors text-reddi-select cursor-pointer"}
                       style={{ transition: 'color 0.2s' }}
                       onClick={e => {
                         e.stopPropagation();
-                        if (selected) {
-                          handleProductDeselect(item.id);
-                        } else {
-                          handleProductSelect(item.id);
-                        }
+                        handleProductDeselect(item.id);
                       }}
                     >
-                      <Heart
-                        className="h-6 w-6"
-                        fill={selected ? "currentColor" : "none"}
-                        strokeWidth={selected ? 0 : 2}
-                      />
+                      <Heart className="h-6 w-6" fill="currentColor" strokeWidth={0} />
                     </span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
-              <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
-                <span className="text-6xl" role="img" aria-label="Products">
-                  📦
-                </span>
+                  </div>
+                ))}
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">No se encontraron productos</h2>
-              <p className="text-gray-600 mb-8">Intenta con otra búsqueda o categoría</p>
+            ) : (
+              <div className="text-gray-400 text-sm">No hay resultados en tu tienda.</div>
+            )}
+          </div>
+          {/* Resultados en el catálogo */}
+          <div>
+            <h4 className="text-base font-semibold text-gray-700 mb-2">En el catálogo</h4>
+            {filteredCatalogProducts.length > 0 ? (
+              <div className="space-y-3 w-full">
+                {filteredCatalogProducts.map((item, idx) => {
+                  const selected = isInInventory(item.id, inventory);
+                  return (
+                    <button
+                      key={item.id || idx}
+                      className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
+                    >
+                      <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
+                        <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
+                          {item.name}
+                        </h3>
+                        <p className="text-sm text-gray-600">{item.category}</p>
+                      </div>
+                      <span
+                        className={
+                          selected
+                            ? "transition-colors text-reddi-select"
+                            : "transition-colors text-gray-300 hover:text-reddi-select"
+                        }
+                        style={{ transition: 'color 0.2s' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (selected) {
+                            handleProductDeselect(item.id);
+                          } else {
+                            handleProductSelect(item.id);
+                          }
+                        }}
+                      >
+                        <Heart
+                          className="h-6 w-6"
+                          fill={selected ? "currentColor" : "none"}
+                          strokeWidth={selected ? 0 : 2}
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-gray-400 text-sm">No hay resultados en el catálogo.</div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Tabs */}
+          <Tabs defaultValue="mi-tienda" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="w-full grid grid-cols-2 h-auto p-0 bg-transparent">
+              <TabsTrigger
+                value="mi-tienda"
+                className={`py-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-black data-[state=active]:shadow-none ${
+                  activeTab === "mi-tienda" ? "font-bold" : "text-gray-500"
+                }`}
+              >
+                Mi Tienda
+              </TabsTrigger>
+              <TabsTrigger
+                value="productos"
+                className={`py-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-black data-[state=active]:shadow-none ${
+                  activeTab === "productos" ? "font-bold" : "text-gray-500"
+                }`}
+              >
+                Productos
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Category Filters */}
+            <div className="flex overflow-x-auto py-2 px-4 space-x-2 scrollbar-hide">
+              {["Todas las categorías", ...categoriesToShow].map((category, idx) => (
+                <button
+                  key={category + '-' + idx}
+                  type="button"
+                  className={cn(
+                    "px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-all",
+                    (!selectedCategory && category === "Todas las categorías") || selectedCategory === category
+                      ? "bg-yellow-400 text-gray-900 shadow-md"
+                      : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  )}
+                  onClick={() => setSelectedCategory(category === "Todas las categorías" ? null : category)}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+
+            {/* Mi Tienda Tab Content */}
+            <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-2 pt-4">
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+              ) : filteredInventory.length > 0 ? (
+                <div className="space-y-3 w-full">
+                  {filteredInventory.map((item, idx) => (
+                    <div
+                      key={item.id || idx}
+                      className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
+                      // onClick={() => navigateToProductDetail(String(item.id))} // Solo detalle al hacer click en el nombre
+                    >
+                      {/* Imagen */}
+                      <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden flex-shrink-0">
+                        <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
+                      </div>
+                      {/* Nombre */}
+                      <div className="flex-1 min-w-0" onClick={() => navigateToProductDetail(String(item.id))}>
+                        <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px] cursor-pointer">
+                          {item.name_alias ? item.name_alias : item.name}
+                        </h3>
+                      </div>
+                      {/* Precio + Editar */}
+                      <div className="flex items-center gap-2 ml-2">
+                        {editingPriceId === item.id ? (
+                          <form
+                            onSubmit={e => {
+                              e.preventDefault();
+                              handleSavePrice(item);
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <Input
+                              type="number"
+                              min={0.01}
+                              step={0.01}
+                              value={editingPriceValue}
+                              autoFocus
+                              disabled={savingPrice}
+                              onChange={e => setEditingPriceValue(e.target.value)}
+                              onBlur={() => handleSavePrice(item)}
+                              className="w-20 text-sm font-semibold"
+                            />
+                          </form>
+                        ) : (
+                          <button
+                            className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
+                            style={{ background: 'none' }}
+                            onClick={e => {
+                              e.stopPropagation();
+                              setEditingPriceId(item.id);
+                              setEditingPriceValue(item.price.toFixed(2));
+                            }}
+                            aria-label="Editar precio"
+                            type="button"
+                          >
+                            <span className="text-sm font-semibold select-none group-hover:text-blue-700">${item.price.toFixed(2)}</span>
+                            <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />
+                          </button>
+                        )}
+                      </div>
+                      {/* Corazón */}
+                      <span
+                        className={"ml-3 transition-colors text-reddi-select cursor-pointer"}
+                        style={{ transition: 'color 0.2s' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleProductDeselect(item.id);
+                        }}
+                      >
+                        <Heart className="h-6 w-6" fill="currentColor" strokeWidth={0} />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
+                  <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
+                    <span className="text-6xl" role="img" aria-label="Store">
+                      🏪
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes productos en tu tienda</h2>
+                  <p className="text-gray-600 mb-8">Selecciona productos del catálogo para agregarlos a tu tienda</p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Productos Tab Content */}
+            <TabsContent value="productos" className="mt-0 flex-1 flex flex-col items-center justify-center p-4 pb-40">
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+              ) : filteredCatalogProducts.length > 0 ? (
+                <div className="space-y-3 w-full">
+                  {filteredCatalogProducts.map((item, idx) => {
+                    const selected = isInInventory(item.id, inventory);
+                    return (
+                      <button
+                        key={item.id || idx}
+                        className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
+                      >
+                        <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
+                          <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
+                            {item.name}
+                          </h3>
+                          <p className="text-sm text-gray-600">{item.category}</p>
+                        </div>
+                        <span
+                          className={
+                            selected
+                              ? "transition-colors text-reddi-select"
+                              : "transition-colors text-gray-300 hover:text-reddi-select"
+                          }
+                          style={{ transition: 'color 0.2s' }}
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (selected) {
+                              handleProductDeselect(item.id);
+                            } else {
+                              handleProductSelect(item.id);
+                            }
+                          }}
+                        >
+                          <Heart
+                            className="h-6 w-6"
+                            fill={selected ? "currentColor" : "none"}
+                            strokeWidth={selected ? 0 : 2}
+                          />
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
+                  <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
+                    <span className="text-6xl" role="img" aria-label="Products">
+                      📦
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">No se encontraron productos</h2>
+                  <p className="text-gray-600 mb-8">Intenta con otra búsqueda o categoría</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
 
       {/* Action Buttons */}
-      <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 flex gap-2">
-        <Button
-          onClick={() => setShowSelectProductModal(true)}
-          className="w-full rounded-xl bg-gray-800 p-5 text-lg font-medium text-white hover:bg-gray-700"
-        >
-          Crear producto
-        </Button>
-      </div>
+      {activeTab === "mi-tienda" && !searchTerm && (
+        <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 flex gap-2">
+          <Button
+            onClick={() => setShowSelectProductModal(true)}
+            className="w-full rounded-xl bg-gray-800 p-5 text-lg font-medium text-white hover:bg-gray-700"
+          >
+            Crear producto
+          </Button>
+        </div>
+      )}
       <SelectProductModal
         isOpen={showSelectProductModal}
         onClose={() => setShowSelectProductModal(false)}
