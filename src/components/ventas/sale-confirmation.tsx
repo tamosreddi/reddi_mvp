@@ -2,12 +2,13 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Check, X, Plus, Receipt, Pencil } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Input from "@/components/ui/Input"
 import { toast } from "sonner"
 import { useAuth } from "@/lib/contexts/AuthContext"
+import Image from "next/image"
 
 interface SaleConfirmationProps {
   isOpen: boolean;
@@ -29,6 +30,19 @@ export default function SaleConfirmation({
   const router = useRouter()
   const [saleName, setSaleName] = useState("")
   const { session } = useAuth()
+  const [showRocket, setShowRocket] = useState(true)
+
+  // Efecto para controlar la animación del cohete
+  useEffect(() => {
+    if (isOpen) {
+      setShowRocket(true)
+      // Ocultar el cohete después de la animación
+      const timer = setTimeout(() => {
+        setShowRocket(false)
+      }, 2000) // 2 segundos, que es la duración de la animación
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null;
 
@@ -86,6 +100,22 @@ export default function SaleConfirmation({
 
   return (
     <div className="flex flex-col min-h-screen bg-green-600 text-white">
+      {/* Rocket animation container */}
+      {showRocket && (
+        <div className="rocket-animation-container fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+            <Image
+              src="/yellow-cohete.png"
+              alt="Celebration rocket"
+              width={80}
+              height={80}
+              className="animate-rocket"
+              priority
+            />
+          </div>
+        </div>
+      )}
+
       {/* Main content - Adjusted spacing and typography */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         {/* Check icon - Simplified and centered */}
@@ -140,6 +170,42 @@ export default function SaleConfirmation({
           <span className="text-sm">Nueva venta</span>
         </button>
       </div>
+
+      <style jsx global>{`
+        @keyframes rocketFly {
+          0% {
+            transform: translate(-50%, 100%) rotate(-15deg);
+            opacity: 0;
+          }
+          20% {
+            opacity: 1;
+            transform: translate(-50%, 60%) rotate(-5deg);
+          }
+          80% {
+            opacity: 1;
+            transform: translate(-50%, -60%) rotate(5deg);
+          }
+          100% {
+            transform: translate(-50%, -100%) rotate(15deg);
+            opacity: 0;
+          }
+        }
+
+        .animate-rocket {
+          animation: rocketFly 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .rocket-animation-container {
+          z-index: 50;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-rocket {
+            animation: none;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   )
 }
