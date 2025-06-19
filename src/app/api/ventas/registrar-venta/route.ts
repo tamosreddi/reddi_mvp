@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const data = await req.json()
     // Validación básica del payload
     const { storeId, userId, paymentMethod, total, date, customer, items } = data
-    if (!storeId || !userId || !paymentMethod || !total || !date || !Array.isArray(items) || items.length === 0) {
+    if (!storeId || !userId || !paymentMethod || total === undefined || !date || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, error: 'Payload incompleto o inválido' }, { status: 400 })
     }
 
@@ -23,12 +23,13 @@ export async function POST(req: NextRequest) {
         // Verifica si ya existe en store_inventory
         const { data: existing, error: existError } = await supabase
           .from("store_inventory")
-          .select("inventory_id, unit_price")
+          .select("inventory_id, unit_price, is_active")
           .eq("store_id", storeId)
           .eq("product_reference_id", item.productId)
           .maybeSingle();
+
         if (!existing) {
-          // Insertar nuevo registro en store_inventory
+          // Insertar nuevo registro en store_inventory (incluso si el precio es 0)
           const { error: insertError } = await supabase
             .from("store_inventory")
             .insert({
@@ -36,20 +37,33 @@ export async function POST(req: NextRequest) {
               product_reference_id: item.productId,
               product_type: item.productType,
               quantity: 0,
-              unit_price: item.unitPrice,
+              unit_price: item.unitPrice || 0, // Asegurarnos que si es undefined sea 0
               created_at: new Date().toISOString(),
+              is_active: true
             });
           if (insertError) {
             return NextResponse.json({ success: false, error: `Error agregando producto a inventario: ${insertError.message}` }, { status: 500 })
           }
-        } else if (existing.unit_price !== item.unitPrice) {
-          // Si ya existe y el precio cambió, actualiza unit_price
-          const { error: updateError } = await supabase
-            .from("store_inventory")
-            .update({ unit_price: item.unitPrice })
-            .eq("inventory_id", existing.inventory_id);
-          if (updateError) {
-            return NextResponse.json({ success: false, error: `Error actualizando precio en inventario: ${updateError.message}` }, { status: 500 })
+        } else {
+          // Si existe pero está inactivo, reactivarlo
+          if (!existing.is_active) {
+            const { error: reactivateError } = await supabase
+              .from("store_inventory")
+              .update({ is_active: true })
+              .eq("inventory_id", existing.inventory_id);
+            if (reactivateError) {
+              return NextResponse.json({ success: false, error: `Error reactivando producto en inventario: ${reactivateError.message}` }, { status: 500 })
+            }
+          }
+          // Si el precio es diferente (incluso si alguno es 0), actualizarlo
+          if (existing.unit_price !== item.unitPrice) {
+            const { error: updateError } = await supabase
+              .from("store_inventory")
+              .update({ unit_price: item.unitPrice || 0 })
+              .eq("inventory_id", existing.inventory_id);
+            if (updateError) {
+              return NextResponse.json({ success: false, error: `Error actualizando precio en inventario: ${updateError.message}` }, { status: 500 })
+            }
           }
         }
       }
@@ -95,24 +109,7 @@ export async function POST(req: NextRequest) {
           product_name: item.productName || item.name || "Venta libre"
         });
       } else {
-        let productName = "";
-        if (item.productType === "custom") {
-          // Buscar en store_products
-          const { data } = await supabase
-            .from("store_products")
-            .select("name")
-            .eq("store_product_id", item.productId)
-            .single();
-          productName = data?.name || "";
-        } else {
-          // Buscar en products
-          const { data } = await supabase
-            .from("products")
-            .select("name")
-            .eq("product_id", item.productId)
-            .single();
-          productName = data?.name || "";
-        }
+        // Usar el nombre que viene del frontend
         transactionItemsPayload.push({
           transaction_id: transaction.transaction_id,
           product_reference_id: item.productId,
@@ -121,7 +118,7 @@ export async function POST(req: NextRequest) {
           unit_price: item.unitPrice,
           store_id: storeId,
           created_at: new Date().toISOString(),
-          product_name: productName,
+          product_name: item.productName || "" // Usar el nombre que viene del frontend
         });
       }
     }

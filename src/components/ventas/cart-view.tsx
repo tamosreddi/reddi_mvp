@@ -257,7 +257,8 @@ export default function CartView() {
       productId: item.productId,
       productType: item.productType,
       quantity: item.cartQuantity,
-      unitPrice: item.price
+      unitPrice: item.price,
+      productName: item.name
     }))
   }
 
@@ -446,7 +447,7 @@ export default function CartView() {
                     )}
                     {item.price === 0 && (
                       <span className="ml-2 px-2 py-0.5 rounded bg-yellow-300 text-yellow-900 text-xs font-semibold">
-                        ¡Asigna un precio!
+                        ¡Asigna un precio y se guardará!
                       </span>
                     )}
                   </div>

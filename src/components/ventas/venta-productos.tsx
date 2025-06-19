@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils"
 import CreateProductForm from "@/components/inventario/create-product-form"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
-import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
 import { supabase } from "@/lib/supabase/supabaseClient"
 import SearchBar from "@/components/shared/SearchBar"
@@ -39,12 +38,69 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<string[]>([])
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([])
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
-  // New state to control whether to show the select product modal
-  const [showSelectProductModal, setShowSelectProductModal] = useState(false)
 
-  // Nueva función para obtener productos desde el API
+  // Nueva función para obtener productos del catálogo
+  const fetchCatalogProducts = async () => {
+    if (!selectedStore?.store_id) return;
+    try {
+      // 1. Obtener productos globales
+      const { data: globalProducts, error: globalError } = await supabase
+        .from("products")
+        .select("*")
+        .order("name");
+      
+      if (globalError) throw globalError;
+
+      // 2. Obtener productos personalizados (custom) del usuario
+      const { data: customProducts, error: customError } = await supabase
+        .from("store_products")
+        .select("*")
+        .eq("store_id", selectedStore.store_id)
+        .order("name");
+
+      if (customError) throw customError;
+      
+      // 3. Mapear productos globales al formato Product
+      const mappedGlobalProducts = (globalProducts || []).map(product => ({
+        id: product.product_id,
+        name: product.name,
+        price: 0,
+        quantity: 0,
+        category: product.category,
+        image: product.image || "/Groserybasket.png",
+        productId: product.product_id.toString(),
+        productType: "global"
+      }));
+
+      // 4. Mapear productos personalizados al formato Product
+      const mappedCustomProducts = (customProducts || []).map(product => ({
+        id: product.store_product_id,
+        name: product.name,
+        price: 0,
+        quantity: 0,
+        category: product.category,
+        image: product.image || "/Groserybasket.png",
+        productId: product.store_product_id.toString(),
+        productType: "custom"
+      }));
+      
+      // 5. Combinar ambos arrays
+      setCatalogProducts([...mappedGlobalProducts, ...mappedCustomProducts]);
+    } catch (err) {
+      console.error("Error al obtener productos del catálogo:", err);
+      setCatalogProducts([]);
+    }
+  };
+
+  // Cargar productos del catálogo al montar el componente
+  useEffect(() => {
+    fetchCatalogProducts();
+  }, [selectedStore]);
+
+  // Nueva función para obtener productos del inventario
   const fetchInventory = async () => {
     if (!selectedStore?.store_id) return;
     let token = "";
@@ -87,6 +143,14 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       localStorage.setItem("productCart", JSON.stringify(cart))
     }
   }, [cart])
+
+  // Obtener todas las categorías únicas combinando inventario y catálogo
+  useEffect(() => {
+    const inventoryCategories = products.map(p => p.category);
+    const catalogCategories = catalogProducts.map(p => p.category);
+    const uniqueCategories = Array.from(new Set([...inventoryCategories, ...catalogCategories])).filter(Boolean);
+    setCategories(uniqueCategories);
+  }, [products, catalogProducts]);
 
   // Cargar carrito desde localStorage al montar
   useEffect(() => {
@@ -132,14 +196,14 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
     }
   }, []);
 
-  // Ajusta el filtro para 'Mi Tienda'
-  const filteredProducts = products.filter((product) => {
+  // Ajusta el filtro para mostrar productos según la categoría seleccionada
+  const filteredProducts = (selectedCategory === "__mi_tienda__" ? products : catalogProducts).filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    // Si hay búsqueda, ignora cualquier filtro de categoría o 'Mi Tienda'
+    // Si hay búsqueda, ignora cualquier filtro de categoría
     if (searchTerm.trim() !== "") {
       return matchesSearch;
     }
-    // Si está seleccionado "Mi Tienda", muestra todos los productos
+    // Si está seleccionado "Mi Tienda", muestra solo productos del inventario
     if (selectedCategory === "__mi_tienda__") {
       return true;
     }
@@ -317,7 +381,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
           {/* New Product Button */}
           <button
-            onClick={() => setShowSelectProductModal(true)}
+            onClick={() => setShowCreateProductForm(true)}
             className="flex flex-col items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded-lg aspect-square hover:bg-gray-50 transition-colors group"
           >
             <div className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center mb-1 group-hover:bg-yellow-100 transition-colors">
@@ -437,21 +501,6 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
           </div>
         </div>
       )}
-
-      {/* Select Product Modal */}
-      <SelectProductModal
-        isOpen={showSelectProductModal}
-        onClose={() => setShowSelectProductModal(false)}
-        onSelect={(type) => {
-          setShowSelectProductModal(false)
-          if (type === 'custom') {
-            setShowCreateProductForm(true)
-          } else {
-            console.log('Tipo de producto seleccionado:', type)
-            // Aquí puedes manejar la lógica para inventario
-          }
-        }}
-      />
     </div>
   )
 }

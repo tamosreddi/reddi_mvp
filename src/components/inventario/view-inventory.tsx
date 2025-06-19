@@ -86,10 +86,8 @@ export default function ViewInventory() {
       }
     };
 
-    if (activeTab === "productos") {
-      fetchCatalogProducts();
-    }
-  }, [selectedStore, activeTab]);
+    fetchCatalogProducts();
+  }, [selectedStore]);
 
   // Fetch inventory from Supabase
   const fetchInventory = async () => {
@@ -181,7 +179,7 @@ export default function ViewInventory() {
   const filteredInventory = inventory.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     const matchesCategory = selectedCategory ? item.category === selectedCategory : true
-    return matchesSearch && matchesCategory
+    return (!searchTerm || matchesSearch) && (!activeTab || activeTab === "mi-tienda") && matchesCategory
   })
 
   // Filter catalog products based on search term and selected category
@@ -189,7 +187,8 @@ export default function ViewInventory() {
     const matchesSearch = item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     const matchesCategory = selectedCategory ? item.category === selectedCategory : true
     const notInInventory = !isInInventory(item.product_id, fullInventoryRows);
-    return matchesSearch && matchesCategory && notInInventory;
+    // Siempre aplicar notInInventory para evitar duplicados
+    return matchesSearch && matchesCategory && notInInventory
   })
 
   // Handle product selection
@@ -421,7 +420,7 @@ export default function ViewInventory() {
                         name_alias: item.name_alias,
                         category: item.category,
                         image: item.image,
-                        price: 0, // No mostrar precio
+                        price: 0,
                         description: item.description,
                       }}
                       selected={selected}
@@ -552,7 +551,7 @@ export default function ViewInventory() {
                             name_alias: item.name_alias,
                             category: item.category,
                             image: item.image,
-                            price: 0, // No mostrar precio
+                            price: 0,
                             description: item.description,
                           }}
                           selected={selected}
