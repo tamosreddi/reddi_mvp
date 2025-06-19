@@ -106,7 +106,6 @@ export default function PaymentMethodModal({
         throw new Error(data.error || 'Error al registrar la venta')
       }
 
-      toast.success("Venta registrada exitosamente")
       router.push(`/dashboard/ventas/confirmacion?total=${total}&paymentMethod=${selectedMethod}&transactionId=${data.transactionId}`)
     } catch (error) {
       console.error('Error:', error)
