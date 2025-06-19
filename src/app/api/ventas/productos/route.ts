@@ -30,66 +30,24 @@ export async function GET(request: Request) {
       )
     }
 
-    // 1. Obtener inventario de la tienda (custom y global)
-    const { data: inventory, error } = await supabase
+    // 1. Fetch all inventory items for the store (including inactive)
+    const { data: inventoryRows, error: invError } = await supabase
       .from("store_inventory")
-      .select("product_reference_id, quantity, name_alias, unit_price, product_type")
+      .select("*")
       .eq("store_id", storeId)
-    console.log("[API productos] Resultado store_inventory:", inventory, error)
-    if (error) {
-      console.log("[API productos] Error al obtener inventario:", error)
+
+    if (invError) {
+      console.log("[API productos] Error al obtener inventario:", invError)
       return NextResponse.json(
-        { error: "Error al obtener inventario", details: error },
+        { error: "Error al obtener inventario", details: invError },
         { status: 500 }
       )
     }
-    if (!inventory || inventory.length === 0) {
-      console.log("[API productos] Inventario vacío")
-      return NextResponse.json([])
-    }
-    // 2. Obtener detalles de productos custom y global
-    const customIds = inventory.filter(i => i.product_type === "custom").map(i => i.product_reference_id);
-    const globalIds = inventory.filter(i => i.product_type === "global").map(i => i.product_reference_id);
 
-    const { data: customProducts } = customIds.length > 0 ? await supabase
-      .from("store_products")
-      .select("store_product_id, name, category, image")
-      .in("store_product_id", customIds) : { data: [] };
-
-    const { data: globalProductsDetails } = globalIds.length > 0 ? await supabase
-      .from("products")
-      .select("product_id, name, category, image")
-      .in("product_id", globalIds) : { data: [] };
-
-    const productsMapped = inventory.map(inv => {
-      let prod;
-      if (inv.product_type === "custom") {
-        prod = customProducts?.find(p => p.store_product_id === inv.product_reference_id);
-      } else {
-        prod = globalProductsDetails?.find(p => p.product_id === inv.product_reference_id);
-      }
-      if (!prod) return null;
-      return {
-        id: inv.product_reference_id,
-        name: prod.name || "Sin nombre",
-        price: Number(inv.unit_price) || 0,
-        quantity: Number(inv.quantity) || 0,
-        category: prod.category || "Sin categoría",
-        image: prod.image || "/Groserybasket.png",
-        productId: inv.product_reference_id.toString(),
-        productType: inv.product_type
-      }
-    }).filter((p): p is NonNullable<typeof p> => Boolean(p));
-    console.log("[API productos] productsMapped:", productsMapped)
-
-    // 1. IDs de productos ya en inventario
-    const inventoryProductIds = new Set(productsMapped.map((p) => p.productId));
-
-    // 2. Obtener productos globales
+    // 2. Fetch all global products
     const { data: globalProducts, error: globalError } = await supabase
       .from("products")
-      .select("product_id, name, category, image")
-      .order("name");
+      .select("*");
 
     if (globalError) {
       console.log("[API productos] Error al obtener productos globales:", globalError);
@@ -99,27 +57,55 @@ export async function GET(request: Request) {
       );
     }
 
-    // 3. Filtrar y mapear productos globales que NO están en inventario
-    const globalProductsMapped = (globalProducts || [])
-      .filter(Boolean)
-      .filter((p): p is { product_id: string, name: string, category: string, image: string } => !inventoryProductIds.has(String(p.product_id)))
-      .map((p) => ({
-        id: p.product_id,
-        name: p.name || "Sin nombre",
-        price: 0, // o el precio base si tienes uno
-        quantity: 0,
-        category: p.category || "Sin categoría",
-        image: p.image || "/Groserybasket.png",
-        productId: String(p.product_id),
-        productType: "global"
-      }));
+    // 3. Fetch all custom products for this store
+    const { data: customProducts, error: customError } = await supabase
+      .from("store_products")
+      .select("*")
+      .eq("store_id", storeId);
 
-    // 4. Unir ambos arrays
-    const allProducts = [...productsMapped, ...globalProductsMapped];
+    if (customError) {
+      console.log("[API productos] Error al obtener productos custom:", customError);
+      return NextResponse.json(
+        { error: "Error al obtener productos custom", details: customError },
+        { status: 500 }
+      );
+    }
 
-    console.log("[API productos] allProducts:", allProducts.length);
+    // 4. Build the inventory array (all records, but only active for display in 'Mi Tienda')
+    let products: any[] = [];
+    for (const item of inventoryRows) {
+      if (!item.is_active) continue; // Only show active in 'Mi Tienda'
+      let productData = null;
+      if (item.product_type === "custom") {
+        productData = customProducts?.find(p => p.store_product_id === item.product_reference_id);
+      } else if (item.product_type === "global") {
+        productData = globalProducts?.find(p => p.product_id === item.product_reference_id);
+      }
+      if (productData) {
+        products.push({
+          id: String(item.inventory_id),
+          product_reference_id: item.product_reference_id,
+          name: productData.name,
+          name_alias: item.name_alias,
+          category: productData.category,
+          image: productData.image || "/Groserybasket.png",
+          quantity: item.quantity,
+          price: Number(item.unit_price),
+          cost: 0, // Puedes optimizar esto después si necesitas el costo
+          created_at: item.created_at,
+          description: productData.description,
+          productId: item.product_reference_id.toString(),
+          productType: item.product_type
+        });
+      }
+    }
 
-    return NextResponse.json(allProducts);
+    // Order by most recent (created_at descending)
+    products = products.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    console.log("[API productos] products:", products.length);
+
+    return NextResponse.json(products);
   } catch (error) {
     console.log("[API productos] Excepción:", error)
     return NextResponse.json(

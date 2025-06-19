@@ -43,8 +43,6 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
   // New state to control whether to show the select product modal
   const [showSelectProductModal, setShowSelectProductModal] = useState(false)
-  // Al cargar el componente, obtén los product_reference_id de store_inventory para la tienda actual
-  const [myStoreProductIds, setMyStoreProductIds] = useState<string[]>([])
 
   // Nueva función para obtener productos desde el API
   const fetchInventory = async () => {
@@ -66,8 +64,10 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       });
       if (!res.ok) throw new Error("Error al obtener productos");
       const productsMapped = await res.json();
-      setProducts(productsMapped);
-      setCategories(Array.from(new Set(productsMapped.map((p: any) => p.category))));
+      // Elimina duplicados por id
+      const uniqueProducts = Array.from(new Map((productsMapped as Product[]).map((p) => [p.id, p])).values());
+      setProducts(uniqueProducts);
+      setCategories(Array.from(new Set(uniqueProducts.map((p) => p.category))));
     } catch (err) {
       setProducts([]);
       setCategories([]);
@@ -132,13 +132,6 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
     }
   }, []);
 
-  // Actualiza myStoreProductIds solo con los productos de inventario
-  useEffect(() => {
-    setMyStoreProductIds(
-      products.filter((p) => p.productType === "custom").map((p) => String(p.productId))
-    );
-  }, [products]);
-
   // Ajusta el filtro para 'Mi Tienda'
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -146,10 +139,12 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
     if (searchTerm.trim() !== "") {
       return matchesSearch;
     }
-    // Si no hay búsqueda, sí aplica el filtro de categoría o 'Mi Tienda'
+    // Si está seleccionado "Mi Tienda", muestra todos los productos
     if (selectedCategory === "__mi_tienda__") {
-      return myStoreProductIds.includes(product.productId);
-    } else if (selectedCategory) {
+      return true;
+    }
+    // Si hay otra categoría seleccionada, filtra por ella
+    if (selectedCategory) {
       return product.category === selectedCategory;
     }
     // Si no hay filtro de categoría, muestra todo

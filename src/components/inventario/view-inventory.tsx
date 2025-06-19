@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { FileText, Grid, Heart, Search, Edit } from "lucide-react"
 import Button from "@/components/ui/button"
 import { useRouter, usePathname } from "next/navigation"
@@ -17,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Input from "@/components/ui/Input"
 import useDebounce from "@/lib/hooks/useDebounce"
 import SearchBar from "@/components/shared/SearchBar"
+import InventoryProductCard from "@/components/inventario/Inventory_product_card"
+import ProductCatalogDetail from "@/components/inventario/ProductCatalogDetail"
 
 // Placeholder categories - these will be replaced with data from Supabase
 const PLACEHOLDER_CATEGORIES = [
@@ -34,9 +36,9 @@ const PLACEHOLDER_CATEGORIES = [
   "Enlatados"
 ]
 
-// Helper para saber si un producto está en el inventario
+// Helper para saber si un producto está en el inventario y activo
 const isInInventory = (productId: string, inventory: any[]) => {
-  return inventory.some(item => String(item.product_reference_id) === String(productId));
+  return inventory.some(item => String(item.product_reference_id) === String(productId) && item.is_active === true);
 };
 
 export default function ViewInventory() {
@@ -55,6 +57,10 @@ export default function ViewInventory() {
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPriceValue, setEditingPriceValue] = useState<string>("");
   const [savingPrice, setSavingPrice] = useState(false);
+  const [fullInventoryRows, setFullInventoryRows] = useState<any[]>([]);
+  const firstInventoryItemRef = useRef<HTMLDivElement | null>(null);
+  const [showCatalogDetail, setShowCatalogDetail] = useState(false);
+  const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<string | null>(null);
 
   // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -69,7 +75,6 @@ export default function ViewInventory() {
           .from("products")
           .select("*")
           .order("name")
-          .limit(20) // Initial load
 
         if (error) throw error;
         setCatalogProducts(data || []);
@@ -89,82 +94,88 @@ export default function ViewInventory() {
   // Fetch inventory from Supabase
   const fetchInventory = async () => {
     if (!selectedStore?.store_id) return;
-    setLoading(true)
+    setLoading(true);
+
+    // 1. Fetch all inventory items for the store (including inactive)
     const { data: inventoryRows, error: invError } = await supabase
       .from("store_inventory")
       .select("*")
-      .eq("store_id", selectedStore.store_id)
-      .eq("is_active", true); // Only active products
+      .eq("store_id", selectedStore.store_id);
+
     if (invError) {
-      setInventory([])
-      setLoading(false)
-      return
+      setInventory([]);
+      setLoading(false);
+      return;
     }
-    const products: any[] = []
-    let totalCost = 0
 
-    // Ordenar por created_at descendente (más reciente primero)
-    const sortedInventoryRows = [...inventoryRows].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // 2. Fetch all global products
+    const { data: globalProducts, error: globalError } = await supabase
+      .from("products")
+      .select("*");
+    if (globalError) {
+      setInventory([]);
+      setLoading(false);
+      return;
+    }
 
-    for (const item of sortedInventoryRows) {
-      let product = null
-      let lastCost = 0
+    // 3. Fetch all custom products for this store
+    const { data: customProducts, error: customError } = await supabase
+      .from("store_products")
+      .select("*")
+      .eq("store_id", selectedStore.store_id);
+    if (customError) {
+      setInventory([]);
+      setLoading(false);
+      return;
+    }
 
+    // 4. Build the inventory array (all records, but only active for display in 'Mi Tienda')
+    let products: any[] = [];
+    let totalCost = 0;
+    for (const item of inventoryRows) {
+      if (!item.is_active) continue; // Only show active in 'Mi Tienda'
+      let productData = null;
       if (item.product_type === "custom") {
-        const { data, error } = await supabase
-          .from("store_products")
-          .select("name, category, image")
-          .eq("store_product_id", item.product_reference_id)
-          .eq("is_active", true)
-          .maybeSingle();
-        if (error) {
-          product = null;
-        } else {
-          product = data;
-        }
+        productData = customProducts.find(p => p.store_product_id === item.product_reference_id);
       } else if (item.product_type === "global") {
-        const { data } = await supabase
-          .from("products")
-          .select("name, category, brand")
-          .eq("product_id", item.product_reference_id)
-          .single()
-        product = data
+        productData = globalProducts.find(p => p.product_id === item.product_reference_id);
       }
-
-      const { data: batches } = await supabase
-        .from("inventory_batches")
-        .select("unit_cost, received_date")
-        .eq("product_reference_id", item.product_reference_id)
-        .eq("store_id", selectedStore.store_id)
-        .order("received_date", { ascending: false })
-        .limit(1)
-      if (batches && batches.length > 0) {
-        lastCost = Number(batches[0].unit_cost) || 0
-      }
-
-      if (product) {
+      if (productData) {
         products.push({
           id: String(item.inventory_id),
           product_reference_id: item.product_reference_id,
-          name: product.name,
+          name: productData.name,
           name_alias: item.name_alias,
-          category: product.category,
-          image: 'image' in product && product.image ? product.image : "/Groserybasket.png",
+          category: productData.category,
+          image: productData.image || "/Groserybasket.png",
           quantity: item.quantity,
           price: Number(item.unit_price),
-          cost: lastCost,
-        })
-        totalCost += lastCost * item.quantity
+          cost: 0, // Puedes optimizar esto después si necesitas el costo
+          created_at: item.created_at,
+          description: productData.description,
+        });
+        // totalCost += ... // Si quieres calcular el costo, ajusta aquí
       }
     }
-    setInventory(products)
-    setTotalCost(totalCost)
-    setLoading(false)
-  }
+    // Order by most recent (created_at descending)
+    products = products.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setInventory(products);
+    setTotalCost(totalCost);
+    // Save the full inventoryRows for isInInventory logic
+    setFullInventoryRows(inventoryRows);
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchInventory()
   }, [selectedStore])
+
+  useEffect(() => {
+    if (filteredInventory.length > 0 && firstInventoryItemRef.current) {
+      firstInventoryItemRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // eslint-disable-next-line
+  }, [inventory]);
 
   // Filter inventory based on search term and selected category
   const filteredInventory = inventory.filter((item) => {
@@ -177,13 +188,20 @@ export default function ViewInventory() {
   const filteredCatalogProducts = catalogProducts.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     const matchesCategory = selectedCategory ? item.category === selectedCategory : true
-    const notInInventory = !isInInventory(item.product_id, inventory);
+    const notInInventory = !isInInventory(item.product_id, fullInventoryRows);
     return matchesSearch && matchesCategory && notInInventory;
   })
 
   // Handle product selection
   const handleProductSelect = async (productId: string) => {
-    if (!selectedStore?.store_id) return;
+    if (!selectedStore?.store_id) {
+      console.error("No store_id", { selectedStore });
+      return;
+    }
+    if (!productId) {
+      console.error("No productId", { productId });
+      return;
+    }
     try {
       // Check if the product already exists in store_inventory (active or inactive)
       const { data: existing, error: fetchError } = await supabase
@@ -219,7 +237,7 @@ export default function ViewInventory() {
       }
       await fetchInventory();
     } catch (error) {
-      console.error("Error selecting product:", error);
+      console.error("Error selecting product:", error, { productId, selectedStore });
     }
   };
 
@@ -285,7 +303,10 @@ export default function ViewInventory() {
         .from("store_inventory")
         .update({ unit_price: newPrice })
         .eq("inventory_id", item.id);
-      // Refrescar inventario
+      // Actualizar el precio en el estado local inmediatamente
+      setInventory((prev) => prev.map((prod) =>
+        prod.id === item.id ? { ...prod, price: newPrice } : prod
+      ));
       item.price = newPrice;
     } finally {
       setSavingPrice(false);
@@ -294,7 +315,13 @@ export default function ViewInventory() {
   };
 
   // Obtener categorías únicas de los productos del catálogo y del inventario
-  const dynamicCatalogCategories = Array.from(new Set(catalogProducts.map((item) => item.category).filter(Boolean)));
+  const dynamicCatalogCategories = Array.from(
+    new Set(
+      catalogProducts
+        .filter(item => !isInInventory(item.product_id, fullInventoryRows)) // Solo productos que no están en el inventario o están inactivos
+        .map(item => item.category)
+    )
+  ).filter(Boolean);
   const dynamicInventoryCategories = Array.from(new Set(inventory.map((item) => item.category).filter(Boolean)));
 
   // Decide qué categorías mostrar según la pestaña activa
@@ -349,67 +376,26 @@ export default function ViewInventory() {
             {filteredInventory.length > 0 ? (
               <div className="space-y-3 w-full">
                 {filteredInventory.map((item, idx) => (
-                  <div
+                  <InventoryProductCard
                     key={item.id || idx}
-                    className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
-                  >
-                    <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden flex-shrink-0">
-                      <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0" onClick={() => navigateToProductDetail(String(item.id))}>
-                      <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px] cursor-pointer">
-                        {item.name_alias ? item.name_alias : item.name}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      {editingPriceId === item.id ? (
-                        <form
-                          onSubmit={e => {
-                            e.preventDefault();
-                            handleSavePrice(item);
-                          }}
-                          className="flex items-center gap-1"
-                        >
-                          <Input
-                            type="number"
-                            min={0.01}
-                            step={0.01}
-                            value={editingPriceValue}
-                            autoFocus
-                            disabled={savingPrice}
-                            onChange={e => setEditingPriceValue(e.target.value)}
-                            onBlur={() => handleSavePrice(item)}
-                            className="w-20 text-sm font-semibold"
-                          />
-                        </form>
-                      ) : (
-                        <button
-                          className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
-                          style={{ background: 'none' }}
-                          onClick={e => {
-                            e.stopPropagation();
-                            setEditingPriceId(item.id);
-                            setEditingPriceValue(item.price.toFixed(2));
-                          }}
-                          aria-label="Editar precio"
-                          type="button"
-                        >
-                          <span className="text-sm font-semibold select-none group-hover:text-blue-700">${item.price.toFixed(2)}</span>
-                          <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />
-                        </button>
-                      )}
-                    </div>
-                    <span
-                      className={"ml-3 transition-colors text-reddi-select cursor-pointer"}
-                      style={{ transition: 'color 0.2s' }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleProductDeselect(item.id);
-                      }}
-                    >
-                      <Heart className="h-6 w-6" fill="currentColor" strokeWidth={0} />
-                    </span>
-                  </div>
+                    product={item}
+                    selected={true}
+                    editablePrice={true}
+                    editingPriceId={editingPriceId}
+                    editingPriceValue={editingPriceValue}
+                    savingPrice={savingPrice}
+                    onEditPrice={(id, value) => {
+                      setEditingPriceId(id);
+                      setEditingPriceValue(value);
+                      handleSavePrice({ ...item, id });
+                    }}
+                    onEditPriceStart={(id, value) => {
+                      setEditingPriceId(id);
+                      setEditingPriceValue(value);
+                    }}
+                    onDeselect={handleProductDeselect}
+                    onNavigate={navigateToProductDetail}
+                  />
                 ))}
               </div>
             ) : (
@@ -422,44 +408,35 @@ export default function ViewInventory() {
             {filteredCatalogProducts.length > 0 ? (
               <div className="space-y-3 w-full">
                 {filteredCatalogProducts.map((item, idx) => {
-                  const selected = isInInventory(item.product_id, inventory);
+                  const selected = isInInventory(item.product_id, fullInventoryRows);
+                  const inventoryItem = fullInventoryRows.find(row => String(row.product_reference_id) === String(item.product_id) && row.is_active === true);
+                  const inventoryId = inventoryItem ? inventoryItem.inventory_id : null;
                   return (
-                    <button
+                    <InventoryProductCard
                       key={item.product_id || idx}
-                      className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
-                      onClick={e => {
-                        e.stopPropagation();
-                        if (selected) {
-                          handleProductDeselect(item.product_id);
+                      product={{
+                        id: String(item.product_id),
+                        product_reference_id: item.product_id,
+                        name: item.name,
+                        name_alias: item.name_alias,
+                        category: item.category,
+                        image: item.image,
+                        price: 0, // No mostrar precio
+                        description: item.description,
+                      }}
+                      selected={selected}
+                      editablePrice={false}
+                      onSelect={handleProductSelect}
+                      onDeselect={handleProductDeselect}
+                      onNavigate={() => {
+                        if (inventoryId) {
+                          navigateToProductDetail(inventoryId);
                         } else {
-                          handleProductSelect(item.product_id);
+                          setSelectedCatalogProductId(item.product_id);
+                          setShowCatalogDetail(true);
                         }
                       }}
-                    >
-                      <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
-                        <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
-                          {item.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">{item.category}</p>
-                      </div>
-                      <span
-                        className={
-                          selected
-                            ? "transition-colors text-reddi-select"
-                            : "transition-colors text-gray-300 hover:text-reddi-select"
-                        }
-                        style={{ transition: 'color 0.2s' }}
-                      >
-                        <Heart
-                          className="h-6 w-6"
-                          fill={selected ? "currentColor" : "none"}
-                          strokeWidth={selected ? 0 : 2}
-                        />
-                      </span>
-                    </button>
+                    />
                   );
                 })}
               </div>
@@ -511,153 +488,102 @@ export default function ViewInventory() {
             </div>
 
             {/* Mi Tienda Tab Content */}
-            <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-2 pt-4">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500">Cargando productos...</div>
-              ) : filteredInventory.length > 0 ? (
-                <div className="space-y-3 w-full">
-                  {filteredInventory.map((item, idx) => (
-                    <div
-                      key={item.id || idx}
-                      className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
-                      // onClick={() => navigateToProductDetail(String(item.id))} // Solo detalle al hacer click en el nombre
-                    >
-                      {/* Imagen */}
-                      <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden flex-shrink-0">
-                        <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
-                      </div>
-                      {/* Nombre */}
-                      <div className="flex-1 min-w-0" onClick={() => navigateToProductDetail(String(item.id))}>
-                        <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px] cursor-pointer">
-                          {item.name_alias ? item.name_alias : item.name}
-                        </h3>
-                      </div>
-                      {/* Precio + Editar */}
-                      <div className="flex items-center gap-2 ml-2">
-                        {editingPriceId === item.id ? (
-                          <form
-                            onSubmit={e => {
-                              e.preventDefault();
-                              handleSavePrice(item);
-                            }}
-                            className="flex items-center gap-1"
-                          >
-                            <Input
-                              type="number"
-                              min={0.01}
-                              step={0.01}
-                              value={editingPriceValue}
-                              autoFocus
-                              disabled={savingPrice}
-                              onChange={e => setEditingPriceValue(e.target.value)}
-                              onBlur={() => handleSavePrice(item)}
-                              className="w-20 text-sm font-semibold"
-                            />
-                          </form>
-                        ) : (
-                          <button
-                            className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
-                            style={{ background: 'none' }}
-                            onClick={e => {
-                              e.stopPropagation();
-                              setEditingPriceId(item.id);
-                              setEditingPriceValue(item.price.toFixed(2));
-                            }}
-                            aria-label="Editar precio"
-                            type="button"
-                          >
-                            <span className="text-sm font-semibold select-none group-hover:text-blue-700">${item.price.toFixed(2)}</span>
-                            <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />
-                          </button>
-                        )}
-                      </div>
-                      {/* Corazón */}
-                      <span
-                        className={"ml-3 transition-colors text-reddi-select cursor-pointer"}
-                        style={{ transition: 'color 0.2s' }}
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleProductDeselect(item.id);
+            {activeTab === "mi-tienda" && (
+              <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-32 pt-4">
+                {loading ? (
+                  <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+                ) : filteredInventory.length > 0 ? (
+                  <div className="space-y-3 w-full">
+                    {filteredInventory.map((item, idx) => (
+                      <InventoryProductCard
+                        key={item.id || idx}
+                        product={item}
+                        selected={true}
+                        editablePrice={true}
+                        editingPriceId={editingPriceId}
+                        editingPriceValue={editingPriceValue}
+                        savingPrice={savingPrice}
+                        onEditPrice={(id, value) => {
+                          setEditingPriceId(id);
+                          setEditingPriceValue(value);
+                          handleSavePrice({ ...item, id });
                         }}
-                      >
-                        <Heart className="h-6 w-6" fill="currentColor" strokeWidth={0} />
+                        onEditPriceStart={(id, value) => {
+                          setEditingPriceId(id);
+                          setEditingPriceValue(value);
+                        }}
+                        onDeselect={handleProductDeselect}
+                        onNavigate={navigateToProductDetail}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
+                    <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
+                      <span className="text-6xl" role="img" aria-label="Store">
+                        🏪
                       </span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
-                  <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
-                    <span className="text-6xl" role="img" aria-label="Store">
-                      🏪
-                    </span>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes productos en tu tienda</h2>
+                    <p className="text-gray-600 mb-8">Selecciona productos del catálogo para agregarlos a tu tienda</p>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">No tienes productos en tu tienda</h2>
-                  <p className="text-gray-600 mb-8">Selecciona productos del catálogo para agregarlos a tu tienda</p>
-                </div>
-              )}
-            </TabsContent>
+                )}
+              </TabsContent>
+            )}
 
             {/* Productos Tab Content */}
-            <TabsContent value="productos" className="mt-0 flex-1 flex flex-col items-center justify-center p-4 pb-40">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500">Cargando productos...</div>
-              ) : filteredCatalogProducts.length > 0 ? (
-                <div className="space-y-3 w-full">
-                  {filteredCatalogProducts.map((item, idx) => {
-                    const selected = isInInventory(item.product_id, inventory);
-                    return (
-                      <button
-                        key={item.product_id || idx}
-                        className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm text-left hover:bg-gray-50 transition-all"
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (selected) {
-                            handleProductDeselect(item.product_id);
-                          } else {
-                            handleProductSelect(item.product_id);
-                          }
-                        }}
-                      >
-                        <div className="h-16 w-16 rounded-lg bg-purple-100 mr-4 overflow-hidden">
-                          <Image src={item.image || "/Groserybasket.png"} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-sm text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[200px]">
-                            {item.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">{item.category}</p>
-                        </div>
-                        <span
-                          className={
-                            selected
-                              ? "transition-colors text-reddi-select"
-                              : "transition-colors text-gray-300 hover:text-reddi-select"
-                          }
-                          style={{ transition: 'color 0.2s' }}
-                        >
-                          <Heart
-                            className="h-6 w-6"
-                            fill={selected ? "currentColor" : "none"}
-                            strokeWidth={selected ? 0 : 2}
-                          />
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
-                  <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
-                    <span className="text-6xl" role="img" aria-label="Products">
-                      📦
-                    </span>
+            {activeTab === "productos" && (
+              <TabsContent value="productos" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-24 pt-4">
+                {loading ? (
+                  <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+                ) : filteredCatalogProducts.length > 0 ? (
+                  <div className="space-y-3 w-full">
+                    {filteredCatalogProducts.map((item, idx) => {
+                      const selected = isInInventory(item.product_id, fullInventoryRows);
+                      const inventoryItem = fullInventoryRows.find(row => String(row.product_reference_id) === String(item.product_id) && row.is_active === true);
+                      const inventoryId = inventoryItem ? inventoryItem.inventory_id : null;
+                      return (
+                        <InventoryProductCard
+                          key={item.product_id || idx}
+                          product={{
+                            id: String(item.product_id),
+                            product_reference_id: item.product_id,
+                            name: item.name,
+                            name_alias: item.name_alias,
+                            category: item.category,
+                            image: item.image,
+                            price: 0, // No mostrar precio
+                            description: item.description,
+                          }}
+                          selected={selected}
+                          editablePrice={false}
+                          onSelect={handleProductSelect}
+                          onDeselect={handleProductDeselect}
+                          onNavigate={() => {
+                            if (inventoryId) {
+                              navigateToProductDetail(inventoryId);
+                            } else {
+                              setSelectedCatalogProductId(item.product_id);
+                              setShowCatalogDetail(true);
+                            }
+                          }}
+                        />
+                      );
+                    })}
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">No se encontraron productos</h2>
-                  <p className="text-gray-600 mb-8">Intenta con otra búsqueda o categoría</p>
-                </div>
-              )}
-            </TabsContent>
+                ) : (
+                  <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center mt-8">
+                    <div className="flex items-center justify-center w-24 h-24 mb-6 bg-purple-50 rounded-full">
+                      <span className="text-6xl" role="img" aria-label="Products">
+                        📦
+                      </span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">No se encontraron productos</h2>
+                    <p className="text-gray-600 mb-8">Intenta con otra búsqueda o categoría</p>
+                  </div>
+                )}
+              </TabsContent>
+            )}
           </Tabs>
         </>
       )}
@@ -685,6 +611,19 @@ export default function ViewInventory() {
           }
         }}
       />
+
+      {/* Modal para detalle de producto del catálogo */}
+      {showCatalogDetail && selectedCatalogProductId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <ProductCatalogDetail
+            productId={selectedCatalogProductId}
+            onClose={() => {
+              setShowCatalogDetail(false);
+              setSelectedCatalogProductId(null);
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
