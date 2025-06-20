@@ -43,7 +43,7 @@ export default function Dashboard() {
             onClick={() => router.push("/dashboard/gastos")}
             className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white shadow-lg shadow-gray-200"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-red-50 rounded-full mr-4">
+            <div className="w-12 h-12 flex items-center justify-center bg-red-50 rounded-full mr-4 shadow-md">
               <Image src="/fuel-expense.png" alt="Gasto" width={48} height={48} className="object-contain" />
             </div>
             <span className="text-gray-800 font-extra-light">Registrar Gasto</span>
@@ -56,10 +56,23 @@ export default function Dashboard() {
             onClick={() => router.push("/inventario")}
             className="w-full flex items-center p-4 rounded-lg border border-gray-200 bg-white shadow-lg shadow-gray-200"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-green-50 rounded-full mr-4">
+            <div className="w-12 h-12 flex items-center justify-center bg-green-50 rounded-full mr-4 shadow-md">
               <Image src="/inventario-icon.png" alt="Inventario" width={48} height={48} className="object-contain" />
             </div>
             <span className="text-gray-800 font-extra-light">Ver Inventario</span>
+          </button>
+        </div>
+
+        {/* Comprar Productos Button */}
+        <div className="mb-4">
+          <button
+            onClick={() => router.push("/comprar-productos")}
+            className="w-full flex items-center p-4 rounded-lg border border-reddi-bottom-text-active bg-reddi-bottom-100 shadow-lg shadow-white-200" //bg-gray-100 es el backgorund
+          >
+            <div className="w-12 h-12 flex items-center justify-center bg-white rounded-full mr-4 shadow-md">
+              <Image src="/icons/carrito.png" alt="Comprar Productos" width={48} height={48} className="object-contain" />
+            </div>
+            <span className="text-gray-800 font-extra-light">Comprar Productos</span>
           </button>
         </div>
       </section>
