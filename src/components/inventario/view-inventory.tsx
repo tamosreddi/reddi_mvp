@@ -19,6 +19,7 @@ import SearchBar from "@/components/shared/SearchBar"
 import InventoryProductCard from "@/components/inventario/Inventory_product_card"
 import ProductCatalogDetail from "@/components/inventario/ProductCatalogDetail"
 import InfoButton from "@/components/shared/InfoButton"
+import DeleteProductModal from "@/components/shared/delete-product-modal"
 
 // Placeholder categories - these will be replaced with data from Supabase
 const PLACEHOLDER_CATEGORIES = [
@@ -60,6 +61,8 @@ export default function ViewInventory() {
   const firstInventoryItemRef = useRef<HTMLDivElement | null>(null);
   const [showCatalogDetail, setShowCatalogDetail] = useState(false);
   const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null);
 
   // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -150,6 +153,7 @@ export default function ViewInventory() {
           cost: 0, // Puedes optimizar esto después si necesitas el costo
           created_at: item.created_at,
           description: productData.description,
+          product_type: item.product_type,
         });
         // totalCost += ... // Si quieres calcular el costo, ajusta aquí
       }
@@ -257,6 +261,19 @@ export default function ViewInventory() {
     } catch (error) {
       console.error("Error deselecting product:", error);
     }
+  };
+
+  const handleRequestDelete = (inventoryId: string) => {
+    setProductToDeleteId(inventoryId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (productToDeleteId) {
+      handleProductDeselect(productToDeleteId);
+    }
+    setProductToDeleteId(null);
+    setIsDeleteModalOpen(false);
   };
 
   // Handle report generation
@@ -398,6 +415,7 @@ export default function ViewInventory() {
                     }}
                     onDeselect={handleProductDeselect}
                     onNavigate={navigateToProductDetail}
+                    onDeleteRequest={handleRequestDelete}
                   />
                 ))}
               </div>
@@ -439,6 +457,7 @@ export default function ViewInventory() {
                           setShowCatalogDetail(true);
                         }
                       }}
+                      onDeleteRequest={handleRequestDelete}
                     />
                   );
                 })}
@@ -535,6 +554,7 @@ export default function ViewInventory() {
                         }}
                         onDeselect={handleProductDeselect}
                         onNavigate={navigateToProductDetail}
+                        onDeleteRequest={handleRequestDelete}
                       />
                     ))}
                   </div>
@@ -588,6 +608,7 @@ export default function ViewInventory() {
                               setShowCatalogDetail(true);
                             }
                           }}
+                          onDeleteRequest={handleRequestDelete}
                         />
                       );
                     })}
@@ -633,6 +654,12 @@ export default function ViewInventory() {
           />
         </div>
       )}
+
+      <DeleteProductModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }

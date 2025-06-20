@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Edit, Heart } from 'lucide-react';
+import { Edit, Heart, Trash2 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ interface InventoryProductCardProps {
     price: number;
     created_at?: string;
     description?: string;
+    product_type?: string;
   };
   selected?: boolean;
   editablePrice?: boolean;
@@ -26,6 +27,7 @@ interface InventoryProductCardProps {
   onDeselect?: (id: string) => void;
   onSelect?: (id: string) => void;
   onNavigate?: (id: string) => void;
+  onDeleteRequest?: (id: string) => void;
 }
 
 export default function InventoryProductCard({
@@ -40,6 +42,7 @@ export default function InventoryProductCard({
   onDeselect,
   onSelect,
   onNavigate,
+  onDeleteRequest,
 }: InventoryProductCardProps) {
   const isEditing = editablePrice && editingPriceId === product.id;
   const inputValue = isEditing
@@ -123,21 +126,37 @@ export default function InventoryProductCard({
           )}
         </div>
       )}
-      {/* Corazón */}
-      <span
-        className={cn(
-          "ml-3 transition-colors cursor-pointer",
-          selected ? "text-reddi-select" : "text-gray-300 hover:text-reddi-select"
-        )}
-        style={{ transition: 'color 0.2s' }}
-        onClick={e => {
-          e.stopPropagation();
-          if (selected && onDeselect) onDeselect(product.id);
-          if (!selected && onSelect) onSelect(String(product.product_reference_id));
-        }}
-      >
-        <Heart className="h-6 w-6" fill={selected ? "currentColor" : "none"} strokeWidth={selected ? 0 : 2} />
-      </span>
+      {/* Icono de Corazón o Basura */}
+      {product.product_type === 'custom' && selected ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onDeleteRequest) onDeleteRequest(product.id);
+          }}
+          className="ml-3 p-2 rounded-full hover:bg-gray-100"
+          aria-label="Eliminar producto personalizado"
+        >
+          <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-600" />
+        </button>
+      ) : (
+        <span
+          className={cn(
+            "ml-3 transition-colors cursor-pointer",
+            selected ? "text-reddi-select" : "text-gray-300 hover:text-reddi-select"
+          )}
+          style={{ transition: 'color 0.2s' }}
+          onClick={e => {
+            e.stopPropagation();
+            if (selected && onDeselect) {
+              onDeselect(product.id);
+            } else if (!selected && onSelect) {
+              onSelect(String(product.product_reference_id));
+            }
+          }}
+        >
+          <Heart className="h-6 w-6" fill={selected ? "currentColor" : "none"} strokeWidth={selected ? 0 : 2} />
+        </span>
+      )}
     </div>
   );
 } 
