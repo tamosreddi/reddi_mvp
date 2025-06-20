@@ -18,6 +18,7 @@ import useDebounce from "@/lib/hooks/useDebounce"
 import SearchBar from "@/components/shared/SearchBar"
 import InventoryProductCard from "@/components/inventario/Inventory_product_card"
 import ProductCatalogDetail from "@/components/inventario/ProductCatalogDetail"
+import InfoButton from "@/components/shared/InfoButton"
 
 // Placeholder categories - these will be replaced with data from Supabase
 const PLACEHOLDER_CATEGORIES = [
@@ -206,20 +207,25 @@ export default function ViewInventory() {
         .select("inventory_id, is_active")
         .eq("store_id", selectedStore.store_id)
         .eq("product_reference_id", productId)
-        .maybeSingle();
+      
       if (fetchError) throw fetchError;
-      if (existing) {
-        if (existing.is_active === false) {
-          // Reactivate the product
-          const { error: updateError } = await supabase
-            .from("store_inventory")
-            .update({ is_active: true })
-            .eq("inventory_id", existing.inventory_id);
-          if (updateError) throw updateError;
+
+      const inactiveEntries = existing.filter(entry => !entry.is_active);
+
+      if (existing && existing.length > 0) {
+        if (inactiveEntries.length > 0) {
+          // Reactivate all inactive entries for this product
+          const updates = inactiveEntries.map(entry => 
+            supabase
+              .from("store_inventory")
+              .update({ is_active: true })
+              .eq("inventory_id", entry.inventory_id)
+          );
+          await Promise.all(updates);
         }
-        // If already active, do nothing
+        // If there are active entries, do nothing to avoid duplicates.
       } else {
-        // Insert new record
+        // Insert new record if no entries exist at all
         const { error } = await supabase
           .from("store_inventory")
           .insert({
@@ -484,11 +490,29 @@ export default function ViewInventory() {
               ))}
             </div>
 
+            {/* Guía para el usuario */}
+            <div className="px-4 mt-4 mb-2">
+              {activeTab === "mi-tienda" && (
+                <InfoButton
+                  imageSrc="/icons/carrito.png"
+                  title="Éstos son tus productos"
+                  description="Puedes editar sus precios, categorías o removerlos de tu inventario."
+                />
+              )}
+              {activeTab === "productos" && (
+                <InfoButton
+                  imageSrc="/icons/catalogo.png"
+                  title="Selecciona de este catálogo"
+                  description="Los productos que selecciones se guardarán en Mi Tienda."
+                />
+              )}
+            </div>
+
             {/* Mi Tienda Tab Content */}
             {activeTab === "mi-tienda" && (
               <TabsContent value="mi-tienda" className="text-base flex-1 flex flex-col items-center justify-center p-2 pb-32 pt-4">
                 {loading ? (
-                  <div className="p-8 text-center text-gray-500">Cargando productos...</div>
+                  <div className="p-8 text-center text-gray-500">Cargando tus productos...</div>
                 ) : filteredInventory.length > 0 ? (
                   <div className="space-y-3 w-full">
                     {filteredInventory.map((item, idx) => (

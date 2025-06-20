@@ -8,7 +8,6 @@ import { ArrowLeft, Info, Barcode, Pencil, Trash2 } from "lucide-react"
 import Button from "@/components/ui/button"
 import Input from "@/components/ui/Input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/lib/hooks/use-toast"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
@@ -16,6 +15,7 @@ import { supabase } from "@/lib/supabase/supabaseClient"
 import { useStore } from "@/lib/contexts/StoreContext"
 import DeleteProductModal from '@/components/shared/delete-product-modal'
 import Image from 'next/image'
+import SelectDropdown from "../ui/select-dropdown"
 
 interface ProductDetailViewProps {
   productId: string
@@ -188,8 +188,6 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           </div>
         </div>
 
-
-
         {/* Product Name */}
         <div>
           <Label htmlFor="name" className="text-base font-bold">
@@ -308,21 +306,14 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
 
         {/* Category */}
         <div>
-          <Label htmlFor="category" className="text-base font-bold">
-            Categoría
-          </Label>
-          <Select value={product.category} onValueChange={(value) => handleChange("category", value)}>
-            <SelectTrigger id="category" className="mt-1 rounded-xl border-gray-200">
-              <SelectValue placeholder="Selecciona una opción" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectDropdown
+            id="category"
+            label="Categoría"
+            value={product.category}
+            onChange={(value) => handleChange("category", value)}
+            options={categories.map((cat) => ({ value: cat, label: cat }))}
+            placeholder="Selecciona una opción"
+          />
         </div>
 
         {/* Barcode - Hidden */}
@@ -347,8 +338,6 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
             </Button>
           </div>
         </div> */}
-
-
 
         {/* Required Fields Note */}
         <p className="text-center text-gray-500">Los campos marcados con (*) son obligatorios</p>

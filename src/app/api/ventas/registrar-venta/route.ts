@@ -26,9 +26,12 @@ export async function POST(req: NextRequest) {
           .select("inventory_id, unit_price, is_active")
           .eq("store_id", storeId)
           .eq("product_reference_id", item.productId)
-          .maybeSingle();
+          
+        if (existError) {
+            return NextResponse.json({ success: false, error: `Error buscando producto en inventario: ${existError.message}` }, { status: 500 })
+        }
 
-        if (!existing) {
+        if (!existing || existing.length === 0) {
           // Insertar nuevo registro en store_inventory (incluso si el precio es 0)
           const { error: insertError } = await supabase
             .from("store_inventory")
@@ -45,29 +48,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: `Error agregando producto a inventario: ${insertError.message}` }, { status: 500 })
           }
         } else {
-          // Si existe, verificar si necesita actualización
-          const updatePayload: { is_active?: boolean; unit_price?: number } = {};
-
-          // 1. Si está inactivo, reactivarlo
-          if (!existing.is_active) {
-            updatePayload.is_active = true;
-          }
-          
-          // 2. Si se proveyó un precio válido y es diferente al existente, actualizarlo
-          if (item.unitPrice > 0 && existing.unit_price !== item.unitPrice) {
-            updatePayload.unit_price = item.unitPrice;
-          }
-
-          // Solo ejecutar la actualización si hay algo que cambiar
-          if (Object.keys(updatePayload).length > 0) {
-            const { error: updateError } = await supabase
-              .from("store_inventory")
-              .update(updatePayload)
-              .eq("inventory_id", existing.inventory_id);
+          // Si el producto ya existe en el inventario, actualizamos el precio
+          // para TODOS los registros que coincidan (para manejar duplicados)
+          // y nos aseguramos de que estén activos.
+          const { error: updateError } = await supabase
+            .from("store_inventory")
+            .update({ 
+              unit_price: item.unitPrice,
+              is_active: true
+            })
+            .eq("store_id", storeId)
+            .eq("product_reference_id", item.productId);
             
-            if (updateError) {
-              return NextResponse.json({ success: false, error: `Error actualizando producto en inventario: ${updateError.message}` }, { status: 500 });
-            }
+          if (updateError) {
+            return NextResponse.json({ success: false, error: `Error actualizando producto en inventario: ${updateError.message}` }, { status: 500 });
           }
         }
       }

@@ -116,7 +116,7 @@ export default function SaleConfirmation({
   // }
 
   return (
-    <div className="flex flex-col min-h-screen bg-green-600 text-white">
+    <div className="flex flex-col h-screen overflow-hidden bg-green-600 text-white">
       {/* Rocket animation container */}
       {showRocket && (
         <div className="rocket-animation-container fixed inset-0 pointer-events-none overflow-hidden">

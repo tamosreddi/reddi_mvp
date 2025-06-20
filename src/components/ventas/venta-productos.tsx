@@ -63,11 +63,28 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
 
       if (customError) throw customError;
       
+      // Obtener el inventario de la tienda para los precios
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from("store_inventory")
+        .select("product_reference_id, unit_price")
+        .eq("store_id", selectedStore.store_id);
+
+      if (inventoryError) throw inventoryError;
+
+      const priceMap = new Map<string, number>();
+      if (inventoryData) {
+        inventoryData.forEach(item => {
+          if (item.product_reference_id && item.unit_price != null) {
+            priceMap.set(item.product_reference_id, Number(item.unit_price));
+          }
+        });
+      }
+      
       // 3. Mapear productos globales al formato Product
       const mappedGlobalProducts = (globalProducts || []).map(product => ({
         id: product.product_id,
         name: product.name,
-        price: 0,
+        price: priceMap.get(String(product.product_id)) ?? 0,
         quantity: 0,
         category: product.category,
         image: product.image || "/Groserybasket.png",
@@ -79,7 +96,7 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       const mappedCustomProducts = (customProducts || []).map(product => ({
         id: product.store_product_id,
         name: product.name,
-        price: 0,
+        price: priceMap.get(String(product.store_product_id)) ?? 0,
         quantity: 0,
         category: product.category,
         image: product.image || "/Groserybasket.png",
