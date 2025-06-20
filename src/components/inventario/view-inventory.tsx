@@ -11,7 +11,6 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import CreateProductForm from "@/components/inventario/create-product-form"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
-import SelectProductModal from "@/components/shared/select_product_modal"
 import Image from 'next/image'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Input from "@/components/ui/Input"
@@ -52,7 +51,6 @@ export default function ViewInventory() {
   const { selectedStore } = useStore()
   const [loading, setLoading] = useState(true)
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
-  const [showSelectProductModal, setShowSelectProductModal] = useState(false)
   const [totalCost, setTotalCost] = useState(0)
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPriceValue, setEditingPriceValue] = useState<string>("");
@@ -591,25 +589,13 @@ export default function ViewInventory() {
       {activeTab === "mi-tienda" && !searchTerm && (
         <div className="fixed bottom-16 left-0 right-0 px-4 pb-2 flex gap-2">
           <Button
-            onClick={() => setShowSelectProductModal(true)}
+            onClick={handleShowCreateProductForm}
             className="w-full rounded-xl bg-gray-800 p-5 text-lg font-medium text-white hover:bg-gray-700"
           >
             Crear producto
           </Button>
         </div>
       )}
-      <SelectProductModal
-        isOpen={showSelectProductModal}
-        onClose={() => setShowSelectProductModal(false)}
-        onSelect={(type) => {
-          setShowSelectProductModal(false)
-          if (type === 'custom') {
-            router.push('/inventario/crear')
-          } else {
-            console.log('Tipo de producto seleccionado:', type)
-          }
-        }}
-      />
 
       {/* Modal para detalle de producto del catálogo */}
       {showCatalogDetail && selectedCatalogProductId && (

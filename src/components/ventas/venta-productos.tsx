@@ -226,12 +226,12 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
           item.id === product.id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item,
         )
       } else {
-        // Si no existe, añadirlo con cantidad 1 y el productType original
+        // Si no existe, añadirlo con cantidad 1.
+        // El `productId` y `productType` correctos ya vienen en el objeto `product`
+        // y se propagan con el operador de propagación (...).
         return [...prevCart, { 
           ...product, 
-          cartQuantity: 1,
-          productId: product.id.toString(),
-          productType: product.productType // Usa el tipo real del producto
+          cartQuantity: 1
         }]
       }
     })

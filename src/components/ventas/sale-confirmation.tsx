@@ -3,7 +3,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, X, Plus, Receipt, Pencil } from "lucide-react"
+import { X, Plus, Receipt, Pencil } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Input from "@/components/ui/Input"
 import { toast } from "sonner"
@@ -31,10 +31,27 @@ export default function SaleConfirmation({
   const [saleName, setSaleName] = useState("")
   const { session } = useAuth()
   const [showRocket, setShowRocket] = useState(true)
+  const [motivationalMessage, setMotivationalMessage] = useState("")
 
-  // Efecto para controlar la animación del cohete
+  const motivationalPhrases = [
+    "¡Bien! ¡Creaste una venta!",
+    "¡Sigue así!",
+    "¡Vas muy bien!",
+    "¡Estás que vuelas!",
+    "¡Excelente trabajo!",
+    "¡Un paso más cerca de tu meta!",
+    "¡Imparable!",
+    "¡Tu negocio está creciendo!",
+  ]
+
+  // Efecto para controlar la animación del cohete y el mensaje de motivación
   useEffect(() => {
     if (isOpen) {
+      // Mensaje aleatorio
+      const randomIndex = Math.floor(Math.random() * motivationalPhrases.length)
+      setMotivationalMessage(motivationalPhrases[randomIndex])
+
+      // Animación del cohete
       setShowRocket(true)
       // Ocultar el cohete después de la animación
       const timer = setTimeout(() => {
@@ -94,9 +111,9 @@ export default function SaleConfirmation({
     router.push("/balance?showSaleModal=true")
   }
 
-  const handleComprobante = () => {
-    alert("La funcionalidad de comprobante será implementada próximamente")
-  }
+  // const handleComprobante = () => {
+  //   alert("La funcionalidad de comprobante será implementada próximamente")
+  // }
 
   return (
     <div className="flex flex-col min-h-screen bg-green-600 text-white">
@@ -119,26 +136,31 @@ export default function SaleConfirmation({
       {/* Main content - Adjusted spacing and typography */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         {/* Check icon - Simplified and centered */}
-        <div className="rounded-full bg-green-600 border-4 border-white p-3 mb-8">
-          <Check className="h-8 w-8 text-white" />
+        <div className="mb-8">
+          <Image
+            src="/icons/manita.png"
+            alt="Venta creada"
+            width={80}
+            height={80}
+          />
         </div>
 
         {/* Title - Reduced font size */}
-        <h1 className="text-2xl font-bold mb-4">¡Creaste una venta!</h1>
+        <h1 className="text-2xl font-bold mb-4">{motivationalMessage}</h1>
 
         {/* Subtitle - Improved spacing and reduced font size */}
         {/* <p className="text-lg mb-10">Se registró en tu balance por un valor de {total} US$.</p> */}
 
         {/* Sale name input - Improved styling */}
         <div className="w-full max-w-md mb-16">
-          <p className="text-left text-lg mb-3">¿Quieres darle un nombre a esta venta?</p>
+          <p className="text-center text-lg font-light mb-3">¿Quieres darle un nombre a esta venta?</p>
           <div className="relative border-b border-white">
             <Pencil className="absolute left-0 top-1/2 transform -translate-y-1/2 text-white h-5 w-5" />
             <Input
               value={saleName}
               onChange={(e) => setSaleName(e.target.value)}
               placeholder="Escríbelo aquí (opcional)"
-              className="pl-8 py-2 bg-transparent border-none focus:border-none rounded-none text-white placeholder-white focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="pl-8 py-2 bg-transparent border-none focus:border-none rounded-none font-light text-white placeholder:text-white/80 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
         </div>
@@ -147,12 +169,12 @@ export default function SaleConfirmation({
       {/* Bottom actions - Repositioned and improved hierarchy */}
       <div className="fixed bottom-0 left-0 right-0 p-4 flex justify-around items-center">
         {/* Comprobante button - Secondary styling */}
-        <button onClick={handleComprobante} className="flex flex-col items-center text-white opacity-80">
+        {/* <button onClick={handleComprobante} className="flex flex-col items-center text-white opacity-80">
           <div className="bg-transparent rounded-full p-2 mb-1">
             <Receipt className="h-5 w-5" />
           </div>
           <span className="text-sm">Comprobante</span>
-        </button>
+        </button> */}
 
         {/* Finalizar button - Primary styling */}
         <button onClick={handleFinish} className="flex flex-col items-center text-white">

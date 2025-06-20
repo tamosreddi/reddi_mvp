@@ -45,24 +45,28 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: `Error agregando producto a inventario: ${insertError.message}` }, { status: 500 })
           }
         } else {
-          // Si existe pero está inactivo, reactivarlo
+          // Si existe, verificar si necesita actualización
+          const updatePayload: { is_active?: boolean; unit_price?: number } = {};
+
+          // 1. Si está inactivo, reactivarlo
           if (!existing.is_active) {
-            const { error: reactivateError } = await supabase
-              .from("store_inventory")
-              .update({ is_active: true })
-              .eq("inventory_id", existing.inventory_id);
-            if (reactivateError) {
-              return NextResponse.json({ success: false, error: `Error reactivando producto en inventario: ${reactivateError.message}` }, { status: 500 })
-            }
+            updatePayload.is_active = true;
           }
-          // Si el precio es diferente (incluso si alguno es 0), actualizarlo
-          if (existing.unit_price !== item.unitPrice) {
+          
+          // 2. Si se proveyó un precio válido y es diferente al existente, actualizarlo
+          if (item.unitPrice > 0 && existing.unit_price !== item.unitPrice) {
+            updatePayload.unit_price = item.unitPrice;
+          }
+
+          // Solo ejecutar la actualización si hay algo que cambiar
+          if (Object.keys(updatePayload).length > 0) {
             const { error: updateError } = await supabase
               .from("store_inventory")
-              .update({ unit_price: item.unitPrice || 0 })
+              .update(updatePayload)
               .eq("inventory_id", existing.inventory_id);
+            
             if (updateError) {
-              return NextResponse.json({ success: false, error: `Error actualizando precio en inventario: ${updateError.message}` }, { status: 500 })
+              return NextResponse.json({ success: false, error: `Error actualizando producto en inventario: ${updateError.message}` }, { status: 500 });
             }
           }
         }

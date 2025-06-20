@@ -15,7 +15,7 @@ import TopProfileMenu from "@/components/shared/top-profile-menu"
 import { useStore } from "@/lib/contexts/StoreContext"
 import { supabase } from "@/lib/supabase/supabaseClient"
 import CategoryCreateProductModal from "@/components/shared/category_create_product_modal"
-import { NewSelector } from "@/components/ui/new-selector"
+import SelectDropdown from "@/components/ui/select-dropdown"
 import Image from 'next/image'
 
 interface CreateProductFormProps {
@@ -258,23 +258,20 @@ export default function CreateProductForm({ initialReferrer, onCancel, onSuccess
         </div> */}
 
         {/* Category */}
-        <div>
-          <Label htmlFor="category" className="text-lg font-medium">
-            Categoría
-          </Label>
-          <NewSelector
-            options={categories}
-            value={category}
-            onChange={(val) => {
-              if (val === "Otro") {
-                setIsCategoryModalOpen(true)
-              } else {
-                setCategory(val)
-              }
-            }}
-            placeholder="Selecciona una categoría"
-          />
-        </div>
+        <SelectDropdown
+          label="Categoría"
+          id="category"
+          value={category}
+          onChange={(val) => {
+            if (val === "Otro") {
+              setIsCategoryModalOpen(true)
+            } else {
+              setCategory(val)
+            }
+          }}
+          options={categories.map((cat) => ({ value: cat, label: cat }))}
+          placeholder="Selecciona una categoría"
+        />
         <CategoryCreateProductModal
           isOpen={isCategoryModalOpen}
           onClose={() => setIsCategoryModalOpen(false)}

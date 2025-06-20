@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       total_amount
     } = data
 
-    if (!user_id || !store_id || !transaction_type || !transaction_subtype || !transaction_description || !payment_method || !transaction_date || typeof total_amount !== 'number') {
+    if (!user_id || !store_id || !transaction_type || !transaction_subtype || !payment_method || !transaction_date || typeof total_amount !== 'number') {
       return NextResponse.json({ success: false, error: 'Payload incompleto o inválido' }, { status: 400 })
     }
 

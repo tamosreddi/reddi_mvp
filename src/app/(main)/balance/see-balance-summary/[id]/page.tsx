@@ -33,23 +33,39 @@ export default function SeeBalanceSummaryPage() {
   if (loading) return <div className="p-8 text-center">Cargando...</div>
 
   // Calcula los totales y agrupaciones igual que en balance-view
-  const incomesTotal = transactions.filter(t => t.transaction_type === "income").reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
-  const expensesTotal = transactions.filter(t => t.transaction_type === "expense").reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
+  const incomeTransactions = transactions.filter(
+    t => t.transaction_type === "income" || (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+  )
+  const expenseTransactions = transactions.filter(t => t.transaction_type === "expense")
+
+  const incomesTotal = incomeTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
+  const expensesTotal = expenseTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
   const balanceTotal = incomesTotal - expensesTotal
 
   const incomesByPaymentMethod = {
-    cash: transactions.filter(t => t.transaction_type === "income" && t.payment_method === "cash").reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
-    other: transactions.filter(t => t.transaction_type === "income" && t.payment_method !== "cash").reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
+    cash: incomeTransactions
+      .filter(t => t.payment_method === "cash")
+      .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
+    other: incomeTransactions
+      .filter(t => t.payment_method !== "cash")
+      .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
   }
   const expensesByPaymentMethod = {
-    cash: transactions.filter(t => t.transaction_type === "expense" && t.payment_method === "cash").reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
-    other: transactions.filter(t => t.transaction_type === "expense" && t.payment_method !== "cash").reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
+    cash: expenseTransactions
+      .filter(t => t.payment_method === "cash")
+      .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
+    other: expenseTransactions
+      .filter(t => t.payment_method !== "cash")
+      .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
   }
+  
+  const productSaleTransactions = incomeTransactions.filter(t => t.products && t.products.length > 0)
+  
   const productSales = {
-    count: transactions.filter(t => t.transaction_type === "income" && t.products && t.products.length > 0).length,
-    total: transactions.filter(t => t.transaction_type === "income" && t.products && t.products.length > 0).reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
+    count: productSaleTransactions.length,
+    total: productSaleTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
     cost: 5, // Placeholder
-    profit: transactions.filter(t => t.transaction_type === "income" && t.profit).reduce((sum, t) => sum + (t.profit || 0), 0),
+    profit: incomeTransactions.filter(t => t.profit).reduce((sum, t) => sum + (t.profit || 0), 0),
   }
 
   // Usa la fecha local para el componente

@@ -65,7 +65,7 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-2">Resumen del gasto</h2>
 
-          <div className="text-blue-600 text-xs mb-3">Transacción #{expense.transaction_id}</div>
+          {/* <div className="text-blue-600 text-xs mb-3">Transacción #{expense.transaction_id}</div> */}
 
           <div className="border-t border-gray-200 py-3">
             <div className="text-gray-600 text-xs mb-1.5">Proveedor</div>
@@ -125,13 +125,13 @@ export default function ExpenseDetailView({ expense, onClose }: ExpenseDetailPro
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-3 border-t border-gray-200 bg-white">
-        <button className="flex flex-col items-center justify-center py-4 text-gray-600">
+      <div className="grid grid-cols-2 border-t border-gray-200 bg-white">
+        {/* <button className="flex flex-col items-center justify-center py-4 text-gray-600">
           <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-1">
             <FileText className="h-5 w-5" />
           </div>
           <span className="text-sm">Comprobante</span>
-        </button>
+        </button> */}
         <button
           className="flex flex-col items-center justify-center py-4 text-gray-800"
           onClick={() => router.push(`/balance/edit-expense/${expense.transaction_id}`)}
