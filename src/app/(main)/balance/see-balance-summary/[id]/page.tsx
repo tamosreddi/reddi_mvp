@@ -9,6 +9,9 @@ export default function SeeBalanceSummaryPage() {
   const router = useRouter()
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [productSoldCount, setProductSoldCount] = useState(0)
+  const [hasMissingCost, setHasMissingCost] = useState(false)
+  const [productSalesCost, setProductSalesCost] = useState(0)
 
   // Desestructura la fecha fuera del useEffect para que esté disponible en todo el componente
   const [year, month, day] = (id as string).split('-').map(Number)
@@ -25,6 +28,31 @@ export default function SeeBalanceSummaryPage() {
         .lte("transaction_date", end.toISOString())
         .order("transaction_date", { ascending: false })
       setTransactions(data || [])
+
+      if (data) {
+        const saleTransactionIds = data
+          .filter(t => t.transaction_type === 'sale' && t.transaction_subtype === 'products-sale')
+          .map(t => t.transaction_id)
+
+        if (saleTransactionIds.length > 0) {
+          try {
+            const response = await fetch('/api/balance/contar-productos-vendidos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactionIds: saleTransactionIds }),
+            })
+            const result = await response.json()
+            if (result.success) {
+              setProductSoldCount(result.totalProducts)
+              setHasMissingCost(result.hasMissingCost)
+              setProductSalesCost(result.totalCost || 0)
+            }
+          } catch (error) {
+            console.error('Error fetching product count:', error)
+          }
+        }
+      }
+
       setLoading(false)
     }
     fetchTransactions()
@@ -59,13 +87,17 @@ export default function SeeBalanceSummaryPage() {
       .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
   }
   
-  const productSaleTransactions = incomeTransactions.filter(t => t.products && t.products.length > 0)
+  const productSaleTransactions = incomeTransactions.filter(
+    (t) => t.transaction_type === "sale" && t.transaction_subtype === "products-sale"
+  )
   
+  const productSalesTotal = productSaleTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
+
   const productSales = {
-    count: productSaleTransactions.length,
-    total: productSaleTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0),
-    cost: 5, // Placeholder
-    profit: incomeTransactions.filter(t => t.profit).reduce((sum, t) => sum + (t.profit || 0), 0),
+    count: productSoldCount,
+    total: productSalesTotal,
+    cost: productSalesCost,
+    profit: productSalesTotal - productSalesCost,
   }
 
   // Usa la fecha local para el componente
@@ -80,6 +112,7 @@ export default function SeeBalanceSummaryPage() {
       incomesByPaymentMethod={incomesByPaymentMethod}
       expensesByPaymentMethod={expensesByPaymentMethod}
       productSales={productSales}
+      hasMissingCost={hasMissingCost}
       onClose={() => router.push("/balance")}
     />
   )

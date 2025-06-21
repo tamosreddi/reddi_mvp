@@ -35,6 +35,7 @@ export async function GET(request: Request) {
       .from("store_inventory")
       .select("*")
       .eq("store_id", storeId)
+      .order("updated_at", { ascending: false });
 
     if (invError) {
       console.log("[API productos] Error al obtener inventario:", invError)
@@ -99,9 +100,6 @@ export async function GET(request: Request) {
         });
       }
     }
-
-    // Order by most recent (created_at descending)
-    products = products.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     console.log("[API productos] products:", products.length);
 

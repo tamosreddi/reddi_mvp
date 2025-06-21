@@ -77,6 +77,7 @@ export const databaseSchema = {
         name_alias: "TEXT - Nombre alternativo del producto para la tienda. Si está presente, se muestra este nombre en vez del nombre original del producto.",
         min_stock: "NUMERIC - Mínima cantidad antes de alertar al usuario.",
         unit_price: "NUMERIC - Precio unitario del producto.",
+        unit_cost: "NUMERIC - Costo unitario del producto.",
         last_change: "TIMESTAMPTZ - Fecha del último cambio de inventario.",
         created_at: "TIMESTAMPTZ - Fecha de creación del registro.",
         is_active: "BOOLEAN - Indica si el producto está activo (visible en inventario).",

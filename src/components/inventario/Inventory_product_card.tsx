@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Edit, Heart, Trash2 } from 'lucide-react';
+import { Edit, Heart, Trash2, Info } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +13,7 @@ interface InventoryProductCardProps {
     image?: string;
     quantity?: number;
     price: number;
+    cost?: number;
     created_at?: string;
     description?: string;
     product_type?: string;
@@ -48,6 +49,8 @@ export default function InventoryProductCard({
   const inputValue = isEditing
     ? (editingPriceValue ?? product.price.toFixed(2))
     : product.price.toFixed(2);
+  
+  const hasNoCost = !product.cost || product.cost === 0;
 
   const handleEditPrice = () => {
     if (onEditPriceStart) {
@@ -63,7 +66,7 @@ export default function InventoryProductCard({
 
   return (
     <div
-      className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all"
+      className="flex w-full items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50 transition-all relative"
     >
       {/* Imagen clickeable */}
       <div
@@ -86,44 +89,54 @@ export default function InventoryProductCard({
       </div>
       {/* Precio editable */}
       {editablePrice && (
-        <div className="flex items-center gap-2 ml-2">
-          {isEditing ? (
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                handleSavePrice();
-              }}
-              className="flex items-center gap-1"
-            >
-              <Input
-                type="number"
-                min={0.01}
-                step={0.01}
-                value={inputValue}
-                autoFocus
-                disabled={savingPrice}
-                onChange={e => {
-                  if (onEditPriceStart) onEditPriceStart(product.id, e.target.value);
-                }}
-                onBlur={handleSavePrice}
-                className="w-20 text-sm font-semibold"
-              />
-            </form>
-          ) : (
-            <button
-              className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
-              style={{ background: 'none' }}
-              onClick={e => {
-                e.stopPropagation();
-                handleEditPrice();
-              }}
-              aria-label="Editar precio"
-              type="button"
-            >
-              <span className="text-sm font-semibold select-none group-hover:text-blue-700">${product.price.toFixed(2)}</span>
-              {editablePrice && <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />}
-            </button>
-          )}
+        <div className="flex flex-col items-end gap-1 ml-2">
+          <div className="flex items-center gap-2">
+              {isEditing ? (
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    handleSavePrice();
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={inputValue}
+                    autoFocus
+                    disabled={savingPrice}
+                    onChange={e => {
+                      if (onEditPriceStart) onEditPriceStart(product.id, e.target.value);
+                    }}
+                    onBlur={handleSavePrice}
+                    className="w-20 text-sm font-semibold"
+                  />
+                </form>
+              ) : (
+                <button
+                  className="flex items-center gap-1 group bg-transparent border-none outline-none p-0 m-0"
+                  style={{ background: 'none' }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleEditPrice();
+                  }}
+                  aria-label="Editar precio"
+                  type="button"
+                >
+                  <span className="text-sm font-semibold select-none group-hover:text-blue-700">${product.price.toFixed(2)}</span>
+                  {editablePrice && <Edit className="h-4 w-4 text-gray-400 group-hover:text-gray-700" />}
+                </button>
+              )}
+          </div>
+          {hasNoCost && (
+                <div 
+                    className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 cursor-pointer hover:bg-amber-200 transition-colors"
+                    onClick={() => onNavigate && onNavigate(product.id)}
+                >
+                    Agregar costo
+                </div>
+            )}
         </div>
       )}
       {/* Icono de Corazón o Basura */}

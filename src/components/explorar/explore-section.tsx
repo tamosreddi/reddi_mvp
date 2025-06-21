@@ -13,8 +13,6 @@ export default function ExploreSection() {
     { id: "clientes", name: "Clientes", path: "/dashboard/clientes?returnTo=/explorar", imgSrc: "/icons/clientes.png", imgAlt: "Clientes" },
     { id: "proveedores", name: "Proveedores", path: "/dashboard/proveedores?returnTo=/explorar", imgSrc: "/icons/proveedores.png", imgAlt: "Proveedores" },
     { id: "venta-perdida", name: "Ventas Perdidas", path: "/explorar/ventas-perdidas", imgSrc: "/icons/ventas-perdidas.png", imgAlt: "Venta Perdida" },
-    { id: "pedidos", name: "Pedidos", path: "/pedidos", imgSrc: "/icons/pedidos.png", imgAlt: "Pedidos" },
-    { id: "empleados", name: "Empleados", path: "/empleados", imgSrc: "/icons/empleados.png", imgAlt: "Empleados" },
   ]
 
   const handleOptionClick = (path: string) => {

@@ -100,7 +100,8 @@ export default function ViewInventory() {
     const { data: inventoryRows, error: invError } = await supabase
       .from("store_inventory")
       .select("*")
-      .eq("store_id", selectedStore.store_id);
+      .eq("store_id", selectedStore.store_id)
+      .order("updated_at", { ascending: false });
 
     if (invError) {
       setInventory([]);
@@ -150,7 +151,7 @@ export default function ViewInventory() {
           image: productData.image || "/Groserybasket.png",
           quantity: item.quantity,
           price: Number(item.unit_price),
-          cost: 0, // Puedes optimizar esto después si necesitas el costo
+          cost: Number(item.unit_cost) || 0,
           created_at: item.created_at,
           description: productData.description,
           product_type: item.product_type,
@@ -158,8 +159,7 @@ export default function ViewInventory() {
         // totalCost += ... // Si quieres calcular el costo, ajusta aquí
       }
     }
-    // Order by most recent (created_at descending)
-    products = products.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // La clasificación ahora se hace en la consulta a la base de datos
     setInventory(products);
     setTotalCost(totalCost);
     // Save the full inventoryRows for isInInventory logic
@@ -222,7 +222,7 @@ export default function ViewInventory() {
           const updates = inactiveEntries.map(entry => 
             supabase
               .from("store_inventory")
-              .update({ is_active: true })
+              .update({ is_active: true, updated_at: new Date().toISOString() })
               .eq("inventory_id", entry.inventory_id)
           );
           await Promise.all(updates);
@@ -238,7 +238,8 @@ export default function ViewInventory() {
             product_type: "global",
             quantity: 0,
             unit_price: 0,
-            is_active: true
+            is_active: true,
+            updated_at: new Date().toISOString(),
           });
         if (error) throw error;
       }
@@ -254,7 +255,7 @@ export default function ViewInventory() {
     try {
       const { error: updateError } = await supabase
         .from("store_inventory")
-        .update({ is_active: false })
+        .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq("inventory_id", inventoryId);
       if (updateError) throw updateError;
       await fetchInventory();
@@ -321,7 +322,7 @@ export default function ViewInventory() {
     try {
       await supabase
         .from("store_inventory")
-        .update({ unit_price: newPrice })
+        .update({ unit_price: newPrice, updated_at: new Date().toISOString() })
         .eq("inventory_id", item.id);
       // Actualizar el precio en el estado local inmediatamente
       setInventory((prev) => prev.map((prod) =>

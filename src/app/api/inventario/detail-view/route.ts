@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     description: '',
     quantity: inventory.quantity,
     price: inventory.unit_price,
-    cost: 0, // Puedes calcularlo después si tienes batches
+    cost: inventory.unit_cost || 0,
     product_type: inventory.product_type,
     image: '/Groserybasket.png', // Imagen por defecto
   }
@@ -195,6 +195,8 @@ export async function POST(req: NextRequest) {
           name_alias: product.name_alias,
           quantity: product.quantity,
           unit_price: product.price,
+          unit_cost: product.cost,
+          updated_at: new Date().toISOString(),
         })
         .eq("inventory_id", product.id);
       error = invError;
@@ -215,6 +217,8 @@ export async function POST(req: NextRequest) {
         .update({
           quantity: product.quantity,
           unit_price: product.price,
+          unit_cost: product.cost,
+          updated_at: new Date().toISOString(),
         })
         .eq("inventory_id", product.id);
       error = prodError || invError;

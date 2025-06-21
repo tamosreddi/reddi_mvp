@@ -7,6 +7,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import TopProfileMenu from "@/components/shared/top-profile-menu"
+import InfoButton from "@/components/shared/InfoButton"
 
 interface BalanceDetailViewProps {
   date: Date
@@ -27,6 +28,7 @@ interface BalanceDetailViewProps {
     profit: number
     count: number
   }
+  hasMissingCost: boolean
   onClose: () => void
 }
 
@@ -38,6 +40,7 @@ export default function BalanceDetailView({
   incomesByPaymentMethod,
   expensesByPaymentMethod,
   productSales,
+  hasMissingCost,
   onClose,
 }: BalanceDetailViewProps) {
   // Format number with thousand separators
@@ -143,6 +146,18 @@ export default function BalanceDetailView({
           </div>
 
           <p className="text-gray-600 mb-4 text-sm">Calculada con las ventas con productos que has registrado.</p>
+          
+          {hasMissingCost && (
+            <div className="mb-4">
+              <InfoButton
+                imageSrc="/icons/contador.png"
+                title="Costo de productos no registrado"
+                description="Algunos productos no tienen costo. La ganancia estimada podría ser incorrecta."
+              />
+            </div>
+          )}
+
+
 
           <div className="mb-4">
             <div className="text-lg font-medium mb-1">Has realizado {productSales.count} ventas con productos</div>

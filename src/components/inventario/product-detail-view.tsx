@@ -16,6 +16,7 @@ import { useStore } from "@/lib/contexts/StoreContext"
 import DeleteProductModal from '@/components/shared/delete-product-modal'
 import Image from 'next/image'
 import SelectDropdown from "../ui/select-dropdown"
+import InfoButton from "../shared/InfoButton"
 
 interface ProductDetailViewProps {
   productId: string
@@ -88,11 +89,16 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
   // Handle save
   const handleSave = async () => {
     setIsLoading(true);
+    
+    const productToSave = { ...product };
+    if (isNaN(productToSave.price)) productToSave.price = 0;
+    if (isNaN(productToSave.cost)) productToSave.cost = 0;
+
     try {
       const res = await fetch('/api/inventario/detail-view', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product, storeId: selectedStore?.store_id })
+        body: JSON.stringify({ product: productToSave, storeId: selectedStore?.store_id })
       });
       const result = await res.json();
       setIsLoading(false);
@@ -212,6 +218,60 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           )}
         </div>
 
+        {/* Price */}
+        <div>
+          <Label htmlFor="price" className="text-base font-bold">
+            Precio <span className="text-red-500">*</span>
+          </Label>
+          <div className="relative mt-1">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <span className="text-gray-500">$</span>
+            </div>
+            <Input
+              id="price"
+              type="number"
+              min="0"
+              step="0.50"
+              value={isNaN(product.price) ? "" : product.price}
+              onChange={(e) => handleChange("price", Number.parseFloat(e.target.value))}
+              className="rounded-xl border-gray-200 pl-7"
+              placeholder="Precio de venta"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Cost */}
+        <div>
+            {(!product.cost || product.cost === 0) && (
+              <div className="mb-4">
+                <InfoButton
+                  imageSrc="/icons/contador.png"
+                  title="Agrega un Costo a tu producto"
+                  description="Esto te ayudará a saber cuánto ganas exactamente."
+                />
+              </div>
+            )}
+            <Label htmlFor="cost" className="text-base font-bold">
+              Costo 
+            </Label>
+            <div className="relative mt-1">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <span className="text-gray-500">$</span>
+              </div>
+              <Input
+                id="cost"
+                type="number"
+                min="0"
+                step="0.50"
+                value={isNaN(product.cost) ? "" : product.cost}
+                onChange={(e) => handleChange("cost", Number.parseFloat(e.target.value))}
+                className="rounded-xl border-gray-200 pl-7"
+                placeholder="Costo de compra"
+              />
+            </div>
+          </div>
+
         {/* Description */}
         <div>
           <Label htmlFor="description" className="text-base font-bold">
@@ -243,66 +303,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
           />
         </div> */}
 
-        {/* Price */}
-        <div>
-          <Label htmlFor="price" className="text-base font-bold">
-            Precio <span className="text-red-500">*</span>
-          </Label>
-          <div className="relative mt-1">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <span className="text-gray-500">$</span>
-            </div>
-            <Input
-              id="price"
-              type="number"
-              min="0"
-              step="0.50"
-              value={product.price}
-              onChange={(e) => handleChange("price", Number.parseFloat(e.target.value) || 0)}
-              className="rounded-xl border-gray-200 pl-7"
-              placeholder="0"
-              required
-            />
-          </div>
-        </div>
 
-        {/* Cost */}
-        <div>
-          <div className="flex items-center">
-            <Label htmlFor="cost" className="text-base font-bold">
-              Costo
-            </Label>
-            <button
-              type="button"
-              className="ml-2 focus:outline-none"
-              onClick={() => setShowCostInfo((v) => !v)}
-              tabIndex={0}
-              aria-label="Información sobre el costo"
-            >
-              <Info className="h-5 w-5 text-gray-400" />
-            </button>
-          </div>
-          <div className="relative mt-1">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <span className="text-gray-500">$</span>
-            </div>
-            <Input
-              id="cost"
-              type="number"
-              min="0"
-              step="0.5"
-              value={product.cost}
-              onChange={(e) => handleChange("cost", e.target.value)}
-              className="rounded-xl border-gray-200 pl-7"
-              placeholder="0"
-            />
-          </div>
-        </div>
-        {showCostInfo && (
-          <div className="mt-1 mb-2 bg-gray-100 border border-gray-300 rounded p-2 text-xs text-gray-700 max-w-xs">
-            Si se necesita cambiar el costo por unidad de este producto, es recomendable eliminar el producto existente y crear uno nuevo.
-          </div>
-        )}
 
         {/* Category */}
         <div>
