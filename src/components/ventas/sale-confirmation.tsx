@@ -19,6 +19,17 @@ interface SaleConfirmationProps {
   transactionId: string;
 }
 
+const motivationalPhrases = [
+  "¡Bien! ¡Creaste una venta!",
+  "¡Sigue así!",
+  "¡Vas muy bien!",
+  "¡Estás que vuelas!",
+  "¡Excelente trabajo!",
+  "¡Un paso más cerca de tu meta!",
+  "¡Imparable!",
+  "¡Tu negocio está creciendo!",
+]
+
 export default function SaleConfirmation({
   isOpen,
   onClose,
@@ -32,17 +43,6 @@ export default function SaleConfirmation({
   const { session } = useAuth()
   const [showRocket, setShowRocket] = useState(true)
   const [motivationalMessage, setMotivationalMessage] = useState("")
-
-  const motivationalPhrases = [
-    "¡Bien! ¡Creaste una venta!",
-    "¡Sigue así!",
-    "¡Vas muy bien!",
-    "¡Estás que vuelas!",
-    "¡Excelente trabajo!",
-    "¡Un paso más cerca de tu meta!",
-    "¡Imparable!",
-    "¡Tu negocio está creciendo!",
-  ]
 
   // Efecto para controlar la animación del cohete y el mensaje de motivación
   useEffect(() => {

@@ -161,6 +161,15 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
   const [incomeTransactions, setIncomeTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [productsByTransaction, setProductsByTransaction] = useState<Record<string, string[]>>({});
+  const [productsData, setProductsData] = useState<any[]>([]);
+  const [balanceTotal, setBalanceTotal] = useState(0);
+  const [productSales, setProductSales] = useState({
+    count: 0,
+    total: 0,
+    cost: 0,
+    profit: 0,
+    hasMissingCost: false,
+  });
 
   useEffect(() => {
     if (!selectedStore || !user) return
@@ -201,6 +210,7 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
         const data = await res.json();
         if (data.success) {
           setProductsByTransaction(data.productsByTransaction);
+          setProductsData(data.products);
         } else {
           setProductsByTransaction({});
         }
@@ -211,63 +221,84 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
     fetchProducts();
   }, [incomeTransactions]);
 
-  // Filter transactions based on selected date and active tab
-  const filteredTransactions = incomeTransactions.filter(
-    (t) =>
-      (
-        t.transaction_type === "income" ||
-        (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
-      ) &&
-      isSameDay(new Date(t.transaction_date), selectedDate)
-  )
+  useEffect(() => {
+    if (!incomeTransactions.length || !productsByTransaction || !productsData) return;
 
-  // Calculate totals for the selected date
-  const incomesTotal = incomeTransactions
-    .filter((t) => (
-      t.transaction_type === "income" ||
-      (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
-    ) && isSameDay(new Date(t.transaction_date), selectedDate))
-    .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
+    const processData = async () => {
+      const incomesTotal = incomeTransactions
+        .filter((t) => (
+          t.transaction_type === "income" ||
+          (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+        ) && isSameDay(new Date(t.transaction_date), selectedDate))
+        .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
 
-  const expensesTotal = incomeTransactions
-    .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
-    .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)
+      const expensesTotal = incomeTransactions
+        .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
+        .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
 
-  const balanceTotal = incomesTotal - expensesTotal
+      setBalanceTotal(incomesTotal - expensesTotal);
 
-  // Calculate income by payment method
-  const incomesByPaymentMethod = {
-    cash: incomeTransactions
-      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method === "cash")
-      .reduce((sum, t) => sum + t.unit_amount, 0),
-    other: incomeTransactions
-      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method !== "cash")
-      .reduce((sum, t) => sum + t.unit_amount, 0),
-  }
+      // Calculate income by payment method
+      const incomesByPaymentMethod = {
+        cash: incomeTransactions
+          .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method === "cash")
+          .reduce((sum, t) => sum + t.unit_amount, 0),
+        other: incomeTransactions
+          .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method !== "cash")
+          .reduce((sum, t) => sum + t.unit_amount, 0),
+      }
 
-  // Calculate expenses by payment method
-  const expensesByPaymentMethod = {
-    cash: incomeTransactions
-      .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method === "cash")
-      .reduce((sum, t) => sum + t.unit_amount, 0),
-    other: incomeTransactions
-      .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method !== "cash")
-      .reduce((sum, t) => sum + t.unit_amount, 0),
-  }
+      // Calculate expenses by payment method
+      const expensesByPaymentMethod = {
+        cash: incomeTransactions
+          .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method === "cash")
+          .reduce((sum, t) => sum + t.unit_amount, 0),
+        other: incomeTransactions
+          .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate) && t.payment_method !== "cash")
+          .reduce((sum, t) => sum + t.unit_amount, 0),
+      }
 
-  // Calculate product sales data
-  const productSales = {
-    count: incomeTransactions.filter(
-      (t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.products && t.products.length > 0,
-    ).length,
-    total: incomeTransactions
-      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.products && t.products.length > 0)
-      .reduce((sum, t) => sum + t.unit_amount, 0),
-    cost: 5, // This would normally be calculated from the products
-    profit: incomeTransactions
-      .filter((t) => t.transaction_type === "income" && isSameDay(new Date(t.transaction_date), selectedDate) && t.profit)
-      .reduce((sum, t) => sum + (t.profit || 0), 0),
-  }
+      // Calculate product sales data
+      const productSalesData = calculateProductSales(incomeTransactions, productsByTransaction, productsData)
+      setProductSales(productSalesData)
+
+    }
+    processData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomeTransactions, productsByTransaction, productsData, selectedDate])
+
+  const calculateProductSales = (transactions: any[], productsByTx: any, products: any) => {
+    let total = 0;
+    let cost = 0;
+    let count = 0;
+    let hasMissingCost = false;
+
+    const salesOnDate = transactions.filter(
+      (t) =>
+        t.transaction_type === "sale" &&
+        t.transaction_subtype === "products-sale" &&
+        isSameDay(new Date(t.transaction_date), selectedDate)
+    );
+
+    count = salesOnDate.length;
+
+    salesOnDate.forEach((sale) => {
+      const productIds = productsByTx[sale.transaction_id] || [];
+      productIds.forEach((productId: string) => {
+        const productInfo = products[productId];
+        if (productInfo) {
+          total += productInfo.unit_price * productInfo.quantity;
+          const productCost = productInfo.unit_cost || 0;
+          cost += productCost * productInfo.quantity;
+          if (productCost === 0) {
+            hasMissingCost = true;
+          }
+        }
+      });
+    });
+
+    return { total, cost, profit: total - cost, count, hasMissingCost };
+  };
 
   // Format number with thousand separators
   const formatNumber = (num: number) => {
@@ -327,15 +358,32 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
 
   // If balance detail is shown, render the balance detail view
   if (showBalanceDetail) {
+    const hasMissingCost = productSales.cost === 0 && productSales.count > 0;
+
     return (
       <BalanceDetailView
         date={selectedDate}
-        incomesTotal={incomesTotal}
-        expensesTotal={expensesTotal}
+        incomesTotal={incomeTransactions
+          .filter((t) => (
+            t.transaction_type === "income" ||
+            (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+          ) && isSameDay(new Date(t.transaction_date), selectedDate))
+          .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)}
+        expensesTotal={incomeTransactions
+          .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
+          .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0)}
         balanceTotal={balanceTotal}
-        incomesByPaymentMethod={incomesByPaymentMethod}
-        expensesByPaymentMethod={expensesByPaymentMethod}
+        incomesByPaymentMethod={incomeTransactions
+          .filter((t) => (
+            t.transaction_type === "income" ||
+            (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+          ) && isSameDay(new Date(t.transaction_date), selectedDate))
+          .reduce((sum, t) => sum + t.unit_amount, 0)}
+        expensesByPaymentMethod={incomeTransactions
+          .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
+          .reduce((sum, t) => sum + t.unit_amount, 0)}
         productSales={productSales}
+        hasMissingCost={hasMissingCost}
         onClose={closeBalanceDetail}
       />
     )
@@ -385,7 +433,12 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
                   Ingresos
                 </span>
               </div>
-              <span className="text-green-600 font-bold text-lg">$ {formatNumber(incomesTotal)}</span>
+              <span className="text-green-600 font-bold text-lg">$ {formatNumber(incomeTransactions
+                .filter((t) => (
+                  t.transaction_type === "income" ||
+                  (t.transaction_type === "sale" && t.transaction_subtype === "products-sale")
+                ) && isSameDay(new Date(t.transaction_date), selectedDate))
+                .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0))}</span>
             </div>
             <div className="flex-1 pl-4">
               <div className="flex items-center mb-1">
@@ -394,7 +447,9 @@ export default function BalanceView({ onNewSale }: BalanceProps) {
                   Egresos
                 </span>
               </div>
-              <span className="text-red-600 font-bold text-lg">-$ {formatNumber(expensesTotal)}</span>
+              <span className="text-red-600 font-bold text-lg">-$ {formatNumber(incomeTransactions
+                .filter((t) => t.transaction_type === "expense" && isSameDay(new Date(t.transaction_date), selectedDate))
+                .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0))}</span>
             </div>
           </div>
 

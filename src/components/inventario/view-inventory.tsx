@@ -67,33 +67,31 @@ export default function ViewInventory() {
   // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  // Fetch catalog products
-  useEffect(() => {
-    const fetchCatalogProducts = async () => {
-      if (!selectedStore?.store_id) return;
-      setLoading(true)
-      try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("*")
-          .order("name")
-
-        if (error) throw error;
-        setCatalogProducts(data || []);
-      } catch (error) {
-        console.error("Error fetching catalog products:", error);
-        setCatalogProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCatalogProducts();
-  }, [selectedStore]);
-
-  // Fetch inventory from Supabase
-  const fetchInventory = async () => {
+  const fetchCatalogProducts = useCallback(async () => {
     if (!selectedStore?.store_id) return;
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("name")
+
+      if (error) throw error;
+      setCatalogProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching catalog products:", error);
+      setCatalogProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedStore?.store_id]);
+
+  const fetchInventory = useCallback(async () => {
+    if (!selectedStore?.store_id) {
+      setInventory([])
+      setLoading(false)
+      return
+    }
     setLoading(true);
 
     // 1. Fetch all inventory items for the store (including inactive)
@@ -165,11 +163,12 @@ export default function ViewInventory() {
     // Save the full inventoryRows for isInInventory logic
     setFullInventoryRows(inventoryRows);
     setLoading(false);
-  };
+  }, [selectedStore?.store_id]);
 
   useEffect(() => {
-    fetchInventory()
-  }, [selectedStore])
+    fetchInventory();
+    fetchCatalogProducts();
+  }, [fetchInventory, fetchCatalogProducts]);
 
   useEffect(() => {
     if (filteredInventory.length > 0 && firstInventoryItemRef.current) {

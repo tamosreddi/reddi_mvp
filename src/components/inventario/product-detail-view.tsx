@@ -74,6 +74,7 @@ export default function ProductDetailView({ productId }: ProductDetailViewProps)
       setIsLoading(false);
     };
     fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, selectedStore?.store_id]);
 
   // Handle form input changes

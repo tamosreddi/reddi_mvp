@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ArrowLeft, Search, Barcode, ShoppingCart, ChevronRight, Plus, Minus, Home } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -42,8 +42,8 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
   // New state to control whether to show the create product form
   const [showCreateProductForm, setShowCreateProductForm] = useState(false)
 
-  // Nueva función para obtener productos del catálogo
-  const fetchCatalogProducts = async () => {
+  // Obtener productos del catálogo (productos que NO están en el inventario de la tienda)
+  const fetchCatalogProducts = useCallback(async () => {
     if (!selectedStore?.store_id) return;
     try {
       // 1. Obtener productos globales
@@ -110,15 +110,15 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       console.error("Error al obtener productos del catálogo:", err);
       setCatalogProducts([]);
     }
-  };
+  }, [selectedStore?.store_id]);
 
   // Cargar productos del catálogo al montar el componente
   useEffect(() => {
     fetchCatalogProducts();
-  }, [selectedStore]);
+  }, [fetchCatalogProducts]);
 
   // Nueva función para obtener productos del inventario
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     if (!selectedStore?.store_id) return;
     let token = "";
     try {
@@ -146,12 +146,11 @@ export default function ProductSale({ transactionId }: { transactionId?: string 
       setCategories([]);
       console.error("Error al obtener productos desde API:", err);
     }
-  }
+  }, [selectedStore?.store_id]);
 
   useEffect(() => {
     fetchInventory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStore])
+  }, [fetchInventory])
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {

@@ -144,6 +144,7 @@ export default function EditExpense({ transactionId }: EditExpenseProps) {
       setLoading(false)
     }
     initExpense();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactionId]);
 
   const handleSave = async () => {
