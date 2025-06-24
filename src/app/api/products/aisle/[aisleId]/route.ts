@@ -3,9 +3,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/supabaseServerClient";
 
-export async function GET(req: NextRequest, { params }: { params: { aisleId: string } }) {
-  const aisleId = Number(params.aisleId);
-  if (isNaN(aisleId)) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ aisleId: string }> }) {
+  const { aisleId } = await params;
+  const aisleIdNum = Number(aisleId);
+  if (isNaN(aisleIdNum)) {
     return NextResponse.json({ error: "AisleId inválido" }, { status: 400 });
   }
   const { searchParams } = new URL(req.url);
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: { aisleId: str
   let query = supabase
     .from("products")
     .select("*, aisles(*)", { count: "exact" })
-    .eq("aisle_id", aisleId);
+    .eq("aisle_id", aisleIdNum);
 
   if (category) {
     query = query.eq("category", category);
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: { aisleId: str
     const { data: aisleData } = await supabase
       .from("aisles")
       .select("*")
-      .eq("id", aisleId)
+      .eq("id", aisleIdNum)
       .single();
     aisle = aisleData;
   }
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: { aisleId: str
   const { data: categoriesData } = await supabase
     .from("products")
     .select("category")
-    .eq("aisle_id", aisleId)
+    .eq("aisle_id", aisleIdNum)
     .neq("category", null);
   const categories = Array.from(new Set((categoriesData || []).map((p: { category: string }) => p.category)));
 
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: { aisleId: str
     const { data: subcatData } = await supabase
       .from("products")
       .select("subcategory")
-      .eq("aisle_id", aisleId)
+      .eq("aisle_id", aisleIdNum)
       .eq("category", category)
       .neq("subcategory", null);
     subcategories = Array.from(new Set((subcatData || []).map((p: { subcategory: string }) => p.subcategory)));
