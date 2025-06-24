@@ -1,3 +1,6 @@
+//Componente presentacional. Solo renderiza la UI. No tiene mucha lógica.
+//Aqui se manjea el UI y el diseño
+
 interface SubcategoryPillsProps {
   subcategories: string[];
   activeSubcategory: string;
@@ -11,7 +14,7 @@ export default function SubcategoryPills({ subcategories, activeSubcategory, onC
         <button
           key={sub}
           onClick={() => onChange(sub)}
-          className={`px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap border transition
+          className={`px-4 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition
             ${activeSubcategory === sub
               ? "bg-gray-900 text-white border-gray-900"
               : "bg-gray-100 text-gray-700 border-gray-200"}

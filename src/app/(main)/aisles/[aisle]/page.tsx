@@ -35,14 +35,14 @@ export default async function AislePage({
   return (
     <div className="min-h-screen bg-white pb-24">
       <ShopHeader searchPlaceholder={`Buscar en ${aisleName}...`} />
-      <h2 className="text-lg font-semibold px-4 mt-4 mb-2 capitalize">{aisleName}</h2>
+      <h2 className="text-xl font-semibold px-4 mt-4 mb-2 capitalize">{aisleName}</h2>
       {/* Tabs de categorías */}
       <div className="flex gap-4 px-4 overflow-x-auto pb-2 border-b border-gray-200">
         {mockCategories.map((cat) => (
           <Link
             key={cat}
             href={`/aisles/${aisle}?category=${encodeURIComponent(cat)}`}
-            className={`pb-1 text-base whitespace-nowrap bg-transparent border-none outline-none
+            className={`pb-1 text-xs whitespace-nowrap bg-transparent border-none outline-none
               ${activeCategory === cat
                 ? "font-semibold text-gray-900 border-b-2 border-gray-900"
                 : "text-gray-400"}

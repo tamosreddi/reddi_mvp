@@ -1,3 +1,6 @@
+//Componente cliente. Tiene lógica.
+//USa el componente presentacional SubcategoryPills
+
 "use client";
 import { useState } from "react";
 import SubcategoryPills from "./SubcategoryPills";
