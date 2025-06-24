@@ -66,8 +66,8 @@ export default function Dashboard() {
         {/* Comprar Productos Button */}
         <div className="mb-4">
           <button
-            onClick={() => router.push("/comprar-productos")}
-            className="w-full flex items-center p-4 rounded-lg border border-reddi-bottom-text-active bg-reddi-bottom-100 shadow-lg shadow-white-200" //bg-gray-100 es el backgorund
+            onClick={() => router.push("/aisles")}
+            className="w-full flex items-center p-4 rounded-lg border border-reddi-bottom-text-active bg-reddi-bottom-100 shadow-lg shadow-white-200"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-white rounded-full mr-4 shadow-md">
               <Image src="/icons/carrito.png" alt="Comprar Productos" width={48} height={48} className="object-contain" />

@@ -66,6 +66,7 @@ export const databaseSchema = {
         distributor_id: "UUID - Referencia al distribuidor que provee el producto, si aplica.",
         barcode: "VARCHAR - Código de barras del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
+        aisle: "TEXT - Pasillo del producto (ej. bebidas, snacks, limpieza). Es una categoría mayor a la de category.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
     },
     store_inventory: {
