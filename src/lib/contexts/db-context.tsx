@@ -63,11 +63,18 @@ export const databaseSchema = {
         brand: "TEXT - Marca del producto.",
         image: "TEXT - URL de la imagen del producto.",
         category: "TEXT - Categoría del producto (ej. bebidas, snacks, limpieza).",
+        sub_category: "TEXT - Subcategoría del producto (ej. bebidas, snacks, limpieza).",
         distributor_id: "UUID - Referencia al distribuidor que provee el producto, si aplica.",
         barcode: "VARCHAR - Código de barras del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
-        aisle: "TEXT - Pasillo del producto (ej. bebidas, snacks, limpieza). Es una categoría mayor a la de category.",
+        aisle_id: "INTEGER - id del pasillo del producto. Relación con tabla aisles.(ej. bebidas, snacks, limpieza). Es una categoría mayor a la de category.",
         updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
+    },
+    aisles: {
+        id: "INTEGER - id del pasillo del producto. Relación con tabla aisles.(ej. bebidas, snacks, limpieza). Es una categoría mayor a la de category.",
+        name: "TEXT - Nombre del pasillo del producto.",
+        is_active: "BOOLEAN - Indica si el pasillo está activo (visible en la app).",
+        display_order: "INTEGER - Orden de visualización del pasillo en la app.",
     },
     store_inventory: {
         inventory_id: "UUID - Identificador único del registro de inventario.",
