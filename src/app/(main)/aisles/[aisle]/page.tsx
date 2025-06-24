@@ -4,6 +4,7 @@ import ShopHeader from "@/components/shop/ShopHeader";
 import HorizontalProductCarousel from "@/components/shop/HorizontalProductCarousel";
 import SubcategoryPillsClient from "@/components/shop/SubcategoryPillsClient";
 import Link from "next/link";
+import Image from "next/image";
 
 // Mock data para estructura inicial
 const mockCategories = ["Todas las categorías", "Frutas Frescas", "Verduras Frescas"];
@@ -19,9 +20,17 @@ const mockProducts = Array.from({ length: 8 }).map((_, i) => ({
   category: i % 2 === 0 ? "Frutas Frescas" : "Verduras Frescas",
 }));
 
-export default function AislePage({ params, searchParams }: { params: { aisle: string }, searchParams: { category?: string } }) {
-  const aisleName = decodeURIComponent(params.aisle).replace(/-/g, " ");
-  const activeCategory = searchParams.category || mockCategories[0];
+export default async function AislePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ aisle: string }>;
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { aisle } = await params;
+  const { category } = searchParams ? await searchParams : { category: undefined };
+  const aisleName = decodeURIComponent(aisle).replace(/-/g, " ");
+  const activeCategory = category || mockCategories[0];
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -32,7 +41,7 @@ export default function AislePage({ params, searchParams }: { params: { aisle: s
         {mockCategories.map((cat) => (
           <Link
             key={cat}
-            href={`/aisles/${params.aisle}?category=${encodeURIComponent(cat)}`}
+            href={`/aisles/${aisle}?category=${encodeURIComponent(cat)}`}
             className={`pb-1 text-base whitespace-nowrap bg-transparent border-none outline-none
               ${activeCategory === cat
                 ? "font-semibold text-gray-900 border-b-2 border-gray-900"
@@ -60,7 +69,7 @@ export default function AislePage({ params, searchParams }: { params: { aisle: s
       <div className="grid grid-cols-2 gap-3 px-4">
         {mockProducts.map((p) => (
           <div key={p.id} className="bg-white rounded-lg p-2 flex flex-col items-center">
-            <img src={p.image} alt={p.name} className="w-16 h-16 object-contain mb-1" />
+            <Image src={p.image} alt={p.name} width={64} height={64} className="w-16 h-16 object-contain mb-1" />
             <span className="text-xs font-medium text-gray-800 text-center">{p.name}</span>
             <span className="text-xs text-gray-500">{p.price}</span>
             <span className="text-[10px] text-green-600">{p.stock}</span>
