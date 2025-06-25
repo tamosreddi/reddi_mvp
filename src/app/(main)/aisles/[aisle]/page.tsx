@@ -86,13 +86,13 @@ export default async function AislePage({
         ))}
       </div>
 
-      {/* Subcategorías tipo píldora (Client Component) */}
-      {activeCategory !== "Todas las categorías" && subcategories.length > 0 && (
-        <SubcategoryPillsClient subcategories={subcategories} />
-      )}
-
       {/* Carruseles y grid manejados por el Client Component */}
-      <AisleClient categories={categories} formattedProducts={formattedProducts} />
+      <AisleClient 
+        categories={categories}
+        subcategories={subcategories}
+        formattedProducts={formattedProducts}
+        activeCategory={activeCategory}
+      />
     </div>
   );
 }

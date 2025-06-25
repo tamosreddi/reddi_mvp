@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import React from "react";
+import { useState, useMemo } from "react";
 import HorizontalProductCarousel from "@/components/shop/HorizontalProductCarousel";
 import AisleGrid from "@/components/shop/AisleGrid";
+import SubcategoryPillsClient from "@/components/shop/SubcategoryPillsClient";
 
 interface Product {
   id: number | string;
@@ -10,6 +12,7 @@ interface Product {
   price: string;
   quantity: number;
   category: string;
+  subcategory?: string;
   [key: string]: any;
 }
 
@@ -20,13 +23,47 @@ interface CartItem {
 
 interface AisleClientProps {
   categories: string[];
+  subcategories: string[];
   formattedProducts: Product[];
+  activeCategory: string;
 }
 
-export default function AisleClient({ categories, formattedProducts }: AisleClientProps) {
+export default function AisleClient({ categories, subcategories, formattedProducts, activeCategory }: AisleClientProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [activeSubcategory, setActiveSubcategory] = useState<string>("");
 
-  // Handler para agregar producto
+  // Filtrar subcategorías según la categoría activa y agregar 'Todas' al inicio
+  const filteredSubcategories = useMemo(() => {
+    if (activeCategory === "Todas las categorías") return [];
+    const subs = formattedProducts
+      .filter((p) => p.category === activeCategory && p.subcategory)
+      .map((p) => p.subcategory!);
+    const uniqueSubs = Array.from(new Set(subs));
+    return ["Todas", ...uniqueSubs];
+  }, [activeCategory, formattedProducts]);
+
+  // Inicializar subcategoría activa si cambia la categoría
+  React.useEffect(() => {
+    if (filteredSubcategories.length > 0) {
+      setActiveSubcategory("Todas");
+    } else {
+      setActiveSubcategory("");
+    }
+  }, [filteredSubcategories]);
+
+  // Filtrar productos por categoría y subcategoría
+  const visibleProducts = useMemo(() => {
+    let products = formattedProducts;
+    if (activeCategory !== "Todas las categorías") {
+      products = products.filter((p) => p.category === activeCategory);
+      if (activeSubcategory && activeSubcategory !== "Todas") {
+        products = products.filter((p) => p.subcategory === activeSubcategory);
+      }
+    }
+    return products;
+  }, [formattedProducts, activeCategory, activeSubcategory]);
+
+  // Handlers de carrito
   const handleAdd = (product: Product) => {
     setCart((prev) => {
       const found = prev.find((item) => item.id === product.id);
@@ -60,8 +97,16 @@ export default function AisleClient({ categories, formattedProducts }: AisleClie
 
   return (
     <>
-      {/* Carruseles por categoría */}
-      {categories.filter((c) => c !== "Todas las categorías").map((cat) => {
+      {/* Subcategorías tipo píldora */}
+      {activeCategory !== "Todas las categorías" && filteredSubcategories.length > 0 && (
+        <SubcategoryPillsClient
+          subcategories={filteredSubcategories}
+          activeSubcategory={activeSubcategory}
+          onChange={setActiveSubcategory}
+        />
+      )}
+      {/* Carruseles por categoría solo si está seleccionada 'Todas las categorías' */}
+      {activeCategory === "Todas las categorías" && categories.filter((c) => c !== "Todas las categorías").map((cat) => {
         const categoryProducts = formattedProducts.filter((p) => p.category === cat);
         if (categoryProducts.length === 0) return null;
         return (
@@ -76,8 +121,37 @@ export default function AisleClient({ categories, formattedProducts }: AisleClie
           />
         );
       })}
-      {/* Grid de productos */}
-      <AisleGrid products={formattedProducts} />
+      {/* Carruseles por subcategoría si está seleccionada una categoría y subcategoría es 'Todas' */}
+      {activeCategory !== "Todas las categorías" && activeSubcategory === "Todas" && filteredSubcategories.filter((s) => s !== "Todas").map((subcat) => {
+        const subcatProducts = formattedProducts.filter((p) => p.category === activeCategory && p.subcategory === subcat);
+        if (subcatProducts.length === 0) return null;
+        return (
+          <HorizontalProductCarousel
+            key={subcat}
+            title={subcat}
+            products={subcatProducts}
+            cart={cart}
+            onAdd={handleAdd as any}
+            onRemove={handleRemove as any}
+            onDelete={handleDelete as any}
+          />
+        );
+      })}
+      {/* Grid de productos filtrados (solo si no se está mostrando carruseles por subcategoría) */}
+      {!(activeCategory !== "Todas las categorías" && activeSubcategory === "Todas") && (
+        <>
+          {activeCategory === "Todas las categorías" && (
+            <h3 className="text-lg font-semibold px-4 mb-2 mt-6">Todos los productos</h3>
+          )}
+          <AisleGrid 
+            products={visibleProducts}
+            cart={cart}
+            onAdd={handleAdd}
+            onRemove={handleRemove}
+            onDelete={handleDelete}
+          />
+        </>
+      )}
     </>
   );
 } 
