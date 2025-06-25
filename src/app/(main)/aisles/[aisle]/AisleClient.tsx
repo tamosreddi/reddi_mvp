@@ -143,6 +143,9 @@ export default function AisleClient({ categories, subcategories, formattedProduc
           {activeCategory === "Todas las categorías" && (
             <h3 className="text-lg font-semibold px-4 mb-2 mt-6">Todos los productos</h3>
           )}
+          {activeCategory !== "Todas las categorías" && activeSubcategory && activeSubcategory !== "Todas" && (
+            <h3 className="text-lg font-semibold px-4 mb-2 mt-6">{activeSubcategory}</h3>
+          )}
           <AisleGrid 
             products={visibleProducts}
             cart={cart}
