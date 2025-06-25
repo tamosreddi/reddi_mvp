@@ -7,6 +7,7 @@ import SubcategoryPillsClient from "@/components/shop/SubcategoryPillsClient";
 import Link from "next/link";
 import AisleGrid from "@/components/shop/AisleGrid";
 import { getAisleData, getAisleProducts } from "@/lib/aisles";
+import AisleClient from "./AisleClient";
 
 export default async function AislePage({
   params,
@@ -90,43 +91,8 @@ export default async function AislePage({
         <SubcategoryPillsClient subcategories={subcategories} />
       )}
 
-      {/* Carruseles horizontales por categoría - Solo mostrar si estamos en "Todas las categorías" */}
-      {activeCategory === "Todas las categorías" && 
-        categories.filter((c) => c !== "Todas las categorías").map((cat) => {
-          const categoryProducts = formattedProducts.filter((p: any) => p.category === cat);
-          
-          // Solo mostrar carrusel si hay productos en esta categoría
-          if (categoryProducts.length === 0) return null;
-          
-          return (
-            <HorizontalProductCarousel
-              key={cat}
-              title={cat}
-              products={categoryProducts}
-            />
-          );
-        })
-      }
-
-      {/* Grid de todos los productos */}
-      <h3 className="text-lg font-semibold px-4 mt-6 mb-2">
-        {activeCategory === "Todas las categorías" 
-          ? "Todos los productos" 
-          : `Productos en ${activeCategory}`}
-      </h3>
-      
-      {formattedProducts.length > 0 ? (
-        <AisleGrid products={formattedProducts} />
-      ) : !errorMsg ? (
-        <div className="px-4 py-8 text-center text-gray-500">
-          <p>No se encontraron productos en este pasillo.</p>
-          {activeCategory !== "Todas las categorías" && (
-            <p className="text-sm mt-2">
-              Intenta seleccionar &quot;Todas las categorías&quot; o una categoría diferente.
-            </p>
-          )}
-        </div>
-      ) : null}
+      {/* Carruseles y grid manejados por el Client Component */}
+      <AisleClient categories={categories} formattedProducts={formattedProducts} />
     </div>
   );
 }
