@@ -59,7 +59,7 @@ export default async function AislePage({
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      <ShopHeader searchPlaceholder={`Buscar en ${aisleName || "..."}`} />
+      <ShopHeader searchPlaceholder={`Buscar en ${aisleName || "..."}`} backHref="/aisles" />
       
       <h2 className="text-xl font-semibold px-4 mt-4 mb-2 capitalize">
         {errorMsg ? (

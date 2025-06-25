@@ -1,5 +1,6 @@
 // 2. CREA una función utilitaria para Server Components
 // lib/aisles.ts (NUEVO ARCHIVO)
+
 import { createServerSupabaseClient } from "@/lib/supabase/supabaseServerClient";
 
 export interface AisleData {
