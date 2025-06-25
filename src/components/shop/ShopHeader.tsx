@@ -5,6 +5,7 @@ import Link from "next/link";
 interface ShopHeaderProps {
   showBackButton?: boolean;
   onBack?: () => void;
+  backHref?: string;
   searchPlaceholder?: string;
   searchDisabled?: boolean;
 }
@@ -12,6 +13,7 @@ interface ShopHeaderProps {
 export default function ShopHeader({
   showBackButton = true,
   onBack,
+  backHref,
   searchPlaceholder = "Buscar...",
   searchDisabled = false,
 }: ShopHeaderProps) {
@@ -23,7 +25,7 @@ export default function ShopHeader({
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
           </button>
         ) : (
-          <Link href="/dashboard">
+          <Link href={backHref || "/dashboard"}>
             <button aria-label="Regresar" className="mr-2 p-2 rounded-full hover:bg-gray-100">
               <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
             </button>

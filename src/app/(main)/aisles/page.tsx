@@ -1,4 +1,5 @@
 //PAGINA PRINCIPAL DE PASILLOS EN CUADROS
+//main/aisles/page.tsx
 
 import ShopHeader from "@/components/shop/ShopHeader";
 import Image from "next/image";
