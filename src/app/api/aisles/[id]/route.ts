@@ -4,9 +4,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  // 1. Validar parámetro
-  const { id } = params;
+export async function GET(req: NextRequest) {
+  // Obtener el id del pasillo desde la URL
+  const id = req.nextUrl.pathname.split("/").pop();
   if (!id || isNaN(Number(id))) {
     return NextResponse.json({ success: false, error: 'ID inválido' }, { status: 400 });
   }

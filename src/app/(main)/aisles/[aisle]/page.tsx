@@ -122,7 +122,7 @@ export default async function AislePage({
           <p>No se encontraron productos en este pasillo.</p>
           {activeCategory !== "Todas las categorías" && (
             <p className="text-sm mt-2">
-              Intenta seleccionar "Todas las categorías" o una categoría diferente.
+              Intenta seleccionar &quot;Todas las categorías&quot; o una categoría diferente.
             </p>
           )}
         </div>
