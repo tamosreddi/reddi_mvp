@@ -68,7 +68,8 @@ export const databaseSchema = {
         barcode: "VARCHAR - Código de barras del producto.",
         created_at: "TIMESTAMPTZ - Fecha de creación del producto.",
         aisle_id: "INTEGER - id del pasillo del producto. Relación con tabla aisles.(ej. bebidas, snacks, limpieza). Es una categoría mayor a la de category.",
-        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto."
+        updated_at: "TIMESTAMPTZ - Fecha de la última actualización del producto.",
+        price: "NUMERIC - Precio del producto."
     },
     aisles: {
         id: "INTEGER - id del pasillo del producto. Relación con tabla aisles.(ej. bebidas, snacks, limpieza). Es una categoría mayor a la de category.",

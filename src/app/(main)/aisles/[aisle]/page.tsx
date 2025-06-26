@@ -8,6 +8,7 @@ import Link from "next/link";
 import AisleGrid from "@/components/shop/AisleGrid";
 import { getAisleData, getAisleProducts } from "@/lib/aisles";
 import AisleClient from "./AisleClient";
+import CartBar from "@/components/shared/CartBar";
 
 export default async function AislePage({
   params,
@@ -93,6 +94,7 @@ export default async function AislePage({
         formattedProducts={formattedProducts}
         activeCategory={activeCategory}
       />
+      <CartBar />
     </div>
   );
 }

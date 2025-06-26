@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 import BottomNavigation from "@/components/shared/bottom-navigation";
 import { StoreProvider } from "@/lib/contexts/StoreContext";
+import { CartProvider } from "@/lib/contexts/CartContext";
 import { Toaster } from "sonner";
 
 // Lista de rutas donde SÍ quieres mostrar el navigation menu
@@ -26,9 +27,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <StoreProvider>
-      {children}
-      {showNavigation && <BottomNavigation />}
-      <Toaster />
+      <CartProvider>
+        {children}
+        {showNavigation && <BottomNavigation />}
+        <Toaster />
+      </CartProvider>
     </StoreProvider>
   );
 }

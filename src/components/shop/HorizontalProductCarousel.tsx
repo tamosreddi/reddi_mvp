@@ -5,18 +5,12 @@ import { Plus, Trash2, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React from "react";
 import ProductAddButton from "./ProductAddButton";
-
-interface Product {
-  id: number | string;
-  name: string;
-  image: string;
-  price: string;
-  quantity: number;
-}
+import type { Product } from '@/lib/types/product';
 
 interface CartItem {
   id: number | string;
   quantity: number;
+  cartQuantity?: number;
 }
 
 interface HorizontalProductCarouselProps {
@@ -32,7 +26,7 @@ export default function HorizontalProductCarousel({ title, products, cart, onAdd
   // Helper para saber si el producto está en el carrito
   const getCartQuantity = (productId: number | string) => {
     const item = cart.find((c) => c.id === productId);
-    return item ? item.quantity : 0;
+    return item && typeof item.cartQuantity === 'number' ? item.cartQuantity : 0;
   };
 
   return (

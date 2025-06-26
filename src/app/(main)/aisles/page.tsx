@@ -5,6 +5,8 @@ import ShopHeader from "@/components/shop/ShopHeader";
 import Image from "next/image";
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/supabaseServerClient";
+import AisleClient from "./[aisle]/AisleClient";
+import CartBar from "@/components/shared/CartBar";
 
 function slugify(str: string) {
   return str
@@ -62,6 +64,7 @@ export default async function AislesPage() {
           </Link>
         ))}
       </div>
+      <CartBar />
     </div>
   );
 } 

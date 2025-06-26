@@ -4,22 +4,8 @@ import { useState, useMemo } from "react";
 import HorizontalProductCarousel from "@/components/shop/HorizontalProductCarousel";
 import AisleGrid from "@/components/shop/AisleGrid";
 import SubcategoryPillsClient from "@/components/shop/SubcategoryPillsClient";
-
-interface Product {
-  id: number | string;
-  name: string;
-  image: string;
-  price: string;
-  quantity: number;
-  category: string;
-  subcategory?: string;
-  [key: string]: any;
-}
-
-interface CartItem {
-  id: number | string;
-  quantity: number;
-}
+import { useCart } from "@/lib/contexts/CartContext";
+import type { Product } from '@/lib/types/product';
 
 interface AisleClientProps {
   categories: string[];
@@ -29,7 +15,8 @@ interface AisleClientProps {
 }
 
 export default function AisleClient({ categories, subcategories, formattedProducts, activeCategory }: AisleClientProps) {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Usar el carrito global
+  const { cart, addToCart, decrementCartItem, removeFromCart } = useCart();
   const [activeSubcategory, setActiveSubcategory] = useState<string>("");
 
   // Filtrar subcategorías según la categoría activa y agregar 'Todas' al inicio
@@ -63,37 +50,17 @@ export default function AisleClient({ categories, subcategories, formattedProduc
     return products;
   }, [formattedProducts, activeCategory, activeSubcategory]);
 
-  // Handlers de carrito
+  // Handlers para el grid y carrusel
   const handleAdd = (product: Product) => {
-    setCart((prev) => {
-      const found = prev.find((item) => item.id === product.id);
-      if (found) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      return [...prev, { id: product.id, quantity: 1 }];
-    });
+    const parsedProduct = {
+      ...product,
+      price: typeof product.price === "string" ? Number(product.price.replace(/[^\d.]/g, "")) : product.price,
+    };
+    console.log("Agregando al carrito:", parsedProduct);
+    addToCart(parsedProduct);
   };
-
-  // Handler para eliminar producto del carrito
-  const handleDelete = (product: Product) => {
-    setCart((prev) => prev.filter((item) => item.id !== product.id));
-  };
-
-  // Handler para disminuir cantidad (opcional, si implementas botón de "-")
-  const handleRemove = (product: Product) => {
-    setCart((prev) => {
-      const found = prev.find((item) => item.id === product.id);
-      if (found && found.quantity > 1) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity - 1 } : item
-        );
-      }
-      // Si la cantidad es 1, eliminar del carrito
-      return prev.filter((item) => item.id !== product.id);
-    });
-  };
+  const handleRemove = (product: Product) => decrementCartItem(product.id);
+  const handleDelete = (product: Product) => removeFromCart(product.id);
 
   return (
     <>
@@ -115,9 +82,9 @@ export default function AisleClient({ categories, subcategories, formattedProduc
             title={cat}
             products={categoryProducts}
             cart={cart}
-            onAdd={handleAdd as any}
-            onRemove={handleRemove as any}
-            onDelete={handleDelete as any}
+            onAdd={handleAdd}
+            onRemove={handleRemove}
+            onDelete={handleDelete}
           />
         );
       })}
@@ -131,9 +98,9 @@ export default function AisleClient({ categories, subcategories, formattedProduc
             title={subcat}
             products={subcatProducts}
             cart={cart}
-            onAdd={handleAdd as any}
-            onRemove={handleRemove as any}
-            onDelete={handleDelete as any}
+            onAdd={handleAdd}
+            onRemove={handleRemove}
+            onDelete={handleDelete}
           />
         );
       })}
