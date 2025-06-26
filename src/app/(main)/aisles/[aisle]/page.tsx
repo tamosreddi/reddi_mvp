@@ -48,7 +48,9 @@ export default async function AislePage({
     id: product.product_id, // Usar product_id como id principal
     name: product.name,
     image: product.image || "/icons/carrito.png",
-    price: `$0.00`, // Tu tabla no tiene precio, puedes agregarlo o usar un valor fijo
+    price: typeof product.price === "number" && !isNaN(product.price)
+      ? product.price.toLocaleString("es-MX", { style: "currency", currency: "MXN" })
+      : "$0.00",
     description: product.description || product.brand || "Sin descripción",
     quantity: 1,
     category: product.category,

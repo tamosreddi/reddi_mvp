@@ -113,7 +113,8 @@ export async function getAisleProducts(aisleId: string, category?: string): Prom
         updated_at,
         image,
         aisle_id,
-        subcategory
+        subcategory,
+        price
       `)
       .eq('aisle_id', Number(aisleId));
 
